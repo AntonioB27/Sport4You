@@ -1,11 +1,16 @@
 using Microsoft.EntityFrameworkCore;
 using Sport4You.Api.Data;
+using Sport4You.Api.Repositories;
+using Sport4You.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite("Data Source=sport4you.db"));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
