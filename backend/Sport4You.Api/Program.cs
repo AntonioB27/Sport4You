@@ -11,6 +11,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
+builder.Services.AddScoped<IScoringService, ScoringService>();
+builder.Services.AddScoped<IActivityService, ActivityService>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
