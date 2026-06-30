@@ -9,10 +9,12 @@ namespace Sport4You.Api.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _users;
+    private readonly IDashboardService _dashboard;
 
-    public UsersController(IUserService users)
+    public UsersController(IUserService users, IDashboardService dashboard)
     {
         _users = users;
+        _dashboard = dashboard;
     }
 
     [HttpPost]
@@ -22,5 +24,14 @@ public class UsersController : ControllerBase
         if (result.IsConflict)
             return Conflict(new { error = result.Error });
         return Ok(new { userId = result.UserId });
+    }
+
+    [HttpGet("{userId}/dashboard")]
+    public async Task<IActionResult> GetDashboard(Guid userId)
+    {
+        var dashboard = await _dashboard.GetDashboardAsync(userId);
+        if (dashboard == null)
+            return NotFound(new { error = "User not found" });
+        return Ok(dashboard);
     }
 }
