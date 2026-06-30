@@ -43,4 +43,40 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
         Assert.Equal(1000, alice.TotalPoints);
         Assert.Equal(500, bob.TotalPoints);
     }
+
+    [Fact]
+    public async Task GetLeaderboard_ReturnsCorrectRankTrend()
+    {
+        var alphaId = await CreateUserAsync("Trend", "Alpha");
+        var betaId = await CreateUserAsync("Trend", "Beta");
+
+        var oldDate = DateTime.UtcNow.AddDays(-9).ToString("o");
+
+        // Old activities: Beta had more points → Beta was rank 1, Alpha was rank 2
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId = betaId, datetime = oldDate, sport = "running", distance = 20.0 });
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId = alphaId, datetime = oldDate, sport = "running", distance = 5.0 });
+
+        // Recent activity: Alpha gains enough to overtake Beta in total
+        var recentDate = DateTime.UtcNow.ToString("o");
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId = alphaId, datetime = recentDate, sport = "running", distance = 30.0 });
+
+        var response = await _client.GetAsync("/api/leaderboard");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var entries = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
+        Assert.NotNull(entries);
+
+        var alpha = entries!.First(e => e.FirstName == "Trend" && e.LastName == "Alpha");
+        var beta = entries!.First(e => e.FirstName == "Trend" && e.LastName == "Beta");
+
+        // Alpha total = 3500 (rank 1, was rank 2) → trend = +1
+        // Beta total = 2000 (rank 2, was rank 1) → trend = -1
+        Assert.Equal(3500, alpha.TotalPoints);
+        Assert.Equal(2000, beta.TotalPoints);
+        Assert.True(alpha.RankTrend > 0, $"Alpha trend should be positive but was {alpha.RankTrend}");
+        Assert.True(beta.RankTrend < 0, $"Beta trend should be negative but was {beta.RankTrend}");
+    }
 }
