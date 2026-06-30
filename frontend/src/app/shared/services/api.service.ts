@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { LeaderboardEntry } from '../models/leaderboard.model';
 import { DashboardData, LogActivityRequest } from '../models/dashboard.model';
 
