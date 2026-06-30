@@ -1,0 +1,29 @@
+using Microsoft.EntityFrameworkCore;
+using Sport4You.Api.Data;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=sport4you.db"));
+
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()));
+
+var app = builder.Build();
+app.UseMiddleware<Sport4You.Api.Middleware.ExceptionMiddleware>();
+app.UseCors();
+app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
+}
+
+app.Run();
+
+public partial class Program { }

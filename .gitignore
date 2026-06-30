@@ -1,0 +1,15 @@
+# .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# SQLite database
+*.db
+
+# Published output
+publish/
+
+# NuGet packages
+*.nupkg
