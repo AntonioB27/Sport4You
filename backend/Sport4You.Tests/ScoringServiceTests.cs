@@ -53,4 +53,16 @@ public class ScoringServiceTests
     [InlineData(10000, 100)]
     public void DailySteps_ReturnsCorrectPoints(int steps, int expected)
         => Assert.Equal(expected, _sut.CalculatePoints("daily_steps", null, null, steps));
+
+    [Fact]
+    public void MalformedDuration_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => _sut.CalculatePoints("swimming", null, "90", null));
+    }
+
+    [Fact]
+    public void NullDistance_ForRunning_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => _sut.CalculatePoints("running", null, null, null));
+    }
 }
