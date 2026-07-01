@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink } from '@angular/router';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatButtonModule } from '@angular/material/button';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { RegisterDialogComponent } from './shared/components/register-dialog/register-dialog.component';
 import { LogActivityDialogComponent } from './shared/components/log-activity-dialog/log-activity-dialog.component';
@@ -9,22 +8,114 @@ import { LogActivityDialogComponent } from './shared/components/log-activity-dia
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, MatToolbarModule, MatButtonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  styles: [`
+    :host { display: flex; min-height: 100vh; background: #EEF3FB; font-family: 'Nunito', system-ui, sans-serif; }
+
+    .sidebar {
+      width: 230px; background: #fff; border-right: 1px solid #E3EAF5;
+      padding: 22px 16px; display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; padding: 0 8px 20px; }
+    .logo img { width: 34px; height: 40px; object-fit: contain; }
+    .logo-text { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 18px; color: #10203E; letter-spacing: .3px; }
+    .logo-text span { color: #2E6BE6; }
+
+    .nav-items { display: flex; flex-direction: column; gap: 6px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+      border-radius: 12px; color: #5c6881;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px;
+      text-decoration: none; transition: background .15s;
+    }
+    .nav-item:hover { background: #F4F6FB; }
+    .nav-item.active { background: linear-gradient(150deg,#2E6BE6,#1B47AE); color: #fff; box-shadow: 0 10px 20px -10px rgba(46,107,230,.7); }
+    .nav-item .icon { font-size: 18px; }
+
+    .xp-widget { margin-top: auto; border-radius: 16px; padding: 16px; background: radial-gradient(120% 80% at 80% 0%, rgba(198,230,59,.35), transparent), #F4FBE3; border: 1px solid rgba(158,207,16,.5); text-align: center; }
+    .xp-label { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #5f7a00; }
+    .xp-value { font-family: 'Chakra Petch', sans-serif; font-size: 26px; font-weight: 700; color: #10203E; }
+    .xp-bar { height: 8px; border-radius: 999px; background: #e4eecb; margin-top: 8px; overflow: hidden; }
+    .xp-bar-fill { height: 100%; width: 72%; border-radius: 999px; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 10px rgba(198,230,59,.9); }
+
+    .log-btn {
+      margin-top: 14px; text-align: center;
+      background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .05em;
+      padding: 13px; border-radius: 14px; box-shadow: 0 0 18px rgba(198,230,59,.5), 0 4px 0 #7c9c00;
+      cursor: pointer; border: none; width: 100%; transition: transform .1s, box-shadow .1s;
+    }
+    .log-btn:hover { transform: translateY(-1px); box-shadow: 0 0 22px rgba(198,230,59,.7), 0 5px 0 #7c9c00; }
+    .log-btn:active { transform: translateY(1px); box-shadow: 0 0 14px rgba(198,230,59,.4), 0 2px 0 #7c9c00; }
+
+    .sidebar-gap { width: 230px; flex-shrink: 0; }
+    .main-content { flex: 1; min-height: 100vh; min-width: 0; overflow-x: hidden; }
+
+    .bottom-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff; border-top: 1px solid #E3EAF5;
+      padding: 10px 14px 20px; justify-content: space-around; align-items: center; z-index: 100;
+    }
+    .bottom-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      color: #9aa6bd; font-family: 'Chakra Petch', sans-serif; font-weight: 700;
+      font-size: 10px; letter-spacing: .06em; text-decoration: none; transition: color .15s;
+    }
+    .bottom-nav-item.active { color: #2E6BE6; }
+    .bottom-nav-item .icon { font-size: 20px; }
+    .bottom-fab {
+      width: 52px; height: 52px; margin-top: -28px; border-radius: 16px;
+      background: linear-gradient(150deg,#C6E63B,#9ECF10); box-shadow: 0 0 22px rgba(158,207,16,.7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; color: #10203E; font-weight: 800; border: none; cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .sidebar-gap { display: none; }
+      .main-content { padding-bottom: 80px; }
+      .bottom-nav { display: flex; }
+    }
+  `],
   template: `
-    <mat-toolbar color="primary">
-      <span style="font-weight: 700; letter-spacing: 1px;">Sport4You 🏆</span>
-      <span style="flex: 1"></span>
-      <button mat-button routerLink="/leaderboard">Leaderboard</button>
-      <button mat-button routerLink="/dashboard">My Dashboard</button>
-      <button
-        mat-stroked-button
-        (click)="openLogActivity()"
-        style="margin-left: 8px; color: white; border-color: rgba(255,255,255,0.5);"
-      >
-        + Log Activity
-      </button>
-    </mat-toolbar>
-    <router-outlet />
+    <aside class="sidebar">
+      <div class="logo">
+        <img src="assets/sporty_wave.png" alt="Spotry" />
+        <div class="logo-text">SPORT<span>4</span>YOU</div>
+      </div>
+      <nav class="nav-items">
+        <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
+          <span class="icon">🏠</span> Home
+        </a>
+        <a class="nav-item" routerLink="/leaderboard" routerLinkActive="active">
+          <span class="icon">🏆</span> Leaderboard
+        </a>
+      </nav>
+      <div class="xp-widget">
+        <div class="xp-label">NEXT LEVEL IN</div>
+        <div class="xp-value">550 XP</div>
+        <div class="xp-bar"><div class="xp-bar-fill"></div></div>
+      </div>
+      <button class="log-btn" (click)="openLogActivity()">+ LOG ACTIVITY</button>
+    </aside>
+
+    <div class="sidebar-gap"></div>
+    <div class="main-content">
+      <router-outlet />
+    </div>
+
+    <nav class="bottom-nav">
+      <a class="bottom-nav-item" routerLink="/dashboard" routerLinkActive="active">
+        <span class="icon">🏠</span> HOME
+      </a>
+      <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
+        <span class="icon">🏆</span> RANK
+      </a>
+      <button class="bottom-fab" (click)="openLogActivity()">+</button>
+      <span class="bottom-nav-item"><span class="icon">🎖️</span> BADGES</span>
+      <span class="bottom-nav-item"><span class="icon">👤</span> ME</span>
+    </nav>
   `,
 })
 export class AppComponent implements OnInit {
@@ -37,6 +128,6 @@ export class AppComponent implements OnInit {
   }
 
   openLogActivity() {
-    this.dialog.open(LogActivityDialogComponent, { width: '480px' });
+    this.dialog.open(LogActivityDialogComponent, { width: '560px', maxWidth: '95vw', panelClass: 's4y-watch-dialog' });
   }
 }

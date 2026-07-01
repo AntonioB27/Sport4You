@@ -1,4 +1,16 @@
 /* You can add global styles to this file, and also import other style files */
 
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Watch dialog — transparent container so the dark card shows through */
+.s4y-watch-dialog .mat-mdc-dialog-container,
+.s4y-watch-dialog .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 34px !important;
+  overflow: visible !important;
+}
