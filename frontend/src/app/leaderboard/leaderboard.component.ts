@@ -4,7 +4,6 @@ import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
 import { ApiService } from '../shared/services/api.service';
 import { LeaderboardEntry } from '../shared/models/leaderboard.model';
 
