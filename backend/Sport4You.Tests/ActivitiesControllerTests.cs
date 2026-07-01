@@ -69,7 +69,7 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task LogActivity_InvalidUserId_Returns400()
+    public async Task LogActivity_UnknownUserId_Returns404()
     {
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
@@ -79,6 +79,6 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
             distance = 5.0
         });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 }

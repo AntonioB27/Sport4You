@@ -15,6 +15,8 @@ public class ActivitiesController : ControllerBase
     public async Task<IActionResult> LogActivity([FromBody] LogActivityRequest request)
     {
         var result = await _activities.LogActivityAsync(request);
+        if (result.IsNotFound)
+            return NotFound(new { error = result.Error });
         if (result.IsError)
             return BadRequest(new { error = result.Error });
         return Ok(new { activityId = result.ActivityId, points = result.Points });

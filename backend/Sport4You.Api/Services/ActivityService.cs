@@ -27,7 +27,7 @@ public class ActivityService : IActivityService
 
         var user = await _users.GetByIdAsync(userId);
         if (user == null)
-            return ActivityResult.BadRequest("User not found");
+            return ActivityResult.NotFound("User not found");
 
         if (!DateTime.TryParse(request.Datetime, out var dateTime))
             return ActivityResult.BadRequest("Invalid datetime format");

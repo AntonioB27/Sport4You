@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ApiService } from '../shared/services/api.service';
@@ -32,6 +33,7 @@ const SPORT_ICONS: Record<string, string> = {
     CommonModule,
     MatCardModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     BaseChartDirective,
   ],
   styles: [`
@@ -156,7 +158,7 @@ export class DashboardComponent implements OnInit {
     plugins: { legend: { position: 'bottom' } },
   };
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private snackBar: MatSnackBar) {}
 
   ngOnInit() {
     const userId =
@@ -173,7 +175,10 @@ export class DashboardComponent implements OnInit {
         this.buildDoughnutChart(data);
         this.loading = false;
       },
-      error: () => { this.loading = false; },
+      error: () => {
+        this.loading = false;
+        this.snackBar.open('Failed to load dashboard. Please try again.', 'OK', { duration: 4000 });
+      },
     });
   }
 
@@ -249,7 +254,7 @@ export class DashboardComponent implements OnInit {
 
   formatMetric(a: ActivityItem): string {
     if (a.distance != null) return `${a.distance} km`;
-    if (a.duration != null) return `${a.duration} min`;
+    if (a.duration != null) return a.duration;
     if (a.steps != null) return `${a.steps.toLocaleString()} steps`;
     return '';
   }

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { LeaderboardEntry } from '../shared/models/leaderboard.model';
 
@@ -15,6 +16,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
     MatTableModule,
     MatCardModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
   ],
   styles: [`
     .container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
@@ -89,12 +91,15 @@ export class LeaderboardComponent implements OnInit {
   columns = ['rank', 'name', 'points', 'trend'];
   loading = true;
 
-  constructor(private api: ApiService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, private snackBar: MatSnackBar) {}
 
   ngOnInit() {
     this.api.getLeaderboard().subscribe({
       next: data => { this.entries = data; this.loading = false; },
-      error: () => { this.loading = false; },
+      error: () => {
+        this.loading = false;
+        this.snackBar.open('Failed to load leaderboard. Please try again.', 'OK', { duration: 4000 });
+      },
     });
   }
 
