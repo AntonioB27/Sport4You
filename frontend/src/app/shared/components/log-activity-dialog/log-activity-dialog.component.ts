@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
+import { ActivityLoggedService } from '../../services/activity-logged.service';
 import { LogActivityRequest } from '../../models/dashboard.model';
 import { SPORT_COLORS, SPORT_ICONS, SPORTS } from '../../constants/sport.constants';
 
@@ -133,6 +134,7 @@ export class LogActivityDialogComponent {
 
   constructor(
     private api: ApiService,
+    private activityLogged: ActivityLoggedService,
     private dialogRef: MatDialogRef<LogActivityDialogComponent>,
     private snackBar: MatSnackBar,
   ) {}
@@ -171,6 +173,7 @@ export class LogActivityDialogComponent {
     this.loading = true;
     this.api.logActivity(request).subscribe({
       next: ({ points }) => {
+        this.activityLogged.notify();
         this.dialogRef.close({ points });
         this.snackBar.open(`✓ +${points} pts earned!`, '', { duration: 3000 });
       },

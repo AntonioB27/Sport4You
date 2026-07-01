@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -7,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ApiService } from '../shared/services/api.service';
+import { ActivityLoggedService } from '../shared/services/activity-logged.service';
 import { DashboardData, ActivityItem } from '../shared/models/dashboard.model';
 import { SPORT_COLORS, SPORT_ICONS } from '../shared/constants/sport.constants';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
@@ -136,7 +138,8 @@ import { LogActivityDialogComponent } from '../shared/components/log-activity-di
     <button class="fab" (click)="openLogActivity()" title="Log Activity">+</button>
   `,
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  private sub?: Subscription;
   data: DashboardData | null = null;
   loading = true;
   streak = 0;
@@ -161,6 +164,7 @@ export class DashboardComponent implements OnInit {
     private api: ApiService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
+    private activityLogged: ActivityLoggedService,
   ) {}
 
   ngOnInit() {
@@ -169,6 +173,11 @@ export class DashboardComponent implements OnInit {
     localStorage.removeItem('viewingUserId');
     if (!userId) { this.loading = false; return; }
     this.loadData(userId);
+    this.sub = this.activityLogged.activityLogged$.subscribe(() => this.loadData());
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
   }
 
   loadData(userId?: string) {
