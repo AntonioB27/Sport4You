@@ -3,28 +3,13 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ApiService } from '../shared/services/api.service';
 import { DashboardData, ActivityItem } from '../shared/models/dashboard.model';
-
-const SPORT_COLORS: Record<string, string> = {
-  running: '#ef5350',
-  walking: '#42a5f5',
-  cycling: '#66bb6a',
-  swimming: '#26c6da',
-  gym: '#ab47bc',
-  daily_steps: '#ffa726',
-};
-
-const SPORT_ICONS: Record<string, string> = {
-  running: '🏃',
-  walking: '🚶',
-  cycling: '🚴',
-  swimming: '🏊',
-  gym: '🏋️',
-  daily_steps: '👟',
-};
+import { SPORT_COLORS, SPORT_ICONS } from '../shared/constants/sport.constants';
+import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -60,6 +45,17 @@ const SPORT_ICONS: Record<string, string> = {
     .activity-points { font-weight: 700; color: #1976d2; font-size: 16px; }
     .feed { max-height: 400px; overflow-y: auto; }
     .spinner-wrap { display: flex; justify-content: center; padding: 48px; }
+    .fab {
+      position: fixed; bottom: 32px; right: 32px;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #1976d2; color: white;
+      font-size: 28px; line-height: 1;
+      border: none; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .fab:hover { background: #1565c0; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
   `],
   template: `
     <div class="container">
@@ -135,6 +131,9 @@ const SPORT_ICONS: Record<string, string> = {
         <mat-card><mat-card-content>User not found.</mat-card-content></mat-card>
       </ng-container>
     </div>
+
+    <!-- FAB -->
+    <button class="fab" (click)="openLogActivity()" title="Log Activity">+</button>
   `,
 })
 export class DashboardComponent implements OnInit {
@@ -158,16 +157,26 @@ export class DashboardComponent implements OnInit {
     plugins: { legend: { position: 'bottom' } },
   };
 
-  constructor(private api: ApiService, private snackBar: MatSnackBar) {}
+  constructor(
+    private api: ApiService,
+    private snackBar: MatSnackBar,
+    private dialog: MatDialog,
+  ) {}
 
   ngOnInit() {
     const userId =
       localStorage.getItem('viewingUserId') ?? localStorage.getItem('userId');
     localStorage.removeItem('viewingUserId');
-
     if (!userId) { this.loading = false; return; }
+    this.loadData(userId);
+  }
 
-    this.api.getDashboard(userId).subscribe({
+  loadData(userId?: string) {
+    const uid = userId ?? localStorage.getItem('userId');
+    if (!uid) return;
+
+    this.loading = true;
+    this.api.getDashboard(uid).subscribe({
       next: data => {
         this.data = data;
         this.streak = this.calculateStreak(data.activities);
@@ -179,6 +188,15 @@ export class DashboardComponent implements OnInit {
         this.loading = false;
         this.snackBar.open('Failed to load dashboard. Please try again.', 'OK', { duration: 4000 });
       },
+    });
+  }
+
+  openLogActivity() {
+    const ref = this.dialog.open(LogActivityDialogComponent, { width: '480px' });
+    ref.afterClosed().subscribe(result => {
+      if (result?.points !== undefined) {
+        this.loadData();
+      }
     });
   }
 
