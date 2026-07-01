@@ -1,12 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartData, ChartOptions } from 'chart.js';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../shared/services/api.service';
 import { ActivityLoggedService } from '../shared/services/activity-logged.service';
 import { DashboardData, ActivityItem } from '../shared/models/dashboard.model';
@@ -17,149 +14,292 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [
-    CommonModule,
-    MatCardModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    BaseChartDirective,
-  ],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
   styles: [`
-    .container { max-width: 900px; margin: 32px auto; padding: 0 16px; }
-    .hero { display: flex; align-items: center; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
-    .hero-points { font-size: 64px; font-weight: 800; color: #1976d2; line-height: 1; }
-    .hero-label { font-size: 16px; color: #666; margin-top: 4px; }
-    .hero-name { font-size: 28px; font-weight: 700; }
-    .streak {
-      display: flex; align-items: center; gap: 8px;
-      background: #fff3e0; border-radius: 12px; padding: 12px 20px;
-      font-size: 18px; font-weight: 600; color: #e65100;
+    @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+    @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
+
+    .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 1100px; }
+    .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
+
+    /* ── Header ── */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .welcome-label { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .18em; color: #8592ad; }
+    .welcome-name { font-family: 'Chakra Petch', sans-serif; font-size: 27px; font-weight: 700; color: #10203E; line-height: 1.05; }
+    .top-badges { display: flex; align-items: center; gap: 12px; }
+    .streak-badge {
+      display: flex; align-items: center; gap: 7px; background: #fff;
+      border: 1px solid #ffe0cf; padding: 8px 14px; border-radius: 999px;
+      box-shadow: 0 8px 18px -10px rgba(255,122,0,.5);
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #FF6A00; font-size: 14px;
     }
-    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-    @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } }
-    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333; }
-    .activity-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+    .coins-badge {
+      display: flex; align-items: center; gap: 7px; background: #fff;
+      border: 1px solid rgba(158,207,16,.6); padding: 8px 14px; border-radius: 999px;
+      box-shadow: 0 8px 18px -10px rgba(158,207,16,.5);
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #5f7a00; font-size: 14px;
     }
-    .activity-item:last-child { border-bottom: none; }
-    .activity-sport { font-weight: 600; font-size: 15px; }
-    .activity-meta { color: #888; font-size: 13px; margin-top: 2px; }
-    .activity-points { font-weight: 700; color: #1976d2; font-size: 16px; }
-    .feed { max-height: 400px; overflow-y: auto; }
-    .spinner-wrap { display: flex; justify-content: center; padding: 48px; }
-    .fab {
-      position: fixed; bottom: 32px; right: 32px;
-      width: 56px; height: 56px; border-radius: 50%;
-      background: #1976d2; color: white;
-      font-size: 28px; line-height: 1;
-      border: none; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-      display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s, box-shadow 0.15s;
+
+    /* ── Grid ── */
+    .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .col { display: flex; flex-direction: column; gap: 18px; }
+
+    /* ── Hero card ── */
+    .hero-card {
+      position: relative; border-radius: 22px; padding: 22px 24px;
+      background: linear-gradient(150deg, #2E6BE6, #173B92);
+      box-shadow: 0 20px 40px -18px rgba(30,79,184,.7); min-height: 200px;
     }
-    .fab:hover { background: #1565c0; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+    .hero-mascot {
+      position: absolute; right: 10px; bottom: 0; width: 160px; height: 190px;
+    }
+    .hero-mascot-shadow {
+      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+      width: 100px; height: 20px; border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(198,230,59,.5), transparent);
+      filter: blur(5px);
+    }
+    .hero-mascot img {
+      position: relative; width: 100%; height: 100%; object-fit: contain;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.3));
+      animation: floaty 4s ease-in-out infinite;
+    }
+    .level-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.14); border: 1px solid rgba(198,230,59,.5);
+      color: #C6E63B; font-family: 'Chakra Petch', sans-serif; font-weight: 700;
+      font-size: 12px; letter-spacing: .14em; padding: 5px 12px; border-radius: 999px;
+    }
+    .hero-points {
+      font-family: 'Chakra Petch', sans-serif; font-size: 46px; font-weight: 700;
+      color: #fff; line-height: 1; margin: 14px 0 2px; text-shadow: 0 0 20px rgba(46,107,230,.5);
+    }
+    .hero-pts-label {
+      font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700;
+      letter-spacing: .18em; color: #bcd2ff; margin-bottom: 16px;
+    }
+    .xp-meta { display: flex; justify-content: space-between; max-width: 62%; font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #dbe8ff; margin-bottom: 6px; }
+    .xp-meta span:last-child { color: #8fb0ee; }
+    .xp-bar { height: 12px; border-radius: 999px; background: rgba(0,0,0,.24); max-width: 62%; overflow: hidden; }
+    .xp-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 16px rgba(198,230,59,.95); }
+
+    /* ── Stat tiles ── */
+    .stat-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .stat-tile { background: #fff; border-radius: 16px; padding: 15px 16px; box-shadow: 0 10px 22px -14px rgba(16,32,62,.35); }
+    .stat-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: #8592ad; }
+    .stat-value { font-family: 'Chakra Petch', sans-serif; font-size: 26px; font-weight: 700; color: #10203E; }
+    .stat-value.blue { color: #2E6BE6; }
+
+    /* ── Cards ── */
+    .card { background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 12px 26px -16px rgba(16,32,62,.35); }
+    .card-title { font-family: 'Chakra Petch', sans-serif; font-size: 16px; font-weight: 700; color: #10203E; letter-spacing: .04em; margin-bottom: 14px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .card-sub { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #8592ad; }
+
+    /* ── Quests ── */
+    .quest-list { display: flex; flex-direction: column; gap: 11px; }
+    .quest-item { display: flex; align-items: center; gap: 13px; }
+    .quest-icon { width: 40px; height: 40px; border-radius: 12px; background: #EAF7C9; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .quest-icon.done { background: linear-gradient(150deg,#C6E63B,#9ECF10); }
+    .quest-body { flex: 1; }
+    .quest-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; color: #10203E; }
+    .quest-name.done-text { color: #4a6100; }
+    .quest-done-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; letter-spacing: .12em; font-weight: 700; color: #7c9c00; margin-top: 2px; }
+    .quest-bar { height: 7px; border-radius: 999px; background: #EAEEF6; margin-top: 6px; overflow: hidden; }
+    .quest-bar-fill { height: 100%; border-radius: 999px; }
+    .quest-bar-fill.green { background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 8px rgba(198,230,59,.8); }
+    .quest-bar-fill.blue { background: #2E6BE6; box-shadow: 0 0 8px rgba(46,107,230,.7); }
+    .quest-pts { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: #5f7a00; }
+
+    /* ── Leaderboard snippet ── */
+    .lb-list { display: flex; flex-direction: column; gap: 9px; }
+    .lb-row { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
+    .lb-row.me { background: #F4FBE3; border: 1px solid rgba(158,207,16,.6); border-radius: 12px; padding: 8px 10px; margin: 0 -6px; }
+    .lb-rank { font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #c9a13a; width: 16px; }
+    .lb-rank.me { color: #5f7a00; }
+    .lb-rank.grey { color: #8592ad; }
+    .lb-name { flex: 1; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
+    .lb-pts { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #8592ad; }
+    .lb-pts.me { color: #5f7a00; }
+    .lb-link { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #2E6BE6; }
+
+    /* ── Activity feed ── */
+    .activity-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; }
+    .activity-item { display: flex; align-items: center; gap: 11px; }
+    .activity-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .activity-body { flex: 1; }
+    .activity-sport { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
+    .activity-meta { font-family: 'Chakra Petch', sans-serif; font-size: 11px; color: #8592ad; font-weight: 700; margin-top: 2px; }
+    .activity-pts { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #2E6BE6; }
+
+    /* ── Log button (desktop bottom of right col) ── */
+    .log-card {
+      text-align: center; background: linear-gradient(150deg,#C6E63B,#9ECF10);
+      color: #10203E; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .05em;
+      padding: 15px; border-radius: 16px; box-shadow: 0 0 26px rgba(198,230,59,.6), 0 5px 0 #7c9c00;
+      cursor: pointer; border: none; width: 100%;
+      transition: transform .1s, box-shadow .1s;
+    }
+    .log-card:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(198,230,59,.7), 0 6px 0 #7c9c00; }
+    .log-card:active { transform: translateY(1px); box-shadow: 0 0 18px rgba(198,230,59,.4), 0 3px 0 #7c9c00; }
+
+    .empty { color: #999; padding: 16px 0; font-family: 'Chakra Petch', sans-serif; font-size: 13px; }
   `],
   template: `
-    <div class="container">
+    <div class="page">
       <div class="spinner-wrap" *ngIf="loading">
-        <mat-spinner diameter="48" />
+        <mat-spinner diameter="48"></mat-spinner>
       </div>
 
       <ng-container *ngIf="!loading && data">
-        <!-- Hero -->
-        <div class="hero">
+        <!-- Top bar -->
+        <div class="top-bar">
           <div>
-            <div class="hero-name">{{ data.user.firstName }} {{ data.user.lastName }}</div>
-            <div class="hero-points">{{ data.totalPoints | number }}</div>
-            <div class="hero-label">total points</div>
+            <div class="welcome-label">WELCOME BACK</div>
+            <div class="welcome-name">Hi, {{ data.user.firstName }} 👋</div>
           </div>
-          <div class="streak" *ngIf="streak > 0">
-            🔥 {{ streak }}-day streak
+          <div class="top-badges">
+            <div class="streak-badge" *ngIf="streak > 0">🔥 {{ streak }} day streak</div>
+            <div class="coins-badge">🪙 {{ data.totalPoints | number }}</div>
           </div>
         </div>
 
-        <!-- Charts row -->
-        <div class="charts-row">
-          <!-- Line chart: points over time -->
-          <mat-card>
-            <mat-card-content>
-              <div class="section-title">Points Over Time</div>
-              <canvas baseChart
-                [data]="lineChartData"
-                [options]="lineChartOptions"
-                type="line">
-              </canvas>
-            </mat-card-content>
-          </mat-card>
-
-          <!-- Doughnut chart: sport breakdown -->
-          <mat-card>
-            <mat-card-content>
-              <div class="section-title">Activity Mix</div>
-              <canvas baseChart
-                [data]="doughnutChartData"
-                [options]="doughnutChartOptions"
-                type="doughnut">
-              </canvas>
-            </mat-card-content>
-          </mat-card>
-        </div>
-
-        <!-- Activity feed -->
-        <mat-card>
-          <mat-card-content>
-            <div class="section-title">Activity History</div>
-            <div class="feed">
-              <div class="activity-item" *ngFor="let a of data.activities">
-                <div>
-                  <div class="activity-sport">
-                    {{ sportIcon(a.sport) }} {{ formatSport(a.sport) }}
-                  </div>
-                  <div class="activity-meta">
-                    {{ formatDate(a.dateTime) }} &nbsp;·&nbsp; {{ formatMetric(a) }}
-                  </div>
-                </div>
-                <div class="activity-points">+{{ a.points }} pts</div>
+        <div class="grid">
+          <!-- LEFT COLUMN -->
+          <div class="col">
+            <!-- Hero card -->
+            <div class="hero-card">
+              <div class="hero-mascot">
+                <div class="hero-mascot-shadow"></div>
+                <img src="assets/sporty_wave.png" alt="Spotry" />
               </div>
-              <div *ngIf="data.activities.length === 0" style="color: #999; padding: 16px 0;">
-                No activities yet — start logging!
+              <div class="level-badge">⚡ LEVEL {{ level }} · {{ levelTitle }}</div>
+              <div class="hero-points">{{ data.totalPoints | number }}</div>
+              <div class="hero-pts-label">TOTAL POINTS</div>
+              <div class="xp-meta">
+                <span>{{ xpProgress }} XP</span>
+                <span>{{ xpNeeded }} → LV {{ level + 1 }}</span>
+              </div>
+              <div class="xp-bar">
+                <div class="xp-fill" [style.width.%]="xpPercent"></div>
               </div>
             </div>
-          </mat-card-content>
-        </mat-card>
+
+            <!-- Stat tiles -->
+            <div class="stat-tiles">
+              <div class="stat-tile">
+                <div class="stat-label">GLOBAL RANK</div>
+                <div class="stat-value blue">#{{ rank }}</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">THIS WEEK</div>
+                <div class="stat-value">{{ weeklyPoints | number }}</div>
+              </div>
+              <div class="stat-tile">
+                <div class="stat-label">ACTIVITIES</div>
+                <div class="stat-value">{{ data.activities.length }} 🎖️</div>
+              </div>
+            </div>
+
+            <!-- Quests -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">TODAY'S QUESTS</span>
+                <span class="card-sub">{{ questsDone }} / {{ quests.length }} done</span>
+              </div>
+              <div class="quest-list">
+                <div class="quest-item" *ngFor="let q of quests">
+                  <div class="quest-icon" [class.done]="q.done">{{ q.done ? '✓' : q.icon }}</div>
+                  <div class="quest-body">
+                    <div class="quest-name" [class.done-text]="q.done">{{ q.label }}</div>
+                    <div class="quest-done-label" *ngIf="q.done">COMPLETE</div>
+                    <div class="quest-bar" *ngIf="!q.done">
+                      <div class="quest-bar-fill" [class.green]="q.color==='green'" [class.blue]="q.color==='blue'" [style.width.%]="q.progress"></div>
+                    </div>
+                  </div>
+                  <div class="quest-pts">+{{ q.pts }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN -->
+          <div class="col">
+            <!-- Leaderboard snippet -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">🏆 LEADERBOARD</span>
+                <span class="lb-link">All time</span>
+              </div>
+              <div class="lb-list">
+                <div *ngFor="let e of topEntries; let i = index"
+                     class="lb-row" [class.me]="e.isMe">
+                  <span class="lb-rank" [class.me]="e.isMe" [class.grey]="i > 0 && !e.isMe">{{ e.rank }}</span>
+                  <span>{{ sportIconForUser(i) }}</span>
+                  <span class="lb-name">{{ e.firstName }} {{ e.lastName }}{{ e.isMe ? ' (You)' : '' }}</span>
+                  <span class="lb-pts" [class.me]="e.isMe">{{ e.totalPoints | number }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="card">
+              <div class="card-title">RECENT ACTIVITY</div>
+              <div class="activity-list">
+                <div class="activity-item" *ngFor="let a of data.activities.slice(0, 6)">
+                  <div class="activity-icon" [style.background]="sportBg(a.sport)">{{ sportIcon(a.sport) }}</div>
+                  <div class="activity-body">
+                    <div class="activity-sport">{{ formatSport(a.sport) }} · {{ formatMetric(a) }}</div>
+                    <div class="activity-meta">{{ formatDate(a.dateTime) }}</div>
+                  </div>
+                  <div class="activity-pts">+{{ a.points }}</div>
+                </div>
+                <div class="empty" *ngIf="data.activities.length === 0">No activities yet — start logging!</div>
+              </div>
+            </div>
+
+            <!-- Log Activity CTA -->
+            <button class="log-card" (click)="openLogActivity()">+ LOG ACTIVITY</button>
+          </div>
+        </div>
       </ng-container>
 
       <ng-container *ngIf="!loading && !data">
-        <mat-card><mat-card-content>User not found.</mat-card-content></mat-card>
+        <div style="padding: 40px; font-family: 'Chakra Petch', sans-serif; color: #8592ad;">User not found.</div>
       </ng-container>
     </div>
-
-    <!-- FAB -->
-    <button class="fab" (click)="openLogActivity()" title="Log Activity">+</button>
   `,
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  private sub?: Subscription;
   data: DashboardData | null = null;
   loading = true;
   streak = 0;
+  rank = 0;
+  weeklyPoints = 0;
+  topEntries: any[] = [];
+  private sub?: Subscription;
 
-  lineChartData: ChartData<'line'> = { labels: [], datasets: [] };
-  lineChartOptions: ChartOptions<'line'> = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: {
-      y: { beginAtZero: true, title: { display: true, text: 'Points' } },
-      x: { title: { display: true, text: 'Date' } },
-    },
-  };
+  // XP / level (derived from totalPoints)
+  level = 1;
+  levelTitle = 'ROOKIE';
+  xpProgress = 0;
+  xpNeeded = 1000;
+  xpPercent = 0;
 
-  doughnutChartData: ChartData<'doughnut'> = { labels: [], datasets: [] };
-  doughnutChartOptions: ChartOptions<'doughnut'> = {
-    responsive: true,
-    plugins: { legend: { position: 'bottom' } },
-  };
+  quests = [
+    { icon: '🏃', label: 'Log any activity today', pts: 50, done: false, progress: 0, color: 'green' },
+    { icon: '🔥', label: 'Keep your streak alive', pts: 100, done: false, progress: 0, color: 'blue' },
+    { icon: '👟', label: 'Hit 5,000 steps (via daily steps)', pts: 80, done: false, progress: 0, color: 'green' },
+  ];
+
+  get questsDone() { return this.quests.filter(q => q.done).length; }
+
+  readonly LEVEL_TITLES = ['ROOKIE', 'JOGGER', 'ATHLETE', 'ELITE', 'CHAMPION', 'LEGEND'];
+  readonly LEVEL_XP = [0, 500, 1500, 3500, 7500, 15000];
+
+  readonly LEADERBOARD_ICONS = ['🚴', '🧃', '🏊', '🏋️', '🏃'];
 
   constructor(
     private api: ApiService,
@@ -169,30 +309,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    const userId =
-      localStorage.getItem('viewingUserId') ?? localStorage.getItem('userId');
+    const userId = localStorage.getItem('viewingUserId') ?? localStorage.getItem('userId');
     localStorage.removeItem('viewingUserId');
     if (!userId) { this.loading = false; return; }
     this.loadData(userId);
     this.sub = this.activityLogged.activityLogged$.subscribe(() => this.loadData());
   }
 
-  ngOnDestroy() {
-    this.sub?.unsubscribe();
-  }
+  ngOnDestroy() { this.sub?.unsubscribe(); }
 
   loadData(userId?: string) {
     const uid = userId ?? localStorage.getItem('userId');
     if (!uid) return;
-
     this.loading = true;
     this.api.getDashboard(uid).subscribe({
       next: data => {
         this.data = data;
         this.streak = this.calculateStreak(data.activities);
-        this.buildLineChart(data);
-        this.buildDoughnutChart(data);
+        this.computeLevel(data.totalPoints);
+        this.weeklyPoints = data.pointsOverTime
+          .filter(p => new Date(p.date) >= new Date(Date.now() - 7 * 86400000))
+          .reduce((s, p) => s + p.points, 0);
+        this.updateQuests(data);
         this.loading = false;
+        this.loadLeaderboard(uid);
       },
       error: (err) => {
         this.loading = false;
@@ -206,86 +346,75 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  openLogActivity() {
-    const ref = this.dialog.open(LogActivityDialogComponent, { width: '480px' });
-    ref.afterClosed().subscribe(result => {
-      if (result?.points !== undefined) {
-        this.loadData();
-      }
+  private loadLeaderboard(myId: string) {
+    this.api.getLeaderboard().subscribe({
+      next: entries => {
+        const me = entries.find(e => e.userId === myId);
+        this.rank = me?.rank ?? 0;
+        this.topEntries = entries.slice(0, 4).map(e => ({ ...e, isMe: e.userId === myId }));
+      },
     });
   }
 
-  private buildLineChart(data: DashboardData) {
-    this.lineChartData = {
-      labels: data.pointsOverTime.map(p => p.date),
-      datasets: [{
-        label: 'Daily Points',
-        data: data.pointsOverTime.map(p => p.points),
-        fill: true,
-        tension: 0.4,
-        borderColor: '#1976d2',
-        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-        pointBackgroundColor: '#1976d2',
-        pointRadius: 4,
-      }],
-    };
+  private computeLevel(pts: number) {
+    let lvl = 0;
+    for (let i = this.LEVEL_XP.length - 1; i >= 0; i--) {
+      if (pts >= this.LEVEL_XP[i]) { lvl = i; break; }
+    }
+    this.level = lvl + 1;
+    this.levelTitle = this.LEVEL_TITLES[lvl] ?? 'LEGEND';
+    const base = this.LEVEL_XP[lvl] ?? 0;
+    const next = this.LEVEL_XP[lvl + 1] ?? base + 5000;
+    this.xpProgress = pts - base;
+    this.xpNeeded = next - base;
+    this.xpPercent = Math.min(100, Math.round((this.xpProgress / this.xpNeeded) * 100));
   }
 
-  private buildDoughnutChart(data: DashboardData) {
-    this.doughnutChartData = {
-      labels: data.sportBreakdown.map(s => this.formatSport(s.sport)),
-      datasets: [{
-        data: data.sportBreakdown.map(s => s.points),
-        backgroundColor: data.sportBreakdown.map(s => SPORT_COLORS[s.sport] ?? '#90a4ae'),
-        borderWidth: 2,
-        borderColor: '#fff',
-      }],
-    };
+  private updateQuests(data: DashboardData) {
+    const today = new Date().toDateString();
+    const todayActivities = data.activities.filter(a => new Date(a.dateTime).toDateString() === today);
+    this.quests[0].done = todayActivities.length > 0;
+    this.quests[1].done = this.streak >= 1;
+    this.quests[1].progress = Math.min(100, this.streak * 20);
+    const todaySteps = todayActivities.filter(a => a.sport === 'daily_steps').reduce((s, a) => s + (a.steps ?? 0), 0);
+    this.quests[2].done = todaySteps >= 5000;
+    this.quests[2].progress = Math.min(100, Math.round((todaySteps / 5000) * 100));
   }
 
   private calculateStreak(activities: ActivityItem[]): number {
     if (!activities.length) return 0;
-
-    const uniqueDates = [...new Set(
-      activities.map(a => new Date(a.dateTime).toDateString())
-    )].map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    let streak = 0;
-    let cursor = today;
-
+    const uniqueDates = [...new Set(activities.map(a => new Date(a.dateTime).toDateString()))]
+      .map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let streak = 0; let cursor = today;
     for (const date of uniqueDates) {
-      const diffDays = Math.round(
-        (cursor.getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (diffDays === 0 || diffDays === 1) {
-        streak++;
-        cursor = date;
-      } else {
-        break;
-      }
+      const diff = Math.round((cursor.getTime() - date.getTime()) / 86400000);
+      if (diff === 0 || diff === 1) { streak++; cursor = date; } else break;
     }
-
     return streak;
   }
 
-  formatSport(sport: string): string {
-    return sport.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+  openLogActivity() {
+    const ref = this.dialog.open(LogActivityDialogComponent, { width: '560px', maxWidth: '95vw', panelClass: 's4y-watch-dialog' });
+    ref.afterClosed().subscribe(result => { if (result?.points !== undefined) this.loadData(); });
   }
 
-  sportIcon(sport: string): string {
-    return SPORT_ICONS[sport] ?? '🏅';
+  formatSport(sport: string) { return sport.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+  sportIcon(sport: string) { return SPORT_ICONS[sport] ?? '🏅'; }
+  sportIconForUser(i: number) { return this.LEADERBOARD_ICONS[i] ?? '🏅'; }
+  sportBg(sport: string) {
+    const map: Record<string, string> = {
+      running: '#EAF7C9', walking: '#E7F0FF', cycling: '#E7F0FF',
+      swimming: '#E7F6FA', gym: '#F5E7FF', daily_steps: '#FFF3E0',
+    };
+    return map[sport] ?? '#F4F6FB';
   }
 
-  formatDate(iso: string): string {
-    return new Date(iso).toLocaleDateString('en-US', {
-      month: 'short', day: 'numeric', year: 'numeric',
-    });
+  formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
-  formatMetric(a: ActivityItem): string {
+  formatMetric(a: ActivityItem) {
     if (a.distance != null) return `${a.distance} km`;
     if (a.duration != null) return a.duration;
     if (a.steps != null) return `${a.steps.toLocaleString()} steps`;
