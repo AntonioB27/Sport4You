@@ -15,7 +15,6 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
     MatTableModule,
     MatCardModule,
     MatProgressSpinnerModule,
-    MatIconModule,
   ],
   styles: [`
     .container { max-width: 800px; margin: 32px auto; padding: 0 16px; }
