@@ -31,7 +31,9 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var scoring = scope.ServiceProvider.GetRequiredService<IScoringService>();
     db.Database.EnsureCreated();
+    DataSeeder.Seed(db, scoring);
 }
 
 app.Run();

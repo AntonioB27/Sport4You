@@ -12,6 +12,7 @@ import { ActivityLoggedService } from '../shared/services/activity-logged.servic
 import { DashboardData, ActivityItem } from '../shared/models/dashboard.model';
 import { SPORT_COLORS, SPORT_ICONS } from '../shared/constants/sport.constants';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
+import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -193,8 +194,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.buildDoughnutChart(data);
         this.loading = false;
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
+        if (err.status === 404) {
+          localStorage.removeItem('userId');
+          this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px' });
+          return;
+        }
         this.snackBar.open('Failed to load dashboard. Please try again.', 'OK', { duration: 4000 });
       },
     });
