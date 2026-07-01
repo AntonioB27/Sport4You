@@ -1,10 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatChipsModule } from '@angular/material/chips';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
 import { ApiService } from '../shared/services/api.service';
@@ -33,12 +30,8 @@ const SPORT_ICONS: Record<string, string> = {
   standalone: true,
   imports: [
     CommonModule,
-    DecimalPipe,
     MatCardModule,
     MatProgressSpinnerModule,
-    MatIconModule,
-    MatDividerModule,
-    MatChipsModule,
     BaseChartDirective,
   ],
   styles: [`
@@ -241,7 +234,7 @@ export class DashboardComponent implements OnInit {
   }
 
   formatSport(sport: string): string {
-    return sport.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return sport.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   sportIcon(sport: string): string {
