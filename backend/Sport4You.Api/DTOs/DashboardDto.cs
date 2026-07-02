@@ -9,6 +9,7 @@ public class DashboardDto
     public List<SportBreakdownDto> SportBreakdown { get; set; } = [];
     public XpDto Xp { get; set; } = new();
     public List<DailyMissionDto> DailyMissions { get; set; } = [];
+    public List<AchievementStatusDto> RecentAchievements { get; set; } = [];
 }
 
 public class UserInfoDto

@@ -25,6 +25,7 @@ public class ActivitiesController : ControllerBase
             points = result.Points,
             xpEarned = result.XpEarned,
             missionsCompleted = result.MissionsCompleted,
+            achievementsUnlocked = result.AchievementsUnlocked,
         });
     }
 }

@@ -8,12 +8,16 @@ public class DashboardService : IDashboardService
     private readonly IUserRepository _users;
     private readonly IActivityRepository _activities;
     private readonly IXpService _xp;
+    private readonly IAchievementService _achievements;
 
-    public DashboardService(IUserRepository users, IActivityRepository activities, IXpService xp)
+    public DashboardService(
+        IUserRepository users, IActivityRepository activities,
+        IXpService xp, IAchievementService achievements)
     {
         _users = users;
         _activities = activities;
         _xp = xp;
+        _achievements = achievements;
     }
 
     public async Task<DashboardDto?> GetDashboardAsync(Guid userId)
@@ -24,6 +28,12 @@ public class DashboardService : IDashboardService
         var activities = await _activities.GetByUserIdAsync(userId);
         var xpSummary = await _xp.GetXpSummaryAsync(userId);
         var missionStatuses = await _xp.GetDailyMissionStatusAsync(userId, DateOnly.FromDateTime(DateTime.UtcNow));
+        var allAchievements = await _achievements.GetUserAchievementsAsync(userId);
+        var recentAchievements = allAchievements
+            .Where(a => a.Unlocked)
+            .OrderByDescending(a => a.UnlockedAt)
+            .Take(3)
+            .ToList();
 
         var pointsOverTime = activities
             .GroupBy(a => a.DateTime.Date)
@@ -73,7 +83,8 @@ public class DashboardService : IDashboardService
             PointsOverTime = pointsOverTime,
             SportBreakdown = sportBreakdown,
             Xp = xpDto,
-            DailyMissions = missionDtos
+            DailyMissions = missionDtos,
+            RecentAchievements = recentAchievements,
         };
     }
 }

@@ -13,15 +13,17 @@ public class ActivityService : IActivityService
     private readonly IActivityRepository _activities;
     private readonly IScoringService _scoring;
     private readonly IXpService _xp;
+    private readonly IAchievementService _achievements;
 
     public ActivityService(
         IUserRepository users, IActivityRepository activities,
-        IScoringService scoring, IXpService xp)
+        IScoringService scoring, IXpService xp, IAchievementService achievements)
     {
         _users = users;
         _activities = activities;
         _scoring = scoring;
         _xp = xp;
+        _achievements = achievements;
     }
 
     public async Task<ActivityResult> LogActivityAsync(LogActivityRequest request)
@@ -62,7 +64,11 @@ public class ActivityService : IActivityService
         var missionResult = await _xp.EvaluateDailyMissionsAsync(
             userId, DateOnly.FromDateTime(dateTime.ToUniversalTime()));
 
-        return ActivityResult.Success(activity.Id, points, xpEarned, missionResult.NewlyCompleted);
+        var newAchievements = await _achievements.EvaluateAchievementsAsync(userId);
+
+        return ActivityResult.Success(
+            activity.Id, points, xpEarned,
+            missionResult.NewlyCompleted, newAchievements);
     }
 
     private static (bool isValid, string? error, string sport) ValidateSportMetrics(LogActivityRequest r)
