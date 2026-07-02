@@ -204,6 +204,28 @@ public class XpService : IXpService
             .ToArray();
     }
 
+    public async Task<int> AwardGenericXpAsync(Guid userId, int xp, string source, Guid sourceId)
+    {
+        var now = DateTime.UtcNow;
+        var row = await _db.UserXp.FindAsync(userId);
+        if (row == null)
+            _db.UserXp.Add(new UserXp { UserId = userId, TotalXp = xp, UpdatedAt = now });
+        else
+        {
+            row.TotalXp += xp;
+            row.UpdatedAt = now;
+        }
+
+        _db.XpTransactions.Add(new XpTransaction
+        {
+            Id = Guid.NewGuid(), UserId = userId, Source = source,
+            SourceId = sourceId, XpEarned = xp, CreatedAt = now,
+        });
+
+        await _db.SaveChangesAsync();
+        return xp;
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private record DailyAggregates(

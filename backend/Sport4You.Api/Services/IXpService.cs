@@ -20,4 +20,5 @@ public interface IXpService
     Task<MissionEvaluationResult> EvaluateDailyMissionsAsync(Guid userId, DateOnly date);
     Task<XpSummary> GetXpSummaryAsync(Guid userId);
     Task<DailyMissionStatus[]> GetDailyMissionStatusAsync(Guid userId, DateOnly date);
+    Task<int> AwardGenericXpAsync(Guid userId, int xp, string source, Guid sourceId);
 }

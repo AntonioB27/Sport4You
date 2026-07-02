@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Sport4You.Api.Services;
 using Sport4You.Tests.Helpers;
 
@@ -52,9 +53,13 @@ public class XpServiceTests
 public class XpServiceIntegrationTests : IClassFixture<TestFactory>
 {
     private readonly HttpClient _client;
+    private readonly TestFactory _factory;
 
     public XpServiceIntegrationTests(TestFactory factory)
-        => _client = factory.CreateClient();
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+    }
 
     private async Task<string> CreateUserAsync()
     {
@@ -98,5 +103,27 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
         var body = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         var missions = body.GetProperty("missionsCompleted");
         Assert.Equal(System.Text.Json.JsonValueKind.Array, missions.ValueKind);
+    }
+
+    [Fact]
+    public async Task AwardGenericXp_UpdatesUserXpAndCreatesTransaction()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+
+        using var scope = _factory.Services.CreateScope();
+        var xpSvc = scope.ServiceProvider.GetRequiredService<IXpService>();
+        var db = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Data.AppDbContext>();
+
+        var sourceId = Guid.NewGuid();
+        var earned = await xpSvc.AwardGenericXpAsync(userId, 150, "achievement", sourceId);
+
+        Assert.Equal(150, earned);
+        var row = await db.UserXp.FindAsync(userId);
+        Assert.NotNull(row);
+        Assert.Equal(150, row!.TotalXp);
+        var tx = db.XpTransactions.FirstOrDefault(t => t.SourceId == sourceId);
+        Assert.NotNull(tx);
+        Assert.Equal("achievement", tx!.Source);
     }
 }
