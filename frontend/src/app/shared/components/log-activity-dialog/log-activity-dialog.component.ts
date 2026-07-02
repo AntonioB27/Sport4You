@@ -6,6 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
 import { ActivityLoggedService } from '../../services/activity-logged.service';
+import { UnlockedAchievement } from '../../models/dashboard.model';
 
 interface Sport {
   key: string; name: string; label: string; unit: string;
@@ -181,6 +182,35 @@ const SPORTS: Sport[] = [
     .conf-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff; font-family:'Chakra Petch',sans-serif; font-weight:700; padding:8px 16px; border-radius:999px; font-size:13px; }
     .conf-done { margin-top:20px; background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px; letter-spacing:.05em; padding:13px 34px; border-radius:14px; cursor:pointer; border:none; box-shadow:0 6px 0 #7c9c00; transition:transform .1s, box-shadow .1s; }
     .conf-done:active { transform:translateY(3px); box-shadow:0 3px 0 #7c9c00; }
+
+    /* achievement overlay */
+    .ach-overlay {
+      position:absolute; inset:0; border-radius:34px; z-index:50;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      text-align:center; padding:36px 30px 32px; overflow:hidden;
+      background:radial-gradient(100% 60% at 50% 4%,rgba(198,230,59,.25),transparent 55%),
+                 linear-gradient(180deg,#0e1a34,#1a2d54);
+    }
+    .ach-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      border-radius:999px; padding:6px 18px; font-family:'Chakra Petch',sans-serif;
+      font-weight:700; font-size:13px; letter-spacing:.18em; margin-bottom:16px;
+    }
+    .ach-badge.bronze { background:rgba(205,127,50,.18); border:1px solid #CD7F32; color:#CD7F32; }
+    .ach-badge.silver { background:rgba(192,192,192,.18); border:1px solid #C0C0C0; color:#C0C0C0; }
+    .ach-badge.gold   { background:rgba(255,215,0,.18);   border:1px solid #FFD700; color:#FFD700; }
+    .ach-title { font-family:'Chakra Petch',sans-serif; font-size:30px; font-weight:700; color:#fff; line-height:1.1; margin-bottom:8px; }
+    .ach-desc  { font-family:'Nunito',sans-serif; font-size:14px; color:#a8bcd8; margin-bottom:14px; max-width:280px; }
+    .ach-xp    { font-family:'Chakra Petch',sans-serif; font-size:1.1rem; font-weight:700; color:#C6E63B; letter-spacing:.05em; margin-bottom:24px; }
+    .ach-next  {
+      background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E;
+      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px;
+      letter-spacing:.05em; padding:13px 34px; border-radius:14px;
+      cursor:pointer; border:none; box-shadow:0 6px 0 #7c9c00;
+      transition:transform .1s, box-shadow .1s;
+    }
+    .ach-next:active { transform:translateY(3px); box-shadow:0 3px 0 #7c9c00; }
+    .ach-tag  { font-family:'Chakra Petch',sans-serif; font-size:11px; letter-spacing:.28em; font-weight:700; color:#7fa8ff; margin-bottom:10px; }
   `],
   template: `
     <div class="card">
@@ -297,6 +327,22 @@ const SPORTS: Sport[] = [
         <button class="conf-done" (click)="done()">DONE 🎉</button>
       </div>
       }
+
+      <!-- Achievement unlock overlay (queued, shown on top of conf) -->
+      @if (currentAchievement) {
+      <div class="ach-overlay">
+        <div class="ach-tag">ACHIEVEMENT UNLOCKED</div>
+        <div class="ach-badge" [class]="currentAchievement.tier">
+          {{ tierLabel(currentAchievement.tier) }}
+        </div>
+        <div class="ach-title">{{ currentAchievement.name }}</div>
+        <div class="ach-desc">{{ currentAchievement.description }}</div>
+        <div class="ach-xp">+{{ currentAchievement.xpReward }} XP</div>
+        <button class="ach-next" (click)="nextAchievement()">
+          {{ achievementQueue.length > 0 ? 'NEXT →' : 'AWESOME! 🏅' }}
+        </button>
+      </div>
+      }
     </div>
   `,
 })
@@ -319,6 +365,8 @@ export class LogActivityDialogComponent implements AfterViewInit {
   errorMsg = '';
   earnedPoints = 0;
   earnedXp = 0;
+  achievementQueue: UnlockedAchievement[] = [];
+  currentAchievement: UnlockedAchievement | null = null;
   confirmedPose = '';
   frontIdx = 0;
   busy = false;
@@ -499,12 +547,26 @@ export class LogActivityDialogComponent implements AfterViewInit {
             );
           }, i * 600);
         });
+
+        const achievements: UnlockedAchievement[] = res.achievementsUnlocked ?? [];
+        if (achievements.length > 0) {
+          this.achievementQueue = achievements.slice(1);
+          this.currentAchievement = achievements[0];
+        }
       },
       error: () => {
         this.loading = false;
         this.errorMsg = 'Failed to log activity. Please try again.';
       },
     });
+  }
+
+  tierLabel(tier: string): string {
+    return { bronze: '🥉 BRONZE', silver: '🥈 SILVER', gold: '🥇 GOLD' }[tier] ?? tier.toUpperCase();
+  }
+
+  nextAchievement(): void {
+    this.currentAchievement = this.achievementQueue.shift() ?? null;
   }
 
   done() {

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -15,7 +16,7 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink],
   styles: [`
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
@@ -113,6 +114,19 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
     .quest-bar-fill.green { background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 8px rgba(198,230,59,.8); }
     .quest-bar-fill.blue { background: #2E6BE6; box-shadow: 0 0 8px rgba(46,107,230,.7); }
     .quest-pts { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: #5f7a00; }
+
+    /* ── Recent Achievements ── */
+    .achievements-card { background:#fff; border-radius:18px; padding:18px 20px; border:1px solid #E3EAF5; }
+    .achievements-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; color:#10203E; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+    .achievements-see-all { font-size:11px; font-weight:700; color:#2E6BE6; letter-spacing:.05em; text-decoration:none; cursor:pointer; }
+    .ach-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #F0F4FB; }
+    .ach-row:last-child { border-bottom:none; }
+    .ach-tier-strip { width:4px; height:36px; border-radius:2px; flex-shrink:0; }
+    .ach-row-info { flex:1; min-width:0; }
+    .ach-row-name { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; color:#10203E; }
+    .ach-row-desc { font-size:11px; color:#8592ad; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .ach-row-date { font-size:11px; color:#b0bcd4; flex-shrink:0; }
+    .ach-empty { font-size:13px; color:#b0bcd4; text-align:center; padding:12px 0; font-style:italic; }
 
     /* ── Leaderboard snippet ── */
     .lb-list { display: flex; flex-direction: column; gap: 9px; }
@@ -264,6 +278,28 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
               </div>
             </div>
 
+            <!-- Recent Achievements -->
+            <div class="achievements-card">
+              <div class="achievements-title">
+                <span>🏅 RECENT ACHIEVEMENTS</span>
+                <a class="achievements-see-all" routerLink="/achievements">SEE ALL →</a>
+              </div>
+              @if ((data?.recentAchievements?.length ?? 0) === 0) {
+                <div class="ach-empty">No achievements yet — keep going!</div>
+              } @else {
+                @for (a of data!.recentAchievements; track a.id) {
+                  <div class="ach-row">
+                    <div class="ach-tier-strip" [style.background]="tierColor(a.tier)"></div>
+                    <div class="ach-row-info">
+                      <div class="ach-row-name">{{ a.name }}</div>
+                      <div class="ach-row-desc">{{ a.description }}</div>
+                    </div>
+                    <div class="ach-row-date">{{ a.unlockedAt | date:'MMM d' }}</div>
+                  </div>
+                }
+              }
+            </div>
+
             <!-- Log Activity CTA -->
             <button class="log-card" (click)="openLogActivity()">+ LOG ACTIVITY</button>
           </div>
@@ -355,6 +391,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   tierIcon(tier: string): string {
     return tier === 'easy' ? '⭐' : tier === 'medium' ? '🏆' : '🔥';
+  }
+
+  tierColor(tier: string): string {
+    return { bronze: '#CD7F32', silver: '#C0C0C0', gold: '#FFD700' }[tier] ?? '#9fb2d6';
   }
 
   progressPercent(m: DailyMissionItem): number {

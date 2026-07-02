@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LeaderboardEntry } from '../models/leaderboard.model';
-import { DashboardData, LogActivityRequest, LogActivityResponse } from '../models/dashboard.model';
+import { AchievementStatus, DashboardData, LogActivityRequest, LogActivityResponse } from '../models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -24,5 +24,9 @@ export class ApiService {
 
   logActivity(request: LogActivityRequest): Observable<LogActivityResponse> {
     return this.http.post<LogActivityResponse>(`${this.base}/activities`, request);
+  }
+
+  getAchievements(userId: string): Observable<AchievementStatus[]> {
+    return this.http.get<AchievementStatus[]>(`${this.base}/users/${userId}/achievements`);
   }
 }

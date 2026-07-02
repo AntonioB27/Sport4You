@@ -6,6 +6,7 @@ export interface DashboardData {
   sportBreakdown: { sport: string; points: number }[];
   xp: XpInfo;
   dailyMissions: DailyMissionItem[];
+  recentAchievements: AchievementStatus[];
 }
 
 export interface XpInfo {
@@ -51,9 +52,24 @@ export interface CompletedMission {
   xpEarned: number;
 }
 
+export interface UnlockedAchievement {
+  id: string;
+  tier: 'bronze' | 'silver' | 'gold';
+  name: string;
+  description: string;
+  xpReward: number;
+}
+
+export interface AchievementStatus extends UnlockedAchievement {
+  requirementType: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+}
+
 export interface LogActivityResponse {
   activityId: string;
   points: number;
   xpEarned: number;
   missionsCompleted: CompletedMission[];
+  achievementsUnlocked: UnlockedAchievement[];
 }

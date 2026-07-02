@@ -12,4 +12,9 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
+  {
+    path: 'achievements',
+    loadComponent: () =>
+      import('./achievements/achievements.component').then(m => m.AchievementsComponent),
+  },
 ];
