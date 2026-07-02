@@ -6,7 +6,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../shared/services/api.service';
 import { ActivityLoggedService } from '../shared/services/activity-logged.service';
-import { DashboardData, ActivityItem } from '../shared/models/dashboard.model';
+import { UserStateService } from '../shared/services/user-state.service';
+import { DashboardData, ActivityItem, DailyMissionItem } from '../shared/models/dashboard.model';
 import { SPORT_COLORS, SPORT_ICONS } from '../shared/constants/sport.constants';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
 import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
@@ -179,8 +180,8 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
               <div class="hero-points">{{ data.totalPoints | number }}</div>
               <div class="hero-pts-label">TOTAL POINTS</div>
               <div class="xp-meta">
-                <span>{{ xpProgress }} XP</span>
-                <span>{{ xpNeeded }} → LV {{ level + 1 }}</span>
+                <span>{{ xpInLevel }} XP</span>
+                <span>{{ xpForNextLevel }} → LV {{ level + 1 }}</span>
               </div>
               <div class="xp-bar">
                 <div class="xp-fill" [style.width.%]="xpPercent"></div>
@@ -207,19 +208,22 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
             <div class="card">
               <div class="card-header">
                 <span class="card-title">TODAY'S QUESTS</span>
-                <span class="card-sub">{{ questsDone }} / {{ quests.length }} done</span>
+                <span class="card-sub">{{ missionsDone }} / {{ data?.dailyMissions?.length ?? 0 }} done</span>
               </div>
               <div class="quest-list">
-                <div class="quest-item" *ngFor="let q of quests">
-                  <div class="quest-icon" [class.done]="q.done">{{ q.done ? '✓' : q.icon }}</div>
+                <div class="quest-item" *ngFor="let m of data?.dailyMissions">
+                  <div class="quest-icon" [class.done]="m.completed">{{ m.completed ? '✓' : tierIcon(m.tier) }}</div>
                   <div class="quest-body">
-                    <div class="quest-name" [class.done-text]="q.done">{{ q.label }}</div>
-                    <div class="quest-done-label" *ngIf="q.done">COMPLETE</div>
-                    <div class="quest-bar" *ngIf="!q.done">
-                      <div class="quest-bar-fill" [class.green]="q.color==='green'" [class.blue]="q.color==='blue'" [style.width.%]="q.progress"></div>
+                    <div class="quest-name" [class.done-text]="m.completed">{{ m.description }}</div>
+                    <div class="quest-done-label" *ngIf="m.completed">COMPLETE</div>
+                    <div class="quest-bar" *ngIf="!m.completed">
+                      <div class="quest-bar-fill"
+                           [class.green]="m.tier === 'easy'"
+                           [class.blue]="m.tier === 'medium'"
+                           [style.width.%]="progressPercent(m)"></div>
                     </div>
                   </div>
-                  <div class="quest-pts">+{{ q.pts }}</div>
+                  <div class="quest-pts">+{{ m.xpReward }} XP</div>
                 </div>
               </div>
             </div>
@@ -281,23 +285,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   topEntries: any[] = [];
   private sub?: Subscription;
 
-  // XP / level (derived from totalPoints)
-  level = 1;
-  levelTitle = 'ROOKIE';
-  xpProgress = 0;
-  xpNeeded = 1000;
-  xpPercent = 0;
+  // XP / level (from API data.xp)
+  get level(): number { return this.data?.xp?.level ?? 1; }
+  get levelTitle(): string { return this.data?.xp?.levelTitle ?? 'ROOKIE'; }
+  get xpPercent(): number { return this.data?.xp?.xpPercent ?? 0; }
+  get xpInLevel(): number { return this.data?.xp?.xpInLevel ?? 0; }
+  get xpForNextLevel(): number { return this.data?.xp?.xpForNextLevel ?? 200; }
 
-  quests = [
-    { icon: '🏃', label: 'Log any activity today', pts: 50, done: false, progress: 0, color: 'green' },
-    { icon: '🔥', label: 'Keep your streak alive', pts: 100, done: false, progress: 0, color: 'blue' },
-    { icon: '👟', label: 'Hit 5,000 steps (via daily steps)', pts: 80, done: false, progress: 0, color: 'green' },
-  ];
-
-  get questsDone() { return this.quests.filter(q => q.done).length; }
-
-  readonly LEVEL_TITLES = ['ROOKIE', 'JOGGER', 'ATHLETE', 'ELITE', 'CHAMPION', 'LEGEND'];
-  readonly LEVEL_XP = [0, 500, 1500, 3500, 7500, 15000];
+  get missionsDone(): number { return this.data?.dailyMissions?.filter(m => m.completed).length ?? 0; }
 
   readonly LEADERBOARD_ICONS = ['🚴', '🧃', '🏊', '🏋️', '🏃'];
 
@@ -306,6 +301,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private activityLogged: ActivityLoggedService,
+    private userState: UserStateService,
   ) {}
 
   ngOnInit() {
@@ -325,12 +321,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.api.getDashboard(uid).subscribe({
       next: data => {
         this.data = data;
+        if (data.xp) {
+          this.userState.setXp(data.xp);
+        }
         this.streak = this.calculateStreak(data.activities);
-        this.computeLevel(data.totalPoints);
         this.weeklyPoints = data.pointsOverTime
           .filter(p => new Date(p.date) >= new Date(Date.now() - 7 * 86400000))
           .reduce((s, p) => s + p.points, 0);
-        this.updateQuests(data);
         this.loading = false;
         this.loadLeaderboard(uid);
       },
@@ -356,29 +353,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  private computeLevel(pts: number) {
-    let lvl = 0;
-    for (let i = this.LEVEL_XP.length - 1; i >= 0; i--) {
-      if (pts >= this.LEVEL_XP[i]) { lvl = i; break; }
-    }
-    this.level = lvl + 1;
-    this.levelTitle = this.LEVEL_TITLES[lvl] ?? 'LEGEND';
-    const base = this.LEVEL_XP[lvl] ?? 0;
-    const next = this.LEVEL_XP[lvl + 1] ?? base + 5000;
-    this.xpProgress = pts - base;
-    this.xpNeeded = next - base;
-    this.xpPercent = Math.min(100, Math.round((this.xpProgress / this.xpNeeded) * 100));
+  tierIcon(tier: string): string {
+    return tier === 'easy' ? '⭐' : tier === 'medium' ? '🏆' : '🔥';
   }
 
-  private updateQuests(data: DashboardData) {
-    const today = new Date().toDateString();
-    const todayActivities = data.activities.filter(a => new Date(a.dateTime).toDateString() === today);
-    this.quests[0].done = todayActivities.length > 0;
-    this.quests[1].done = this.streak >= 1;
-    this.quests[1].progress = Math.min(100, this.streak * 20);
-    const todaySteps = todayActivities.filter(a => a.sport === 'daily_steps').reduce((s, a) => s + (a.steps ?? 0), 0);
-    this.quests[2].done = todaySteps >= 5000;
-    this.quests[2].progress = Math.min(100, Math.round((todaySteps / 5000) * 100));
+  progressPercent(m: DailyMissionItem): number {
+    if (m.progressMax <= 0) return 0;
+    return Math.min(100, Math.round((m.progress / m.progressMax) * 100));
   }
 
   private calculateStreak(activities: ActivityItem[]): number {

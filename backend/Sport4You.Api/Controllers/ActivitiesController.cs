@@ -19,6 +19,12 @@ public class ActivitiesController : ControllerBase
             return NotFound(new { error = result.Error });
         if (result.IsError)
             return BadRequest(new { error = result.Error });
-        return Ok(new { activityId = result.ActivityId, points = result.Points });
+        return Ok(new
+        {
+            activityId = result.ActivityId,
+            points = result.Points,
+            xpEarned = result.XpEarned,
+            missionsCompleted = result.MissionsCompleted,
+        });
     }
 }

@@ -7,6 +7,8 @@ public class DashboardDto
     public List<ActivityDto> Activities { get; set; } = [];
     public List<PointsOverTimeDto> PointsOverTime { get; set; } = [];
     public List<SportBreakdownDto> SportBreakdown { get; set; } = [];
+    public XpDto Xp { get; set; } = new();
+    public List<DailyMissionDto> DailyMissions { get; set; } = [];
 }
 
 public class UserInfoDto
@@ -37,3 +39,16 @@ public class SportBreakdownDto
     public string Sport { get; set; } = string.Empty;
     public int Points { get; set; }
 }
+
+public record CompletedMissionDto(string Description, int XpEarned);
+
+public record XpDto(
+    int Total, int Level, string LevelTitle,
+    int XpInLevel, int XpForNextLevel, int XpPercent)
+{
+    public XpDto() : this(0, 0, string.Empty, 0, 0, 0) { }
+}
+
+public record DailyMissionDto(
+    Guid Id, string Tier, string Description, int XpReward,
+    bool Completed, double Progress, double ProgressMax);

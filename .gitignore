@@ -5,8 +5,13 @@ obj/
 *.suo
 .vs/
 
-# SQLite database
+# SQLite database and WAL files
 *.db
+*.db-shm
+*.db-wal
+
+# macOS metadata
+.DS_Store
 
 # Published output
 publish/

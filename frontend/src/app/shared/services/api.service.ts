@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LeaderboardEntry } from '../models/leaderboard.model';
-import { DashboardData, LogActivityRequest } from '../models/dashboard.model';
+import { DashboardData, LogActivityRequest, LogActivityResponse } from '../models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly base = 'http://localhost:5000/api';
+  private readonly base = 'http://localhost:5262/api';
 
   constructor(private http: HttpClient) {}
 
@@ -22,10 +22,7 @@ export class ApiService {
     return this.http.get<DashboardData>(`${this.base}/users/${userId}/dashboard`);
   }
 
-  logActivity(request: LogActivityRequest): Observable<{ activityId: string; points: number }> {
-    return this.http.post<{ activityId: string; points: number }>(
-      `${this.base}/activities`,
-      request
-    );
+  logActivity(request: LogActivityRequest): Observable<LogActivityResponse> {
+    return this.http.post<LogActivityResponse>(`${this.base}/activities`, request);
   }
 }

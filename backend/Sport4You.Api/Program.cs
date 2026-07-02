@@ -16,6 +16,7 @@ builder.Services.AddScoped<IScoringService, ScoringService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IXpService, XpService>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
@@ -24,8 +25,8 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()));
 
 var app = builder.Build();
-app.UseMiddleware<Sport4You.Api.Middleware.ExceptionMiddleware>();
 app.UseCors();
+app.UseMiddleware<Sport4You.Api.Middleware.ExceptionMiddleware>();
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())

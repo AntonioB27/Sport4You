@@ -1,14 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { RegisterDialogComponent } from './shared/components/register-dialog/register-dialog.component';
 import { LogActivityDialogComponent } from './shared/components/log-activity-dialog/log-activity-dialog.component';
+import { UserStateService } from './shared/services/user-state.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, AsyncPipe],
   styles: [`
     :host { display: flex; min-height: 100vh; background: #EEF3FB; font-family: 'Nunito', system-ui, sans-serif; }
 
@@ -37,7 +38,7 @@ import { LogActivityDialogComponent } from './shared/components/log-activity-dia
     .xp-label { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #5f7a00; }
     .xp-value { font-family: 'Chakra Petch', sans-serif; font-size: 26px; font-weight: 700; color: #10203E; }
     .xp-bar { height: 8px; border-radius: 999px; background: #e4eecb; margin-top: 8px; overflow: hidden; }
-    .xp-bar-fill { height: 100%; width: 72%; border-radius: 999px; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 10px rgba(198,230,59,.9); }
+    .xp-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 10px rgba(198,230,59,.9); }
 
     .log-btn {
       margin-top: 14px; text-align: center;
@@ -92,11 +93,19 @@ import { LogActivityDialogComponent } from './shared/components/log-activity-dia
           <span class="icon">🏆</span> Leaderboard
         </a>
       </nav>
-      <div class="xp-widget">
-        <div class="xp-label">NEXT LEVEL IN</div>
-        <div class="xp-value">550 XP</div>
-        <div class="xp-bar"><div class="xp-bar-fill"></div></div>
-      </div>
+      @if (userState.xp$ | async; as xp) {
+        <div class="xp-widget">
+          <div class="xp-label">NEXT LEVEL IN</div>
+          <div class="xp-value">{{ xp.xpForNextLevel - xp.xpInLevel }} XP</div>
+          <div class="xp-bar"><div class="xp-bar-fill" [style.width.%]="xp.xpPercent"></div></div>
+        </div>
+      } @else {
+        <div class="xp-widget">
+          <div class="xp-label">NEXT LEVEL IN</div>
+          <div class="xp-value">— XP</div>
+          <div class="xp-bar"><div class="xp-bar-fill" style="width: 0%"></div></div>
+        </div>
+      }
       <button class="log-btn" (click)="openLogActivity()">+ LOG ACTIVITY</button>
     </aside>
 
@@ -119,7 +128,10 @@ import { LogActivityDialogComponent } from './shared/components/log-activity-dia
   `,
 })
 export class AppComponent implements OnInit {
-  constructor(private dialog: MatDialog) {}
+  constructor(
+    private dialog: MatDialog,
+    public userState: UserStateService,
+  ) {}
 
   ngOnInit() {
     if (!localStorage.getItem('userId')) {

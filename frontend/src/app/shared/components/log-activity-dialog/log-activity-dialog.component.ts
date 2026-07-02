@@ -2,6 +2,8 @@ import { Component, AfterViewInit, ElementRef, ViewChild, ChangeDetectorRef } fr
 import { CommonModule } from '@angular/common';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
 import { ActivityLoggedService } from '../../services/activity-logged.service';
 
@@ -22,7 +24,7 @@ const SPORTS: Sport[] = [
 @Component({
   selector: 'app-log-activity-dialog',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
   styles: [`
     @keyframes s4y-conf { 0%{transform:translateY(-14px) rotate(0);opacity:0} 15%{opacity:1} 100%{transform:translateY(360px) rotate(420deg);opacity:0} }
     @keyframes s4y-pop  { 0%{transform:scale(.5) rotate(-8deg);opacity:0} 55%{transform:scale(1.1) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
@@ -162,9 +164,9 @@ const SPORTS: Sport[] = [
 
     /* confirmation overlay */
     .conf {
-      position:absolute; inset:0; border-radius:34px; z-index:40;
+      margin:-26px -30px -30px;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
-      text-align:center; padding:30px; overflow:hidden;
+      text-align:center; padding:40px 30px 36px; overflow:hidden;
       background:radial-gradient(100% 60% at 50% 4%,rgba(198,230,59,.3),transparent 55%),
                  linear-gradient(180deg,#2E6BE6,#163a8f);
     }
@@ -175,12 +177,14 @@ const SPORTS: Sport[] = [
     .conf-mascot img { position:relative; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 12px 16px rgba(0,0,0,.3)); animation:s4y-pop .6s ease-out both; }
     .conf-pts { font-family:'Chakra Petch',sans-serif; font-size:58px; line-height:.9; font-weight:700; color:#fff; text-shadow:0 0 26px rgba(198,230,59,.55); }
     .conf-pts-label { font-family:'Chakra Petch',sans-serif; font-size:12px; font-weight:700; letter-spacing:.28em; color:#C6E63B; margin-bottom:12px; }
+    .conf-xp { font-family:'Chakra Petch',sans-serif; font-size:1.1rem; font-weight:600; color:#C6E63B; letter-spacing:.05em; margin-top:2px; }
     .conf-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff; font-family:'Chakra Petch',sans-serif; font-weight:700; padding:8px 16px; border-radius:999px; font-size:13px; }
     .conf-done { margin-top:20px; background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px; letter-spacing:.05em; padding:13px 34px; border-radius:14px; cursor:pointer; border:none; box-shadow:0 6px 0 #7c9c00; transition:transform .1s, box-shadow .1s; }
     .conf-done:active { transform:translateY(3px); box-shadow:0 3px 0 #7c9c00; }
   `],
   template: `
     <div class="card">
+      @if (!logged) {
       <!-- Header -->
       <div class="hdr">
         <div>
@@ -267,9 +271,11 @@ const SPORTS: Sport[] = [
       <button class="log-btn" [disabled]="loading" (click)="logActivity()">
         LOG {{ sport.name.toUpperCase() }} · +{{ previewPoints }} PTS
       </button>
+      }
 
       <!-- Confirmation overlay -->
-      <div class="conf" *ngIf="logged">
+      @if (logged) {
+      <div class="conf">
         <!-- confetti particles -->
         <div class="conf-particle" style="left:14%;top:8%;width:11px;height:11px;background:#C6E63B;animation:s4y-conf 2.4s ease-in infinite;"></div>
         <div class="conf-particle" style="left:38%;top:5%;width:10px;height:10px;background:#FFD54A;border-radius:50%;animation:s4y-conf 2.9s ease-in .3s infinite;"></div>
@@ -284,9 +290,13 @@ const SPORTS: Sport[] = [
         </div>
         <div class="conf-pts">+{{ earnedPoints }}</div>
         <div class="conf-pts-label">POINTS EARNED</div>
+        @if (earnedXp > 0) {
+          <div class="conf-xp">+{{ earnedXp }} XP</div>
+        }
         <div class="conf-pill">{{ sport.name.toUpperCase() }} · {{ displayValue }} {{ sport.unit }}</div>
         <button class="conf-done" (click)="done()">DONE 🎉</button>
       </div>
+      }
     </div>
   `,
 })
@@ -308,6 +318,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
   loading = false;
   errorMsg = '';
   earnedPoints = 0;
+  earnedXp = 0;
   confirmedPose = '';
   frontIdx = 0;
   busy = false;
@@ -317,6 +328,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
     private api: ApiService,
     private activityLogged: ActivityLoggedService,
     private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar,
   ) {}
 
   ngAfterViewInit() {
@@ -463,7 +475,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
     this.loading = true; this.errorMsg = '';
 
     const sp = this.sport; const val = this.value;
-    const req: any = { userId, sport: sp.key };
+    const req: any = { userId, sport: sp.key, datetime: new Date().toISOString() };
     if (sp.unit === 'km')    req.distance = val;
     else if (sp.unit === 'min') { const m = Math.floor(val); const s = Math.round((val-m)*60); req.duration = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
     else req.steps = val;
@@ -472,9 +484,21 @@ export class LogActivityDialogComponent implements AfterViewInit {
       next: (res: any) => {
         this.loading = false;
         this.earnedPoints = res.points;
+        this.earnedXp = res.xpEarned ?? 0;
         this.confirmedPose = sp.pose;
         this.activityLogged.notify();
         this.logged = true;
+
+        const missions: { description: string; xpEarned: number }[] = res.missionsCompleted ?? [];
+        missions.forEach((m, i) => {
+          setTimeout(() => {
+            this.snackBar.open(
+              `Quest complete! ${m.description} · +${m.xpEarned} XP`,
+              '',
+              { duration: 3500, panelClass: 's4y-toast' }
+            );
+          }, i * 600);
+        });
       },
       error: () => {
         this.loading = false;

@@ -14,3 +14,11 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   border-radius: 34px !important;
   overflow: visible !important;
 }
+
+.s4y-toast .mdc-snackbar__surface {
+  background: #1a2d54 !important;
+  color: #C6E63B !important;
+  font-family: 'Chakra Petch', sans-serif !important;
+  font-size: 0.85rem !important;
+  border: 1px solid rgba(198, 230, 59, 0.25) !important;
+}
