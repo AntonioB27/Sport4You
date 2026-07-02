@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<DailyMission> DailyMissions => Set<DailyMission>();
     public DbSet<UserMissionCompletion> UserMissionCompletions => Set<UserMissionCompletion>();
     public DbSet<XpTransaction> XpTransactions => Set<XpTransaction>();
+    public DbSet<Achievement> Achievements => Set<Achievement>();
+    public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -31,5 +33,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<UserMissionCompletion>()
             .HasIndex(c => new { c.UserId, c.MissionId, c.Date })
             .IsUnique();
+
+        modelBuilder.Entity<UserAchievement>()
+            .HasKey(ua => new { ua.UserId, ua.AchievementId });
     }
 }

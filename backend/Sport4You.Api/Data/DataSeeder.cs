@@ -9,6 +9,7 @@ public static class DataSeeder
     {
         SeedUsers(db, scoring);
         SeedMissions(db);
+        SeedAchievements(db);
     }
 
     private static void SeedUsers(AppDbContext db, IScoringService scoring)
@@ -140,5 +141,63 @@ public static class DataSeeder
 
     private static DailyMission M(string tier, string desc, string reqType, double reqVal, string? sport, int xp)
         => new() { Id = Guid.NewGuid(), Tier = tier, Description = desc,
+                   RequirementType = reqType, RequirementValue = reqVal, Sport = sport, XpReward = xp };
+
+    private static void SeedAchievements(AppDbContext db)
+    {
+        if (db.Achievements.Any()) return;
+
+        db.Achievements.AddRange(
+            // Sport Distance — Running
+            A("bronze", "First Strides",   "Run 10 km total",    "total_km", 10,  "running", 50),
+            A("silver", "Road Warrior",    "Run 50 km total",    "total_km", 50,  "running", 150),
+            A("gold",   "Marathon Legend", "Run 200 km total",   "total_km", 200, "running", 300),
+            // Sport Distance — Walking
+            A("bronze", "Weekend Walker",  "Walk 20 km total",   "total_km", 20,  "walking", 50),
+            A("silver", "Trail Blazer",    "Walk 100 km total",  "total_km", 100, "walking", 150),
+            A("gold",   "Pathfinder",      "Walk 500 km total",  "total_km", 500, "walking", 300),
+            // Sport Distance — Cycling
+            A("bronze", "Casual Rider",    "Cycle 30 km total",  "total_km", 30,  "cycling", 50),
+            A("silver", "Chain Breaker",   "Cycle 150 km total", "total_km", 150, "cycling", 150),
+            A("gold",   "Tour Crusher",    "Cycle 500 km total", "total_km", 500, "cycling", 300),
+            // Sport Duration — Swimming
+            A("bronze", "Pool Diver",      "Swim 60 min total",    "total_minutes", 60,   "swimming", 50),
+            A("silver", "Lap Master",      "Swim 300 min total",   "total_minutes", 300,  "swimming", 150),
+            A("gold",   "Open Water",      "Swim 1,000 min total", "total_minutes", 1000, "swimming", 300),
+            // Sport Duration — Gym
+            A("bronze", "Iron Starter",    "Log 120 min at the gym",   "total_minutes", 120,  "gym", 50),
+            A("silver", "Pump Master",     "Log 600 min at the gym",   "total_minutes", 600,  "gym", 150),
+            A("gold",   "Iron Legend",     "Log 2,000 min at the gym", "total_minutes", 2000, "gym", 300),
+            // Steps
+            A("bronze", "First March",     "Log 50,000 steps total",    "total_steps", 50000,   null, 50),
+            A("silver", "Step Hunter",     "Log 250,000 steps total",   "total_steps", 250000,  null, 150),
+            A("gold",   "Steps Legend",    "Log 1,000,000 steps total", "total_steps", 1000000, null, 300),
+            // Streaks
+            A("bronze", "On a Roll",       "Log activity 3 days in a row",  "streak_days", 3,  null, 50),
+            A("silver", "Week Warrior",    "Log activity 7 days in a row",  "streak_days", 7,  null, 150),
+            A("gold",   "Iron Habit",      "Log activity 30 days in a row", "streak_days", 30, null, 300),
+            // XP Journey
+            A("bronze", "Leveling Up",     "Reach Level 3",  "level_reached", 3,  null, 50),
+            A("silver", "Getting Serious", "Reach Level 6",  "level_reached", 6,  null, 150),
+            A("gold",   "Immortal",        "Reach Level 10", "level_reached", 10, null, 300),
+            // Leaderboard Feats
+            A("bronze", "Top 10",          "Reach top 10 on the leaderboard", "leaderboard_rank", 10, null, 50),
+            A("silver", "Podium",          "Reach top 3 on the leaderboard",  "leaderboard_rank", 3,  null, 150),
+            A("gold",   "Champion",        "Reach #1 on the leaderboard",     "leaderboard_rank", 1,  null, 300),
+            // One-Time Feats
+            A("bronze", "First Blood",      "Log your first activity",                           "first_activity", 1,    null, 50),
+            A("bronze", "Mission Possible", "Complete your first daily mission",                 "first_mission",  1,    null, 50),
+            A("silver", "Triple Crown",     "Complete a daily sweep (all 3 missions in one day)","first_sweep",    1,    null, 150),
+            A("silver", "All-Rounder",      "Log all 6 sport types at least once",               "all_sports",     6,    null, 150),
+            A("bronze", "Century",          "Earn 1,000 points in a single day",                 "points_in_day",  1000, null, 50),
+            A("gold",   "Centurion",        "Earn 10,000 points in a single day",                "points_in_day",  10000, null, 300)
+        );
+
+        db.SaveChanges();
+    }
+
+    private static Achievement A(string tier, string name, string desc,
+        string reqType, double reqVal, string? sport, int xp)
+        => new() { Id = Guid.NewGuid(), Tier = tier, Name = name, Description = desc,
                    RequirementType = reqType, RequirementValue = reqVal, Sport = sport, XpReward = xp };
 }
