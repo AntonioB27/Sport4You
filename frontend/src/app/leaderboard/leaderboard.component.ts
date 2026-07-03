@@ -6,9 +6,6 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { LeaderboardEntry } from '../shared/models/leaderboard.model';
 
-const PODIUM_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
-const PODIUM_EMOJIS = ['🥇', '🥈', '🥉'];
-const ATHLETE_EMOJIS = ['🚴', '🏊', '🏃', '🚶', '🏋️', '👟'];
 
 @Component({
   selector: 'app-leaderboard',
@@ -78,6 +75,22 @@ const ATHLETE_EMOJIS = ['🚴', '🏊', '🏃', '🚶', '🏋️', '👟'];
     .trend.up { color: #4CAF50; }
     .trend.down { color: #f44336; }
     .trend.neutral { color: #b0b8cb; }
+
+    /* avatar thumbnails */
+    .av-thumb, .av-initial {
+      display:inline-block; border-radius:50%; object-fit:cover; vertical-align:middle; flex-shrink:0;
+    }
+    .av-thumb  { border:2px solid rgba(255,255,255,.35); }
+    .av-initial {
+      background:#2E6BE6; color:#fff;
+      font-family:'Chakra Petch',sans-serif; font-weight:700;
+      display:inline-flex; align-items:center; justify-content:center;
+      border:2px solid rgba(255,255,255,.35);
+    }
+    /* list row size */
+    .av-thumb.sm, .av-initial.sm { width:32px; height:32px; font-size:13px; }
+    /* podium size */
+    .av-thumb.lg, .av-initial.lg { width:48px; height:48px; font-size:20px; margin-bottom:6px; }
   `],
   template: `
     <div class="page">
@@ -93,7 +106,11 @@ const ATHLETE_EMOJIS = ['🚴', '🏊', '🏃', '🚶', '🏋️', '👟'];
           <!-- 2nd place (left) -->
           <div class="podium-slot" (click)="viewDashboard(entries[1])">
             <div class="podium-card" [style.background]="'#F7F7F7'">
-              <div class="podium-emoji">{{ athleteEmoji(1) }}</div>
+              @if (entries[1].activeAvatarImagePath) {
+                <img class="av-thumb lg" [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName">
+              } @else {
+                <span class="av-initial lg">{{ entries[1].firstName[0] }}</span>
+              }
               <div class="podium-name">{{ entries[1].firstName }} {{ entries[1].lastName }}</div>
               <div class="podium-pts">{{ entries[1].totalPoints | number }}</div>
             </div>
@@ -103,7 +120,11 @@ const ATHLETE_EMOJIS = ['🚴', '🏊', '🏃', '🚶', '🏋️', '👟'];
           <div class="podium-slot" (click)="viewDashboard(entries[0])">
             <div class="podium-card" style="background: linear-gradient(150deg,#FFE27A,#FFC200); box-shadow: 0 0 28px rgba(255,194,0,.5);">
               <div style="font-size:34px">👑</div>
-              <div class="podium-emoji" style="font-size:22px">{{ athleteEmoji(0) }}</div>
+              @if (entries[0].activeAvatarImagePath) {
+                <img class="av-thumb lg" [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName">
+              } @else {
+                <span class="av-initial lg">{{ entries[0].firstName[0] }}</span>
+              }
               <div class="podium-name">{{ entries[0].firstName }} {{ entries[0].lastName }}</div>
               <div class="podium-pts">{{ entries[0].totalPoints | number }}</div>
             </div>
@@ -112,7 +133,11 @@ const ATHLETE_EMOJIS = ['🚴', '🏊', '🏃', '🚶', '🏋️', '👟'];
           <!-- 3rd place (right) -->
           <div class="podium-slot" (click)="viewDashboard(entries[2])">
             <div class="podium-card" [style.background]="'#FDF0E6'">
-              <div class="podium-emoji">{{ athleteEmoji(2) }}</div>
+              @if (entries[2].activeAvatarImagePath) {
+                <img class="av-thumb lg" [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName">
+              } @else {
+                <span class="av-initial lg">{{ entries[2].firstName[0] }}</span>
+              }
               <div class="podium-name">{{ entries[2].firstName }} {{ entries[2].lastName }}</div>
               <div class="podium-pts">{{ entries[2].totalPoints | number }}</div>
             </div>
@@ -137,7 +162,12 @@ const ATHLETE_EMOJIS = ['🚴', '🏊', '🏃', '🚶', '🏋️', '👟'];
               <span class="rank-chip" [class]="rankChipClass(i, e)">{{ e.rank }}</span>
             </div>
             <div class="athlete-name">
-              {{ athleteEmoji(i) }} {{ e.firstName }} {{ e.lastName }}
+              @if (e.activeAvatarImagePath) {
+                <img class="av-thumb sm" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
+              } @else {
+                <span class="av-initial sm">{{ e.firstName[0] }}</span>
+              }
+              {{ e.firstName }} {{ e.lastName }}
               <span class="you-badge" *ngIf="isMe(e)">YOU</span>
             </div>
             <div class="pts-val" [class.me]="isMe(e)">{{ e.totalPoints | number }}</div>
@@ -166,8 +196,6 @@ export class LeaderboardComponent implements OnInit {
   }
 
   isMe(e: LeaderboardEntry) { return e.userId === this.myId; }
-
-  athleteEmoji(i: number) { return ATHLETE_EMOJIS[i % ATHLETE_EMOJIS.length]; }
 
   rankChipClass(i: number, e: LeaderboardEntry): string {
     if (this.isMe(e)) return 'me';

@@ -10,4 +10,5 @@ public interface IAvatarService
     Task<bool> SetActiveAvatarAsync(Guid userId, Guid avatarId);
     Task<AvatarStatusDto?> GetActiveAvatarAsync(Guid userId);
     Task UnlockAndEquipDefaultAsync(Guid userId);
+    Task<Dictionary<Guid, string>> GetAvatarImageMapAsync();
 }

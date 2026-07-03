@@ -8,4 +8,5 @@ public class LeaderboardEntryDto
     public string LastName { get; set; } = string.Empty;
     public int TotalPoints { get; set; }
     public int RankTrend { get; set; }
+    public string? ActiveAvatarImagePath { get; set; }
 }

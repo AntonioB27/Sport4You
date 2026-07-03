@@ -147,4 +147,7 @@ public class AvatarService : IAvatarService
             .Select(a => new UnlockedAvatarDto(a.Id, a.Name, a.Description, a.ImagePath))
             .ToList();
     }
+
+    public async Task<Dictionary<Guid, string>> GetAvatarImageMapAsync()
+        => await _db.Avatars.ToDictionaryAsync(a => a.Id, a => a.ImagePath);
 }

@@ -5,4 +5,5 @@ export interface LeaderboardEntry {
   lastName: string;
   totalPoints: number;
   rankTrend: number;
+  activeAvatarImagePath?: string;
 }

@@ -79,4 +79,21 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
         Assert.True(alpha.RankTrend > 0, $"Alpha trend should be positive but was {alpha.RankTrend}");
         Assert.True(beta.RankTrend < 0, $"Beta trend should be negative but was {beta.RankTrend}");
     }
+
+    [Fact]
+    public async Task GetLeaderboard_IncludesActiveAvatarImagePath()
+    {
+        var userId = await CreateUserAsync("Avatar", "Leaderboard");
+
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = "2026-06-30T10:00:00Z", sport = "running", distance = 1.0 });
+
+        var response = await _client.GetAsync("/api/leaderboard");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var entries = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
+        var entry = entries!.First(e => e.FirstName == "Avatar" && e.LastName == "Leaderboard");
+        Assert.NotNull(entry.ActiveAvatarImagePath);
+        Assert.StartsWith("assets/avatars/", entry.ActiveAvatarImagePath);
+    }
 }
