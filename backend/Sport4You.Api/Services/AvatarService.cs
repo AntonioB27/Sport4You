@@ -19,9 +19,7 @@ public class AvatarService : IAvatarService
 
     public async Task<List<AvatarStatusDto>> GetUserAvatarsAsync(Guid userId)
     {
-        // Exclude loot-box avatars from user-facing lists
         var all = await _db.Avatars
-            .Where(a => a.UnlockType != "loot_box")
             .ToListAsync();
         var unlocked = await _db.UserAvatars
             .Where(ua => ua.UserId == userId)
@@ -101,9 +99,9 @@ public class AvatarService : IAvatarService
             .Select(ua => ua.AvatarId)
             .ToListAsync();
 
-        // Only evaluate non-default, non-loot-box avatars the user hasn't earned yet
+        // Only evaluate non-default avatars the user hasn't earned yet
         var unearned = await _db.Avatars
-            .Where(a => !unlockedIds.Contains(a.Id) && a.UnlockType != "default" && a.UnlockType != "loot_box")
+            .Where(a => !unlockedIds.Contains(a.Id) && a.UnlockType != "default")
             .ToListAsync();
 
         if (unearned.Count == 0) return [];
