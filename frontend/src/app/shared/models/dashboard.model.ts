@@ -1,3 +1,4 @@
+// frontend/src/app/shared/models/dashboard.model.ts
 export interface DashboardData {
   user: { firstName: string; lastName: string };
   totalPoints: number;
@@ -7,6 +8,7 @@ export interface DashboardData {
   xp: XpInfo;
   dailyMissions: DailyMissionItem[];
   recentAchievements: AchievementStatus[];
+  activeAvatar: AvatarStatus | null;
 }
 
 export interface XpInfo {
@@ -64,6 +66,29 @@ export interface AchievementStatus extends UnlockedAchievement {
   requirementType: string;
   unlocked: boolean;
   unlockedAt: string | null;
+  sport: string | null;
+  requirementValue: number;
+  progress: number;
+  ownedByPercent: number;
+}
+
+export interface AchievementsPage {
+  xp: XpInfo;
+  achievements: AchievementStatus[];
+}
+
+export interface UnlockedAvatar {
+  id: string;
+  name: string;
+  description: string;
+  imagePath: string;
+}
+
+export interface AvatarStatus extends UnlockedAvatar {
+  unlockType: string;
+  unlocked: boolean;
+  unlockedAt: string | null;
+  isActive: boolean;
 }
 
 export interface LogActivityResponse {
@@ -72,4 +97,5 @@ export interface LogActivityResponse {
   xpEarned: number;
   missionsCompleted: CompletedMission[];
   achievementsUnlocked: UnlockedAchievement[];
+  avatarsUnlocked: UnlockedAvatar[];
 }

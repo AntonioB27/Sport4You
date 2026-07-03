@@ -1,3 +1,4 @@
+// frontend/src/app/app.routes.ts
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
@@ -16,5 +17,10 @@ export const routes: Routes = [
     path: 'achievements',
     loadComponent: () =>
       import('./achievements/achievements.component').then(m => m.AchievementsComponent),
+  },
+  {
+    path: 'avatars',
+    loadComponent: () =>
+      import('./avatars/avatars.component').then(m => m.AvatarsComponent),
   },
 ];

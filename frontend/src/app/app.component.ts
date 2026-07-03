@@ -95,6 +95,9 @@ import { UserStateService } from './shared/services/user-state.service';
         <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
           <span class="icon">🏅</span> BADGES
         </a>
+        <a class="nav-item" routerLink="/avatars" routerLinkActive="active">
+          <span class="icon">🎭</span> AVATARS
+        </a>
       </nav>
       @if (userState.xp$ | async; as xp) {
         <div class="xp-widget">
@@ -126,6 +129,9 @@ import { UserStateService } from './shared/services/user-state.service';
       </a>
       <button class="bottom-fab" (click)="openLogActivity()">+</button>
       <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active"><span class="icon">🏅</span> BADGES</a>
+      <a class="bottom-nav-item" routerLink="/avatars" routerLinkActive="active">
+        <span class="icon">🎭</span> AVATARS
+      </a>
       <span class="bottom-nav-item"><span class="icon">👤</span> ME</span>
     </nav>
   `,

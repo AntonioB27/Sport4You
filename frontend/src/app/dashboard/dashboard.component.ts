@@ -188,7 +188,8 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
             <div class="hero-card">
               <div class="hero-mascot">
                 <div class="hero-mascot-shadow"></div>
-                <img src="assets/sporty_wave.png" alt="Spotry" />
+                <img [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
+                     [alt]="data.activeAvatar?.name ?? 'Sporty'" />
               </div>
               <div class="level-badge">⚡ LEVEL {{ level }} · {{ levelTitle }}</div>
               <div class="hero-points">{{ data.totalPoints | number }}</div>
