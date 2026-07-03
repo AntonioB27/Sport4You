@@ -21,11 +21,12 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task Seed_Creates20Avatars()
+    public async Task Seed_Creates35Avatars()
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        Assert.Equal(20, await db.Avatars.CountAsync());
+        // 20 regular avatars + 15 loot-box avatars = 35 total
+        Assert.Equal(35, await db.Avatars.CountAsync());
     }
 
     [Fact]

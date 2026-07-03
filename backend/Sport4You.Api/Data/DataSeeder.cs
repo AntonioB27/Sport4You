@@ -11,6 +11,9 @@ public static class DataSeeder
         SeedMissions(db);
         SeedAchievements(db);
         SeedAvatars(db);
+        SeedBorders(db);
+        SeedLootBoxAvatars(db);
+        SeedLootBoxRewards(db);
     }
 
     private static void SeedUsers(AppDbContext db, IScoringService scoring)
@@ -251,4 +254,105 @@ public static class DataSeeder
             UnlockAchievementId = unlockAchievementId == Guid.Empty ? null : unlockAchievementId,
             ImagePath = $"assets/avatars/{name.ToLower().Replace(" ", "-")}.png",
         };
+
+    private static void SeedBorders(AppDbContext db)
+    {
+        if (db.Borders.Any()) return;
+
+        db.Borders.AddRange(
+            B("Iron Ring",    "common",    "3px solid #9E9E9E",                                                                     "iron-ring"),
+            B("Leaf Ring",    "common",    "3px solid #66BB6A",                                                                     "leaf-ring"),
+            B("Sapphire Band","rare",      "3px double #2196F3",                                                                    "sapphire-band"),
+            B("Aurora Band",  "rare",      "3px solid #9C27B0",                                                                     "aurora-band"),
+            B("Gold Crown Ring","legendary","3px solid #FFD700",                                                                    "gold-crown-ring"),
+            B("Inferno Halo", "legendary", "3px solid #FF6F00",                                                                     "inferno-halo")
+        );
+
+        db.SaveChanges();
+    }
+
+    private static Border B(string name, string rarity, string borderCss, string slug)
+        => new() { Id = Guid.NewGuid(), Name = name, Rarity = rarity, BorderCss = borderCss,
+                   ImagePath = $"assets/borders/{slug}.png" };
+
+    private static void SeedLootBoxAvatars(AppDbContext db)
+    {
+        if (db.Avatars.Any(a => a.UnlockType == "loot_box")) return;
+
+        db.Avatars.AddRange(
+            // Common
+            LV("Shadow Sporty",  "shadow-sporty"),
+            LV("Crystal Sporty", "crystal-sporty"),
+            LV("Neon Sporty",    "neon-sporty"),
+            LV("Forest Sporty",  "forest-sporty"),
+            LV("Ocean Sporty",   "ocean-sporty"),
+            // Rare
+            LV("Galaxy Sporty",  "galaxy-sporty"),
+            LV("Flame Sporty",   "flame-sporty"),
+            LV("Arctic Sporty",  "arctic-sporty"),
+            LV("Thunder Sporty", "thunder-sporty"),
+            LV("Prism Sporty",   "prism-sporty"),
+            // Legendary
+            LV("Phantom Sporty", "phantom-sporty"),
+            LV("Inferno Sporty", "inferno-sporty"),
+            LV("Cosmos Sporty",  "cosmos-sporty"),
+            LV("Void Sporty",    "void-sporty"),
+            LV("Titan Sporty",   "titan-sporty")
+        );
+
+        db.SaveChanges();
+    }
+
+    private static Avatar LV(string name, string slug)
+        => new() { Id = Guid.NewGuid(), Name = name, Description = "Loot box exclusive",
+                   UnlockType = "loot_box", UnlockValue = 0, UnlockAchievementId = null,
+                   ImagePath = $"assets/avatars/loot-box/{slug}.png" };
+
+    private static void SeedLootBoxRewards(AppDbContext db)
+    {
+        if (db.LootBoxRewards.Any()) return;
+
+        var avatarByName = db.Avatars
+            .Where(a => a.UnlockType == "loot_box")
+            .ToDictionary(a => a.Name, a => a.Id);
+
+        var borderByName = db.Borders.ToDictionary(b => b.Name, b => b.Id);
+
+        db.LootBoxRewards.AddRange(
+            // Common avatars
+            R("avatar", "common", "Shadow Sporty",   $"assets/avatars/loot-box/shadow-sporty.png",   avatarId: avatarByName["Shadow Sporty"]),
+            R("avatar", "common", "Crystal Sporty",  $"assets/avatars/loot-box/crystal-sporty.png",  avatarId: avatarByName["Crystal Sporty"]),
+            R("avatar", "common", "Neon Sporty",     $"assets/avatars/loot-box/neon-sporty.png",     avatarId: avatarByName["Neon Sporty"]),
+            R("avatar", "common", "Forest Sporty",   $"assets/avatars/loot-box/forest-sporty.png",   avatarId: avatarByName["Forest Sporty"]),
+            R("avatar", "common", "Ocean Sporty",    $"assets/avatars/loot-box/ocean-sporty.png",    avatarId: avatarByName["Ocean Sporty"]),
+            // Rare avatars
+            R("avatar", "rare",   "Galaxy Sporty",   $"assets/avatars/loot-box/galaxy-sporty.png",   avatarId: avatarByName["Galaxy Sporty"]),
+            R("avatar", "rare",   "Flame Sporty",    $"assets/avatars/loot-box/flame-sporty.png",    avatarId: avatarByName["Flame Sporty"]),
+            R("avatar", "rare",   "Arctic Sporty",   $"assets/avatars/loot-box/arctic-sporty.png",   avatarId: avatarByName["Arctic Sporty"]),
+            R("avatar", "rare",   "Thunder Sporty",  $"assets/avatars/loot-box/thunder-sporty.png",  avatarId: avatarByName["Thunder Sporty"]),
+            R("avatar", "rare",   "Prism Sporty",    $"assets/avatars/loot-box/prism-sporty.png",    avatarId: avatarByName["Prism Sporty"]),
+            // Legendary avatars
+            R("avatar", "legendary","Phantom Sporty",$"assets/avatars/loot-box/phantom-sporty.png",  avatarId: avatarByName["Phantom Sporty"]),
+            R("avatar", "legendary","Inferno Sporty",$"assets/avatars/loot-box/inferno-sporty.png",  avatarId: avatarByName["Inferno Sporty"]),
+            R("avatar", "legendary","Cosmos Sporty", $"assets/avatars/loot-box/cosmos-sporty.png",   avatarId: avatarByName["Cosmos Sporty"]),
+            R("avatar", "legendary","Void Sporty",   $"assets/avatars/loot-box/void-sporty.png",     avatarId: avatarByName["Void Sporty"]),
+            R("avatar", "legendary","Titan Sporty",  $"assets/avatars/loot-box/titan-sporty.png",    avatarId: avatarByName["Titan Sporty"]),
+            // Common borders
+            R("border", "common", "Iron Ring",        "assets/borders/iron-ring.png",    borderId: borderByName["Iron Ring"]),
+            R("border", "common", "Leaf Ring",        "assets/borders/leaf-ring.png",    borderId: borderByName["Leaf Ring"]),
+            // Rare borders
+            R("border", "rare",   "Sapphire Band",    "assets/borders/sapphire-band.png",borderId: borderByName["Sapphire Band"]),
+            R("border", "rare",   "Aurora Band",      "assets/borders/aurora-band.png",  borderId: borderByName["Aurora Band"]),
+            // Legendary borders
+            R("border", "legendary","Gold Crown Ring","assets/borders/gold-crown-ring.png",borderId: borderByName["Gold Crown Ring"]),
+            R("border", "legendary","Inferno Halo",   "assets/borders/inferno-halo.png",  borderId: borderByName["Inferno Halo"])
+        );
+
+        db.SaveChanges();
+    }
+
+    private static LootBoxReward R(string type, string rarity, string name, string imagePath,
+        Guid? avatarId = null, Guid? borderId = null)
+        => new() { Id = Guid.NewGuid(), Type = type, Rarity = rarity, Name = name,
+                   ImagePath = imagePath, AvatarId = avatarId, BorderId = borderId };
 }
