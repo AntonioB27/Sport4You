@@ -10,6 +10,7 @@ public static class DataSeeder
         SeedUsers(db, scoring);
         SeedMissions(db);
         SeedAchievements(db);
+        SeedAvatars(db);
     }
 
     private static void SeedUsers(AppDbContext db, IScoringService scoring)
@@ -200,4 +201,54 @@ public static class DataSeeder
         string reqType, double reqVal, string? sport, int xp)
         => new() { Id = Guid.NewGuid(), Tier = tier, Name = name, Description = desc,
                    RequirementType = reqType, RequirementValue = reqVal, Sport = sport, XpReward = xp };
+
+    private static void SeedAvatars(AppDbContext db)
+    {
+        if (db.Avatars.Any()) return;
+
+        // Look up achievement IDs by name — SeedAchievements runs first so these exist
+        var achByName = db.Achievements.ToDictionary(a => a.Name, a => a.Id);
+
+        db.Avatars.AddRange(
+            // Default
+            V("Starter Sporty",      "Your default avatar — always available",             "default",            0,   null),
+            // XP level
+            V("Energized Sporty",    "Reach Level 2",                                      "level_reached",      2,   null),
+            V("Athletic Sporty",     "Reach Level 4",                                      "level_reached",      4,   null),
+            V("Elite Sporty",        "Reach Level 7",                                      "level_reached",      7,   null),
+            V("Legend Sporty",       "Reach Level 10",                                     "level_reached",      10,  null),
+            // Achievement earned
+            V("First Blood Sporty",  "Earn the First Blood achievement",                   "achievement_earned", 0,   achByName.GetValueOrDefault("First Blood")),
+            V("Marathon Sporty",     "Earn the Marathon Legend achievement",               "achievement_earned", 0,   achByName.GetValueOrDefault("Marathon Legend")),
+            V("Tour Sporty",         "Earn the Tour Crusher achievement",                  "achievement_earned", 0,   achByName.GetValueOrDefault("Tour Crusher")),
+            V("Aqua Sporty",         "Earn the Open Water achievement",                    "achievement_earned", 0,   achByName.GetValueOrDefault("Open Water")),
+            V("Iron Sporty",         "Earn the Iron Legend achievement",                   "achievement_earned", 0,   achByName.GetValueOrDefault("Iron Legend")),
+            V("Steps Legend Sporty", "Earn the Steps Legend achievement",                  "achievement_earned", 0,   achByName.GetValueOrDefault("Steps Legend")),
+            V("Champion Sporty",     "Earn the Champion achievement",                      "achievement_earned", 0,   achByName.GetValueOrDefault("Champion")),
+            V("All-Rounder Sporty",  "Earn the All-Rounder achievement",                   "achievement_earned", 0,   achByName.GetValueOrDefault("All-Rounder")),
+            V("Centurion Sporty",    "Earn the Centurion achievement",                     "achievement_earned", 0,   achByName.GetValueOrDefault("Centurion")),
+            V("Triple Crown Sporty", "Earn the Triple Crown achievement",                  "achievement_earned", 0,   achByName.GetValueOrDefault("Triple Crown")),
+            // Streak
+            V("Habit Sporty",        "Maintain a 14-day activity streak",                  "streak_days",        14,  null),
+            V("Iron Habit Sporty",   "Maintain a 30-day activity streak",                  "streak_days",        30,  null),
+            // Activities logged
+            V("Active Sporty",       "Log 10 activities",                                  "activities_logged",  10,  null),
+            V("Committed Sporty",    "Log 50 activities",                                  "activities_logged",  50,  null),
+            V("Veteran Sporty",      "Log 100 activities",                                 "activities_logged",  100, null)
+        );
+
+        db.SaveChanges();
+    }
+
+    private static Avatar V(string name, string desc, string unlockType, double unlockValue, Guid? unlockAchievementId)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Description = desc,
+            UnlockType = unlockType,
+            UnlockValue = unlockValue,
+            UnlockAchievementId = unlockAchievementId == Guid.Empty ? null : unlockAchievementId,
+            ImagePath = $"assets/avatars/{name.ToLower().Replace(" ", "-")}.png",
+        };
 }

@@ -15,12 +15,21 @@ public class AppDbContext : DbContext
     public DbSet<XpTransaction> XpTransactions => Set<XpTransaction>();
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
+    public DbSet<Avatar> Avatars => Set<Avatar>();
+    public DbSet<UserAvatar> UserAvatars => Set<UserAvatar>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>()
             .HasIndex(u => new { u.FirstName, u.LastName })
             .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasOne<Avatar>()
+            .WithMany()
+            .HasForeignKey(u => u.ActiveAvatarId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<UserXp>()
             .HasKey(u => u.UserId);
@@ -36,5 +45,8 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<UserAchievement>()
             .HasKey(ua => new { ua.UserId, ua.AchievementId });
+
+        modelBuilder.Entity<UserAvatar>()
+            .HasKey(ua => new { ua.UserId, ua.AvatarId });
     }
 }

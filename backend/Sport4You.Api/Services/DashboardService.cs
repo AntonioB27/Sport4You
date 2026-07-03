@@ -1,3 +1,4 @@
+// backend/Sport4You.Api/Services/DashboardService.cs
 using Sport4You.Api.DTOs;
 using Sport4You.Api.Repositories;
 
@@ -9,15 +10,17 @@ public class DashboardService : IDashboardService
     private readonly IActivityRepository _activities;
     private readonly IXpService _xp;
     private readonly IAchievementService _achievements;
+    private readonly IAvatarService _avatars;
 
     public DashboardService(
         IUserRepository users, IActivityRepository activities,
-        IXpService xp, IAchievementService achievements)
+        IXpService xp, IAchievementService achievements, IAvatarService avatars)
     {
         _users = users;
         _activities = activities;
         _xp = xp;
         _achievements = achievements;
+        _avatars = avatars;
     }
 
     public async Task<DashboardDto?> GetDashboardAsync(Guid userId)
@@ -34,6 +37,7 @@ public class DashboardService : IDashboardService
             .OrderByDescending(a => a.UnlockedAt)
             .Take(3)
             .ToList();
+        var activeAvatar = await _avatars.GetActiveAvatarAsync(userId);
 
         var pointsOverTime = activities
             .GroupBy(a => a.DateTime.Date)
@@ -85,6 +89,7 @@ public class DashboardService : IDashboardService
             Xp = xpDto,
             DailyMissions = missionDtos,
             RecentAchievements = recentAchievements,
+            ActiveAvatar = activeAvatar,
         };
     }
 }

@@ -1,3 +1,4 @@
+// backend/Sport4You.Api/Services/ActivityService.cs
 using Sport4You.Api.DTOs;
 using Sport4You.Api.Models;
 using Sport4You.Api.Repositories;
@@ -14,16 +15,19 @@ public class ActivityService : IActivityService
     private readonly IScoringService _scoring;
     private readonly IXpService _xp;
     private readonly IAchievementService _achievements;
+    private readonly IAvatarService _avatars;
 
     public ActivityService(
         IUserRepository users, IActivityRepository activities,
-        IScoringService scoring, IXpService xp, IAchievementService achievements)
+        IScoringService scoring, IXpService xp,
+        IAchievementService achievements, IAvatarService avatars)
     {
         _users = users;
         _activities = activities;
         _scoring = scoring;
         _xp = xp;
         _achievements = achievements;
+        _avatars = avatars;
     }
 
     public async Task<ActivityResult> LogActivityAsync(LogActivityRequest request)
@@ -65,10 +69,11 @@ public class ActivityService : IActivityService
             userId, DateOnly.FromDateTime(dateTime.ToUniversalTime()));
 
         var newAchievements = await _achievements.EvaluateAchievementsAsync(userId);
+        var newAvatars = await _avatars.EvaluateAvatarsAsync(userId);
 
         return ActivityResult.Success(
             activity.Id, points, xpEarned,
-            missionResult.NewlyCompleted, newAchievements);
+            missionResult.NewlyCompleted, newAchievements, newAvatars);
     }
 
     private static (bool isValid, string? error, string sport) ValidateSportMetrics(LogActivityRequest r)

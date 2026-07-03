@@ -1,3 +1,4 @@
+// backend/Sport4You.Api/Services/UserService.cs
 using Sport4You.Api.DTOs;
 using Sport4You.Api.Models;
 using Sport4You.Api.Repositories;
@@ -7,7 +8,13 @@ namespace Sport4You.Api.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _users;
-    public UserService(IUserRepository users) => _users = users;
+    private readonly IAvatarService _avatars;
+
+    public UserService(IUserRepository users, IAvatarService avatars)
+    {
+        _users = users;
+        _avatars = avatars;
+    }
 
     public async Task<RegisterResult> RegisterAsync(RegisterUserRequest request)
     {
@@ -18,10 +25,11 @@ public class UserService : IUserService
         {
             Id = Guid.NewGuid(),
             FirstName = request.FirstName,
-            LastName = request.LastName
+            LastName = request.LastName,
         };
 
         await _users.CreateAsync(user);
+        await _avatars.UnlockAndEquipDefaultAsync(user.Id);
         return RegisterResult.Success(user.Id);
     }
 }

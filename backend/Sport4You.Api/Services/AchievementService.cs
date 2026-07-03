@@ -25,12 +25,24 @@ public class AchievementService : IAchievementService
             .ToListAsync();
         var earnedMap = earned.ToDictionary(ua => ua.AchievementId);
 
+        var agg = await ComputeAggregatesAsync(userId);
+
+        var totalUsers = await _db.Users.CountAsync();
+        var ownersByAchievement = await _db.UserAchievements
+            .GroupBy(ua => ua.AchievementId)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
+
         return all.Select(a =>
         {
             earnedMap.TryGetValue(a.Id, out var ua);
+            var owners = ownersByAchievement.GetValueOrDefault(a.Id);
+            var ownedByPercent = totalUsers == 0 ? 0
+                : (int)Math.Round(100.0 * owners / totalUsers);
             return new AchievementStatusDto(
                 a.Id, a.Tier, a.Name, a.Description, a.RequirementType,
-                a.XpReward, ua != null, ua?.UnlockedAt);
+                a.XpReward, ua != null, ua?.UnlockedAt,
+                a.Sport, a.RequirementValue, ComputeProgress(a, agg), ownedByPercent);
         }).ToList();
     }
 
@@ -48,66 +60,17 @@ public class AchievementService : IAchievementService
 
         if (unearned.Count == 0) return [];
 
-        // Compute all-time aggregates
-        var allActivities = await _db.Activities
-            .Where(a => a.UserId == userId)
-            .ToListAsync();
-
-        var totalKmBySport = allActivities
-            .Where(a => a.Distance.HasValue)
-            .GroupBy(a => a.Sport.ToLower())
-            .ToDictionary(g => g.Key, g => (double)g.Sum(a => a.Distance!.Value));
-
-        var totalMinBySport = allActivities
-            .Where(a => a.Duration != null)
-            .GroupBy(a => a.Sport.ToLower())
-            .ToDictionary(g => g.Key, g => g.Sum(a => ParseMinutes(a.Duration!)));
-
-        var totalSteps = allActivities.Sum(a => a.Steps ?? 0);
-        var distinctSports = allActivities.Select(a => a.Sport.ToLower()).Distinct().Count();
-        var maxPointsInDay = allActivities.Count == 0 ? 0
-            : allActivities
-                .GroupBy(a => DateOnly.FromDateTime(a.DateTime.ToUniversalTime()))
-                .Select(g => g.Sum(a => a.Points))
-                .Max();
-
-        var streak = ComputeCurrentStreak(allActivities.Select(a => a.DateTime));
-
-        var xpRow = await _db.UserXp.FindAsync(userId);
-        var level = _xp.GetLevelInfo(xpRow?.TotalXp ?? 0).Level;
-
-        var allUserPoints = await _db.Activities
-            .GroupBy(a => a.UserId)
-            .Select(g => new { UserId = g.Key, Total = g.Sum(a => a.Points) })
-            .OrderByDescending(x => x.Total)
-            .ToListAsync();
-        var myIdx = allUserPoints.FindIndex(x => x.UserId == userId);
-        var rank = myIdx >= 0 ? myIdx + 1 : allUserPoints.Count + 1;
-
-        var hasMission = await _db.UserMissionCompletions.AnyAsync(c => c.UserId == userId);
-        var hasSweep = await _db.XpTransactions
-            .AnyAsync(t => t.UserId == userId && t.Source == "mission_sweep");
+        var agg = await ComputeAggregatesAsync(userId);
 
         // Evaluate + batch-save
         var toUnlock = new List<Achievement>();
         foreach (var a in unearned)
         {
-            var sport = a.Sport?.ToLower();
-            bool meets = a.RequirementType switch
-            {
-                "total_km"         => sport != null && totalKmBySport.GetValueOrDefault(sport) >= a.RequirementValue,
-                "total_minutes"    => sport != null && totalMinBySport.GetValueOrDefault(sport) >= a.RequirementValue,
-                "total_steps"      => totalSteps >= a.RequirementValue,
-                "streak_days"      => streak >= a.RequirementValue,
-                "level_reached"    => level >= a.RequirementValue,
-                "leaderboard_rank" => rank <= a.RequirementValue,
-                "first_activity"   => allActivities.Count >= a.RequirementValue,
-                "first_mission"    => hasMission,
-                "first_sweep"      => hasSweep,
-                "all_sports"       => distinctSports >= a.RequirementValue,
-                "points_in_day"    => maxPointsInDay >= a.RequirementValue,
-                _                  => false,
-            };
+            if (!KnownRequirementTypes.Contains(a.RequirementType)) continue;
+            var progress = ComputeProgress(a, agg);
+            var meets = a.RequirementType == "leaderboard_rank"
+                ? progress <= a.RequirementValue
+                : progress >= a.RequirementValue;
             if (meets) toUnlock.Add(a);
         }
 
@@ -150,28 +113,93 @@ public class AchievementService : IAchievementService
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private static int ComputeCurrentStreak(IEnumerable<DateTime> activityDateTimes)
+    private sealed record UserAggregates(
+        Dictionary<string, double> KmBySport,
+        Dictionary<string, int> MinBySport,
+        int TotalSteps,
+        int DistinctSports,
+        int MaxPointsInDay,
+        int Streak,
+        int Level,
+        int Rank,
+        bool HasMission,
+        bool HasSweep,
+        int ActivityCount);
+
+    private static readonly HashSet<string> KnownRequirementTypes =
+    [
+        "total_km", "total_minutes", "total_steps", "streak_days",
+        "level_reached", "leaderboard_rank", "first_activity",
+        "first_mission", "first_sweep", "all_sports", "points_in_day",
+    ];
+
+    private async Task<UserAggregates> ComputeAggregatesAsync(Guid userId)
     {
-        var dates = activityDateTimes
-            .Select(d => DateOnly.FromDateTime(d.ToUniversalTime()))
-            .Distinct()
-            .OrderByDescending(d => d)
-            .ToList();
+        var allActivities = await _db.Activities
+            .Where(a => a.UserId == userId)
+            .ToListAsync();
 
-        if (dates.Count == 0) return 0;
+        var totalKmBySport = allActivities
+            .Where(a => a.Distance.HasValue)
+            .GroupBy(a => a.Sport.ToLower())
+            .ToDictionary(g => g.Key, g => (double)g.Sum(a => a.Distance!.Value));
 
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
-        // Streak must end today or yesterday (activity just logged = today)
-        if (dates[0] != today && dates[0] != today.AddDays(-1)) return 0;
+        var totalMinBySport = allActivities
+            .Where(a => a.Duration != null)
+            .GroupBy(a => a.Sport.ToLower())
+            .ToDictionary(g => g.Key, g => g.Sum(a => ParseMinutes(a.Duration!)));
 
-        var streak = 0;
-        var expected = dates[0];
-        foreach (var date in dates)
+        var totalSteps = allActivities.Sum(a => a.Steps ?? 0);
+        var distinctSports = allActivities.Select(a => a.Sport.ToLower()).Distinct().Count();
+        var maxPointsInDay = allActivities.Count == 0 ? 0
+            : allActivities
+                .GroupBy(a => DateOnly.FromDateTime(a.DateTime.ToUniversalTime()))
+                .Select(g => g.Sum(a => a.Points))
+                .Max();
+
+        var streak = ActivityStreakHelper.ComputeCurrentStreak(allActivities.Select(a => a.DateTime));
+
+        var xpRow = await _db.UserXp.FindAsync(userId);
+        var level = _xp.GetLevelInfo(xpRow?.TotalXp ?? 0).Level;
+
+        var allUserPoints = await _db.Activities
+            .GroupBy(a => a.UserId)
+            .Select(g => new { UserId = g.Key, Total = g.Sum(a => a.Points) })
+            .OrderByDescending(x => x.Total)
+            .ToListAsync();
+        var myIdx = allUserPoints.FindIndex(x => x.UserId == userId);
+        var rank = myIdx >= 0 ? myIdx + 1 : allUserPoints.Count + 1;
+
+        var hasMission = await _db.UserMissionCompletions.AnyAsync(c => c.UserId == userId);
+        var hasSweep = await _db.XpTransactions
+            .AnyAsync(t => t.UserId == userId && t.Source == "mission_sweep");
+
+        return new UserAggregates(
+            totalKmBySport, totalMinBySport, totalSteps, distinctSports,
+            maxPointsInDay, streak, level, rank, hasMission, hasSweep,
+            allActivities.Count);
+    }
+
+    // For leaderboard_rank, progress is the user's current rank (lower is better);
+    // every other type counts up toward RequirementValue.
+    private static double ComputeProgress(Achievement a, UserAggregates agg)
+    {
+        var sport = a.Sport?.ToLower();
+        return a.RequirementType switch
         {
-            if (date == expected) { streak++; expected = expected.AddDays(-1); }
-            else break;
-        }
-        return streak;
+            "total_km"         => sport != null ? agg.KmBySport.GetValueOrDefault(sport) : 0,
+            "total_minutes"    => sport != null ? agg.MinBySport.GetValueOrDefault(sport) : 0,
+            "total_steps"      => agg.TotalSteps,
+            "streak_days"      => agg.Streak,
+            "level_reached"    => agg.Level,
+            "leaderboard_rank" => agg.Rank,
+            "first_activity"   => agg.ActivityCount,
+            "first_mission"    => agg.HasMission ? 1 : 0,
+            "first_sweep"      => agg.HasSweep ? 1 : 0,
+            "all_sports"       => agg.DistinctSports,
+            "points_in_day"    => agg.MaxPointsInDay,
+            _                  => 0,
+        };
     }
 
     private static int ParseMinutes(string duration)

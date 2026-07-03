@@ -160,7 +160,7 @@ public class AchievementServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task GetAchievementsEndpoint_Returns33Items()
+    public async Task GetAchievementsEndpoint_ReturnsXpAnd33Items()
     {
         var suffix = Guid.NewGuid().ToString("N")[..6];
         var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "EndpT", lastName = suffix });
@@ -171,8 +171,62 @@ public class AchievementServiceTests : IClassFixture<TestFactory>
         Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
 
         var body = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-        Assert.Equal(System.Text.Json.JsonValueKind.Array, body.ValueKind);
-        Assert.Equal(33, body.GetArrayLength());
+        var achievements = body.GetProperty("achievements");
+        Assert.Equal(System.Text.Json.JsonValueKind.Array, achievements.ValueKind);
+        Assert.Equal(33, achievements.GetArrayLength());
+        Assert.True(body.GetProperty("xp").TryGetProperty("level", out _));
+    }
+
+    [Fact]
+    public async Task GetUserAchievements_ReportsProgressTowardMilestones()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        db.Activities.Add(new Activity
+        {
+            Id = Guid.NewGuid(), UserId = userId,
+            DateTime = DateTime.UtcNow, Sport = "running",
+            Distance = 32.0m, Points = 3200,
+        });
+        await db.SaveChangesAsync();
+
+        var svc = scope.ServiceProvider.GetRequiredService<IAchievementService>();
+        var list = await svc.GetUserAchievementsAsync(userId);
+
+        var roadWarrior = list.Single(a => a.Name == "Road Warrior");
+        Assert.Equal(32.0, roadWarrior.Progress);
+        Assert.Equal(50.0, roadWarrior.RequirementValue);
+        Assert.Equal("running", roadWarrior.Sport);
+
+        // Steps achievement untouched — zero progress
+        var firstMarch = list.Single(a => a.Name == "First March");
+        Assert.Equal(0, firstMarch.Progress);
+    }
+
+    [Fact]
+    public async Task GetUserAchievements_ReportsOwnedByPercent()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        db.Activities.Add(new Activity
+        {
+            Id = Guid.NewGuid(), UserId = userId,
+            DateTime = DateTime.UtcNow, Sport = "running",
+            Distance = 5.0m, Points = 500,
+        });
+        await db.SaveChangesAsync();
+
+        var svc = scope.ServiceProvider.GetRequiredService<IAchievementService>();
+        await svc.EvaluateAchievementsAsync(userId); // unlocks First Blood
+        var list = await svc.GetUserAchievementsAsync(userId);
+
+        var firstBlood = list.Single(a => a.Name == "First Blood");
+        Assert.True(firstBlood.Unlocked);
+        Assert.InRange(firstBlood.OwnedByPercent, 1, 100);
     }
 
     [Fact]

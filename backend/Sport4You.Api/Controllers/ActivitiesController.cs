@@ -26,6 +26,7 @@ public class ActivitiesController : ControllerBase
             xpEarned = result.XpEarned,
             missionsCompleted = result.MissionsCompleted,
             achievementsUnlocked = result.AchievementsUnlocked,
+            avatarsUnlocked = result.AvatarsUnlocked,
         });
     }
 }
