@@ -33,7 +33,7 @@ public class AvatarService : IAvatarService
             unlockedMap.TryGetValue(a.Id, out var ua);
             return new AvatarStatusDto(
                 a.Id, a.Name, a.Description, a.ImagePath,
-                a.UnlockType,
+                a.UnlockType, a.UnlockValue,
                 ua != null, ua?.UnlockedAt, a.Id == activeId);
         }).ToList();
     }
@@ -51,7 +51,7 @@ public class AvatarService : IAvatarService
 
         return new AvatarStatusDto(
             avatar.Id, avatar.Name, avatar.Description, avatar.ImagePath,
-            avatar.UnlockType, true, ua?.UnlockedAt, true);
+            avatar.UnlockType, avatar.UnlockValue, true, ua?.UnlockedAt, true);
     }
 
     public async Task UnlockAndEquipDefaultAsync(Guid userId)

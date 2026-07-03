@@ -88,6 +88,7 @@ export interface UnlockedAvatar {
 
 export interface AvatarStatus extends UnlockedAvatar {
   unlockType: string;
+  unlockValue: number;
   unlocked: boolean;
   unlockedAt: string | null;
   isActive: boolean;

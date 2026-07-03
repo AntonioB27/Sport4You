@@ -5,7 +5,7 @@ public record UnlockedAvatarDto(Guid Id, string Name, string Description, string
 
 public record AvatarStatusDto(
     Guid Id, string Name, string Description, string ImagePath,
-    string UnlockType,
+    string UnlockType, double UnlockValue,
     bool Unlocked, DateTime? UnlockedAt, bool IsActive);
 
 public record SetActiveAvatarRequest(Guid AvatarId);

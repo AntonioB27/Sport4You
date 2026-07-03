@@ -6,13 +6,15 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { DashboardData, AchievementStatus, AvatarStatus } from '../shared/models/dashboard.model';
 import { achievementIconPath } from '../shared/utils/achievement-icon';
+import { AvatarLockerComponent } from './avatar-locker.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule],
+  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent],
   styles: [`
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 680px; margin: 0 auto; }
+    .page.wide { max-width: 1160px; }
     .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
     .error-state { text-align: center; padding: 80px 0; }
     .error-msg { font-family: 'Chakra Petch', sans-serif; font-size: 20px; color: #10203E; margin-bottom: 16px; }
@@ -80,34 +82,9 @@ import { achievementIconPath } from '../shared/utils/achievement-icon';
     .av-showcase-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .av-showcase-thumb { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #E3EAF5; }
 
-    /* Avatar grid (AVATARS tab) */
-    .av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .av-card {
-      background: #fff; border-radius: 16px; border: 2px solid #E3EAF5;
-      padding: 0 16px 14px; overflow: hidden; transition: box-shadow .15s;
-    }
-    .av-card:hover { box-shadow: 0 8px 20px -10px rgba(46,107,230,.2); }
-    .av-card.locked { opacity: .45; filter: grayscale(.7); }
-    .av-card.active { border-color: #2E6BE6; box-shadow: 0 0 0 2px rgba(46,107,230,.25); }
-    .av-card-img { display: block; width: calc(100% + 32px); margin: 0 -16px 12px; aspect-ratio: 1; object-fit: cover; border-radius: 14px 14px 0 0; }
-    .av-card-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; color: #10203E; line-height: 1.2; margin-bottom: 4px; }
-    .av-card-desc { font-size: 11px; color: #8592ad; line-height: 1.4; margin-bottom: 10px; }
-    .av-card-date { font-size: 10px; color: #b0bcd4; margin-bottom: 10px; }
-    .av-card-badge {
-      display: inline-block; background: #EEF3FB; border-radius: 999px;
-      font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700;
-      letter-spacing: .1em; color: #2E6BE6; padding: 3px 10px; margin-bottom: 10px;
-    }
-    .equip-btn {
-      width: 100%; padding: 8px; border-radius: 10px; border: none; cursor: pointer;
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 12px;
-      background: linear-gradient(150deg, #2E6BE6, #1B47AE); color: #fff; transition: opacity .15s;
-    }
-    .equip-btn:hover { opacity: .88; }
-    .equip-btn:disabled { background: #E3EAF5; color: #8592ad; cursor: default; opacity: 1; }
   `],
   template: `
-    <div class="page">
+    <div class="page" [class.wide]="activeTab === 'avatars' && isOwnProfile">
       @if (loading) {
         <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
       } @else if (error) {
@@ -189,26 +166,7 @@ import { achievementIconPath } from '../shared/utils/achievement-icon';
           @if (avatarsLoading) {
             <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
           } @else {
-            <div class="av-grid">
-              @for (a of sortedAvatars; track a.id) {
-                <div class="av-card" [class.locked]="!a.unlocked" [class.active]="a.isActive">
-                  <img class="av-card-img" [src]="a.imagePath" [alt]="a.name">
-                  @if (a.isActive) {
-                    <div class="av-card-badge">ACTIVE</div>
-                  }
-                  <div class="av-card-name">{{ a.name }}</div>
-                  <div class="av-card-desc">{{ a.description }}</div>
-                  @if (a.unlocked && a.unlockedAt) {
-                    <div class="av-card-date">Unlocked {{ a.unlockedAt | date:'MMM d, y' }}</div>
-                  }
-                  @if (a.unlocked) {
-                    <button class="equip-btn" [disabled]="a.isActive || equipping" (click)="equip(a)">
-                      {{ a.isActive ? 'EQUIPPED' : 'EQUIP' }}
-                    </button>
-                  }
-                </div>
-              }
-            </div>
+            <app-avatar-locker [avatars]="avatars" [equipping]="equipping" (equip)="equip($event)"></app-avatar-locker>
           }
         }
       }
@@ -262,16 +220,6 @@ export class ProfileComponent implements OnInit {
 
   get unlockedCount(): number {
     return this.avatars.filter(a => a.unlocked).length;
-  }
-
-  get sortedAvatars(): AvatarStatus[] {
-    return [...this.avatars].sort((a, b) => {
-      if (a.unlocked && !b.unlocked) return -1;
-      if (!a.unlocked && b.unlocked) return 1;
-      if (a.unlocked && b.unlocked)
-        return new Date(b.unlockedAt!).getTime() - new Date(a.unlockedAt!).getTime();
-      return 0;
-    });
   }
 
   iconPath(a: AchievementStatus): string {
