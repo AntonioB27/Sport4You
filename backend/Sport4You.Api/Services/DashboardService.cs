@@ -11,16 +11,19 @@ public class DashboardService : IDashboardService
     private readonly IXpService _xp;
     private readonly IAchievementService _achievements;
     private readonly IAvatarService _avatars;
+    private readonly ILeaderboardService _leaderboard;
 
     public DashboardService(
         IUserRepository users, IActivityRepository activities,
-        IXpService xp, IAchievementService achievements, IAvatarService avatars)
+        IXpService xp, IAchievementService achievements,
+        IAvatarService avatars, ILeaderboardService leaderboard)
     {
         _users = users;
         _activities = activities;
         _xp = xp;
         _achievements = achievements;
         _avatars = avatars;
+        _leaderboard = leaderboard;
     }
 
     public async Task<DashboardDto?> GetDashboardAsync(Guid userId)
@@ -35,9 +38,11 @@ public class DashboardService : IDashboardService
         var recentAchievements = allAchievements
             .Where(a => a.Unlocked)
             .OrderByDescending(a => a.UnlockedAt)
-            .Take(3)
+            .Take(6)
             .ToList();
         var activeAvatar = await _avatars.GetActiveAvatarAsync(userId);
+        var leaderboard = await _leaderboard.GetLeaderboardAsync();
+        var leaderboardEntry = leaderboard.FirstOrDefault(e => e.UserId == userId);
 
         var pointsOverTime = activities
             .GroupBy(a => a.DateTime.Date)
@@ -74,6 +79,8 @@ public class DashboardService : IDashboardService
         {
             User = new UserInfoDto { FirstName = user.FirstName, LastName = user.LastName },
             TotalPoints = activities.Sum(a => a.Points),
+            Rank = leaderboardEntry?.Rank ?? 0,
+            CurrentStreak = ActivityStreakHelper.ComputeCurrentStreak(activities.Select(a => a.DateTime)),
             Activities = activities.Select(a => new ActivityDto
             {
                 Id = a.Id,
