@@ -164,25 +164,33 @@ const SPORTS: Sport[] = [
     /* spinner row */
     .spinner-row { display:flex; justify-content:center; margin-bottom:8px; }
 
-    /* confirmation overlay */
-    .conf {
-      margin:-26px -30px -30px;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      text-align:center; padding:40px 30px 36px; overflow:hidden;
-      background:radial-gradient(100% 60% at 50% 4%,rgba(198,230,59,.3),transparent 55%),
-                 linear-gradient(180deg,#2E6BE6,#163a8f);
+    /* confirmation splash (video background) */
+    .conf-splash {
+      position:relative; margin:-26px -30px -30px; min-height:540px;
+      border-radius:34px; overflow:hidden; background:#0e1a34;
+      display:flex; flex-direction:column; justify-content:flex-end;
+      /* own stacking context so inner z-indexes stay below the unlock splashes (z-50) */
+      z-index:1;
     }
-    .conf-particle { position:absolute; border-radius:2px; }
-    .conf-tag { font-family:'Chakra Petch',sans-serif; font-size:13px; letter-spacing:.3em; font-weight:700; color:#C6E63B; text-shadow:0 0 14px rgba(198,230,59,.7); }
-    .conf-mascot { position:relative; width:180px; height:190px; margin:6px 0; }
-    .conf-mascot-shadow { position:absolute; left:50%; bottom:8px; width:118px; height:26px; border-radius:50%; background:radial-gradient(closest-side,rgba(198,230,59,.6),transparent); filter:blur(4px); animation:s4y-glow 2s ease-in-out infinite; }
-    .conf-mascot img { position:relative; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 12px 16px rgba(0,0,0,.3)); animation:s4y-pop .6s ease-out both; }
-    .conf-pts { font-family:'Chakra Petch',sans-serif; font-size:58px; line-height:.9; font-weight:700; color:#fff; text-shadow:0 0 26px rgba(198,230,59,.55); }
-    .conf-pts-label { font-family:'Chakra Petch',sans-serif; font-size:12px; font-weight:700; letter-spacing:.28em; color:#C6E63B; margin-bottom:12px; }
-    .conf-xp { font-family:'Chakra Petch',sans-serif; font-size:1.1rem; font-weight:600; color:#C6E63B; letter-spacing:.05em; margin-top:2px; }
+    .splash-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .splash-fallback { position:absolute; inset:0; }
+    .splash-pose {
+      position:absolute; right:-10px; bottom:0; height:78%; object-fit:contain;
+      filter:drop-shadow(0 12px 16px rgba(0,0,0,.35));
+    }
+    .splash-wash.dark { background:linear-gradient(180deg, transparent 38%, rgba(9,16,34,.82) 72%, rgba(5,10,24,.97)); }
+    .splash-flash.lime { background:#dff29b; }
+    .conf-points {
+      font-family:'Chakra Petch',sans-serif; font-size:54px; line-height:.95; font-weight:700;
+      color:#fff; text-shadow:0 0 26px rgba(198,230,59,.55); margin-bottom:4px;
+    }
+    .conf-sub {
+      font-family:'Chakra Petch',sans-serif; font-size:12px; font-weight:700;
+      letter-spacing:.24em; color:#C6E63B; margin-bottom:12px;
+    }
+    .conf-sub-xp { color:#fff; }
     .conf-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff; font-family:'Chakra Petch',sans-serif; font-weight:700; padding:8px 16px; border-radius:999px; font-size:13px; }
-    .conf-done { margin-top:20px; background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px; letter-spacing:.05em; padding:13px 34px; border-radius:14px; cursor:pointer; border:none; box-shadow:0 6px 0 #7c9c00; transition:transform .1s, box-shadow .1s; }
-    .conf-done:active { transform:translateY(3px); box-shadow:0 3px 0 #7c9c00; }
+    .conf-pill-row { margin-bottom:16px; }
 
     /* unlock splash (achievements + avatars) */
     .splash {
@@ -324,28 +332,33 @@ const SPORTS: Sport[] = [
       </button>
       }
 
-      <!-- Confirmation overlay -->
+      <!-- Confirmation splash (video background) -->
       @if (logged) {
-      <div class="conf">
-        <!-- confetti particles -->
-        <div class="conf-particle" style="left:14%;top:8%;width:11px;height:11px;background:#C6E63B;animation:s4y-conf 2.4s ease-in infinite;"></div>
-        <div class="conf-particle" style="left:38%;top:5%;width:10px;height:10px;background:#FFD54A;border-radius:50%;animation:s4y-conf 2.9s ease-in .3s infinite;"></div>
-        <div class="conf-particle" style="left:62%;top:7%;width:12px;height:12px;background:#fff;animation:s4y-conf 2.2s ease-in .5s infinite;"></div>
-        <div class="conf-particle" style="left:84%;top:11%;width:10px;height:10px;background:#C6E63B;border-radius:50%;animation:s4y-conf 3.1s ease-in .1s infinite;"></div>
-        <div class="conf-particle" style="left:26%;top:4%;width:9px;height:9px;background:#FFD54A;animation:s4y-conf 2.6s ease-in .7s infinite;"></div>
-
-        <div class="conf-tag">ACTIVITY LOGGED</div>
-        <div class="conf-mascot">
-          <div class="conf-mascot-shadow"></div>
-          <img [src]="confirmedPose" alt="Spotry" />
-        </div>
-        <div class="conf-pts">+{{ earnedPoints }}</div>
-        <div class="conf-pts-label">POINTS EARNED</div>
-        @if (earnedXp > 0) {
-          <div class="conf-xp">+{{ earnedXp }} XP</div>
+      <div class="conf-splash">
+        @if (sport.video) {
+          <video class="splash-video" [src]="sport.video" [muted]="true" autoplay loop playsinline></video>
+        } @else {
+          <div class="splash-fallback" [style.background]="sport.bg"></div>
+          <img class="splash-pose" [src]="sport.pose" alt="">
         }
-        <div class="conf-pill">{{ sport.name.toUpperCase() }} · {{ displayValue }} {{ sport.unit }}</div>
-        <button class="conf-done" (click)="done()">DONE 🎉</button>
+        <div class="splash-wash dark"></div>
+        <div class="splash-flash lime"></div>
+        <div class="splash-confetti" style="left:14%;top:8%;width:11px;height:11px;background:#C6E63B;animation:s4y-conf 2.4s ease-in infinite;"></div>
+        <div class="splash-confetti" style="left:38%;top:5%;width:10px;height:10px;background:#FFD54A;border-radius:50%;animation:s4y-conf 2.9s ease-in .3s infinite;"></div>
+        <div class="splash-confetti" style="left:62%;top:7%;width:12px;height:12px;background:#fff;animation:s4y-conf 2.2s ease-in .5s infinite;"></div>
+        <div class="splash-confetti" style="left:84%;top:11%;width:10px;height:10px;background:#C6E63B;border-radius:50%;animation:s4y-conf 3.1s ease-in .1s infinite;"></div>
+        <div class="splash-confetti" style="left:26%;top:4%;width:9px;height:9px;background:#FFD54A;animation:s4y-conf 2.6s ease-in .7s infinite;"></div>
+        <div class="splash-content">
+          <div class="splash-item splash-tag" style="animation-delay:.15s">ACTIVITY LOGGED</div>
+          <div class="splash-item conf-points" style="animation-delay:.23s">+{{ displayedPoints.toLocaleString('en-US') }}</div>
+          <div class="splash-item conf-sub" style="animation-delay:.31s">
+            POINTS EARNED@if (earnedXp > 0) {<span class="conf-sub-xp"> · +{{ earnedXp }} XP</span>}
+          </div>
+          <div class="splash-item conf-pill-row" style="animation-delay:.39s">
+            <div class="conf-pill">{{ sport.name.toUpperCase() }} · {{ displayValue }} {{ sport.unit }}</div>
+          </div>
+          <button class="splash-item ach-next" style="animation-delay:.47s" (click)="done()">DONE 🎉</button>
+        </div>
       </div>
       }
 
@@ -420,10 +433,10 @@ export class LogActivityDialogComponent implements AfterViewInit {
   achievementQueue: UnlockedAchievement[] = [];
   currentAchievement: UnlockedAchievement | null = null;
   displayedXp = 0;
-  private xpTickerId = 0;
+  displayedPoints = 0;
+  private tickerIds: Record<string, number> = {};
   avatarQueue: UnlockedAvatar[] = [];
   currentAvatar: UnlockedAvatar | null = null;
-  confirmedPose = '';
   frontIdx = 0;
   busy = false;
 
@@ -582,16 +595,16 @@ export class LogActivityDialogComponent implements AfterViewInit {
     const req: any = { userId, sport: sp.key, datetime: new Date().toISOString() };
     if (sp.unit === 'km')    req.distance = val;
     else if (sp.unit === 'min') { const m = Math.floor(val); const s = Math.round((val-m)*60); req.duration = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
-    else req.steps = val;
+    else { delete req.sport; req.steps = val; }  // API infers daily_steps; sending sport is rejected
 
     this.api.logActivity(req).subscribe({
       next: (res: any) => {
         this.loading = false;
         this.earnedPoints = res.points;
         this.earnedXp = res.xpEarned ?? 0;
-        this.confirmedPose = sp.pose;
         this.activityLogged.notify();
         this.logged = true;
+        this.startCountUp('displayedPoints', res.points);
 
         const missions: { description: string; xpEarned: number }[] = res.missionsCompleted ?? [];
         missions.forEach((m, i) => {
@@ -632,17 +645,20 @@ export class LogActivityDialogComponent implements AfterViewInit {
     return achievementIconPath(a);
   }
 
-  private startXpTicker(target: number): void {
-    cancelAnimationFrame(this.xpTickerId);
+  private startCountUp(prop: 'displayedXp' | 'displayedPoints', target: number): void {
+    cancelAnimationFrame(this.tickerIds[prop] ?? 0);
     const start = performance.now();
     const duration = 800;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3);
-      this.displayedXp = Math.round(target * eased);
-      if (t < 1) this.xpTickerId = requestAnimationFrame(tick);
+      this[prop] = Math.round(target * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) this.tickerIds[prop] = requestAnimationFrame(tick);
     };
-    this.xpTickerId = requestAnimationFrame(tick);
+    this.tickerIds[prop] = requestAnimationFrame(tick);
+  }
+
+  private startXpTicker(target: number): void {
+    this.startCountUp('displayedXp', target);
   }
 
   nextAchievement(): void {
