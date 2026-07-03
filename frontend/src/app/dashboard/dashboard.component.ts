@@ -176,7 +176,7 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
             <div class="welcome-name">Hi, {{ data.user.firstName }} 👋</div>
           </div>
           <div class="top-badges">
-            <div class="streak-badge" *ngIf="streak > 0">🔥 {{ streak }} day streak</div>
+            <div class="streak-badge" *ngIf="(data?.currentStreak ?? 0) > 0">🔥 {{ data!.currentStreak }} day streak</div>
             <div class="coins-badge">🪙 {{ data.totalPoints | number }}</div>
           </div>
         </div>
@@ -207,7 +207,7 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
             <div class="stat-tiles">
               <div class="stat-tile">
                 <div class="stat-label">GLOBAL RANK</div>
-                <div class="stat-value blue">#{{ rank }}</div>
+                <div class="stat-value blue">{{ (data?.rank ?? 0) > 0 ? '#' + data!.rank : '—' }}</div>
               </div>
               <div class="stat-tile">
                 <div class="stat-label">THIS WEEK</div>
@@ -316,8 +316,6 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
 export class DashboardComponent implements OnInit, OnDestroy {
   data: DashboardData | null = null;
   loading = true;
-  streak = 0;
-  rank = 0;
   weeklyPoints = 0;
   topEntries: any[] = [];
   private sub?: Subscription;
@@ -342,8 +340,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    const userId = localStorage.getItem('viewingUserId') ?? localStorage.getItem('userId');
-    localStorage.removeItem('viewingUserId');
+    const userId = localStorage.getItem('userId');
     if (!userId) { this.loading = false; return; }
     this.loadData(userId);
     this.sub = this.activityLogged.activityLogged$.subscribe(() => this.loadData());
@@ -361,7 +358,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         if (data.xp) {
           this.userState.setXp(data.xp);
         }
-        this.streak = this.calculateStreak(data.activities);
         this.weeklyPoints = data.pointsOverTime
           .filter(p => new Date(p.date) >= new Date(Date.now() - 7 * 86400000))
           .reduce((s, p) => s + p.points, 0);
@@ -383,8 +379,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private loadLeaderboard(myId: string) {
     this.api.getLeaderboard().subscribe({
       next: entries => {
-        const me = entries.find(e => e.userId === myId);
-        this.rank = me?.rank ?? 0;
         this.topEntries = entries.slice(0, 4).map(e => ({ ...e, isMe: e.userId === myId }));
       },
     });
@@ -401,19 +395,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   progressPercent(m: DailyMissionItem): number {
     if (m.progressMax <= 0) return 0;
     return Math.min(100, Math.round((m.progress / m.progressMax) * 100));
-  }
-
-  private calculateStreak(activities: ActivityItem[]): number {
-    if (!activities.length) return 0;
-    const uniqueDates = [...new Set(activities.map(a => new Date(a.dateTime).toDateString()))]
-      .map(d => new Date(d)).sort((a, b) => b.getTime() - a.getTime());
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    let streak = 0; let cursor = today;
-    for (const date of uniqueDates) {
-      const diff = Math.round((cursor.getTime() - date.getTime()) / 86400000);
-      if (diff === 0 || diff === 1) { streak++; cursor = date; } else break;
-    }
-    return streak;
   }
 
   openLogActivity() {

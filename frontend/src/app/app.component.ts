@@ -95,8 +95,8 @@ import { UserStateService } from './shared/services/user-state.service';
         <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
           <span class="icon">🏅</span> BADGES
         </a>
-        <a class="nav-item" routerLink="/avatars" routerLinkActive="active">
-          <span class="icon">🎭</span> AVATARS
+        <a class="nav-item" [routerLink]="profileRoute" routerLinkActive="active">
+          <span class="icon">👤</span> PROFILE
         </a>
       </nav>
       @if (userState.xp$ | async; as xp) {
@@ -129,10 +129,9 @@ import { UserStateService } from './shared/services/user-state.service';
       </a>
       <button class="bottom-fab" (click)="openLogActivity()">+</button>
       <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active"><span class="icon">🏅</span> BADGES</a>
-      <a class="bottom-nav-item" routerLink="/avatars" routerLinkActive="active">
-        <span class="icon">🎭</span> AVATARS
+      <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
+        <span class="icon">👤</span> PROFILE
       </a>
-      <span class="bottom-nav-item"><span class="icon">👤</span> ME</span>
     </nav>
   `,
 })
@@ -146,6 +145,10 @@ export class AppComponent implements OnInit {
     if (!localStorage.getItem('userId')) {
       this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px' });
     }
+  }
+
+  get profileRoute(): string[] {
+    return ['/profile', localStorage.getItem('userId') ?? ''];
   }
 
   openLogActivity() {

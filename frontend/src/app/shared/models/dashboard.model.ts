@@ -2,6 +2,8 @@
 export interface DashboardData {
   user: { firstName: string; lastName: string };
   totalPoints: number;
+  rank: number;
+  currentStreak: number;
   activities: ActivityItem[];
   pointsOverTime: { date: string; points: number }[];
   sportBreakdown: { sport: string; points: number }[];

@@ -19,8 +19,8 @@ export const routes: Routes = [
       import('./achievements/achievements.component').then(m => m.AchievementsComponent),
   },
   {
-    path: 'avatars',
+    path: 'profile/:userId',
     loadComponent: () =>
-      import('./avatars/avatars.component').then(m => m.AvatarsComponent),
+      import('./profile/profile.component').then(m => m.ProfileComponent),
   },
 ];

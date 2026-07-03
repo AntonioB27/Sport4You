@@ -104,7 +104,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
         <!-- Podium top 3 -->
         <div class="podium" *ngIf="entries.length >= 3">
           <!-- 2nd place (left) -->
-          <div class="podium-slot" (click)="viewDashboard(entries[1])">
+          <div class="podium-slot" (click)="viewProfile(entries[1])">
             <div class="podium-card" [style.background]="'#F7F7F7'">
               @if (entries[1].activeAvatarImagePath) {
                 <img class="av-thumb lg" [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName">
@@ -117,7 +117,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
             <div class="podium-bar" [style.height.px]="90" [style.background]="'#E0E0E0'">2</div>
           </div>
           <!-- 1st place (center) -->
-          <div class="podium-slot" (click)="viewDashboard(entries[0])">
+          <div class="podium-slot" (click)="viewProfile(entries[0])">
             <div class="podium-card" style="background: linear-gradient(150deg,#FFE27A,#FFC200); box-shadow: 0 0 28px rgba(255,194,0,.5);">
               <div style="font-size:34px">👑</div>
               @if (entries[0].activeAvatarImagePath) {
@@ -131,7 +131,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
             <div class="podium-bar" [style.height.px]="120" [style.background]="'#FFD700'">1</div>
           </div>
           <!-- 3rd place (right) -->
-          <div class="podium-slot" (click)="viewDashboard(entries[2])">
+          <div class="podium-slot" (click)="viewProfile(entries[2])">
             <div class="podium-card" [style.background]="'#FDF0E6'">
               @if (entries[2].activeAvatarImagePath) {
                 <img class="av-thumb lg" [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName">
@@ -157,7 +157,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
                *ngFor="let e of entries; let i = index"
                [class.top3]="i < 3 && !isMe(e)"
                [class.me]="isMe(e)"
-               (click)="viewDashboard(e)">
+               (click)="viewProfile(e)">
             <div>
               <span class="rank-chip" [class]="rankChipClass(i, e)">{{ e.rank }}</span>
             </div>
@@ -217,8 +217,7 @@ export class LeaderboardComponent implements OnInit {
     return '—';
   }
 
-  viewDashboard(entry: LeaderboardEntry) {
-    localStorage.setItem('viewingUserId', entry.userId);
-    this.router.navigate(['/dashboard']);
+  viewProfile(entry: LeaderboardEntry) {
+    this.router.navigate(['/profile', entry.userId]);
   }
 }
