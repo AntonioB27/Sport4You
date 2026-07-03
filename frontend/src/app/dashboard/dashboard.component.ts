@@ -55,17 +55,19 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
       box-shadow: 0 20px 40px -18px rgba(30,79,184,.7); min-height: 200px;
     }
     .hero-mascot {
-      position: absolute; right: 10px; bottom: 0; width: 160px; height: 190px;
+      position: absolute; right: 24px; bottom: 24px; width: 150px; height: 150px;
     }
     .hero-mascot-shadow {
-      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+      position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%);
       width: 100px; height: 20px; border-radius: 50%;
       background: radial-gradient(closest-side, rgba(198,230,59,.5), transparent);
       filter: blur(5px);
     }
     .hero-mascot img {
-      position: relative; width: 100%; height: 100%; object-fit: contain;
-      filter: drop-shadow(0 10px 14px rgba(0,0,0,.3));
+      position: relative; width: 100%; height: 100%; border-radius: 50%;
+      object-fit: cover; object-position: 50% 22%;
+      border: 4px solid #C6E63B;
+      box-shadow: 0 0 0 4px rgba(255,255,255,.18), 0 14px 26px -10px rgba(0,0,0,.45);
       animation: floaty 4s ease-in-out infinite;
     }
     .level-badge {
@@ -133,6 +135,15 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
     .lb-row { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
     .lb-row.me { background: #F4FBE3; border: 1px solid rgba(158,207,16,.6); border-radius: 12px; padding: 8px 10px; margin: 0 -6px; }
     .lb-rank { font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #c9a13a; width: 16px; }
+    .lb-av, .lb-av-initial {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      object-fit: cover; object-position: 50% 22%; border: 2px solid #E3EAF5;
+    }
+    .lb-av-initial {
+      background: #2E6BE6; color: #fff;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 11px;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
     .lb-rank.me { color: #5f7a00; }
     .lb-rank.grey { color: #8592ad; }
     .lb-name { flex: 1; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
@@ -256,7 +267,11 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
                 <div *ngFor="let e of topEntries; let i = index"
                      class="lb-row" [class.me]="e.isMe">
                   <span class="lb-rank" [class.me]="e.isMe" [class.grey]="i > 0 && !e.isMe">{{ e.rank }}</span>
-                  <span>{{ sportIconForUser(i) }}</span>
+                  @if (e.activeAvatarImagePath) {
+                    <img class="lb-av" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
+                  } @else {
+                    <span class="lb-av-initial">{{ e.firstName[0] }}</span>
+                  }
                   <span class="lb-name">{{ e.firstName }} {{ e.lastName }}{{ e.isMe ? ' (You)' : '' }}</span>
                   <span class="lb-pts" [class.me]="e.isMe">{{ e.totalPoints | number }}</span>
                 </div>
@@ -329,7 +344,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   get missionsDone(): number { return this.data?.dailyMissions?.filter(m => m.completed).length ?? 0; }
 
-  readonly LEADERBOARD_ICONS = ['🚴', '🧃', '🏊', '🏋️', '🏃'];
 
   constructor(
     private api: ApiService,
@@ -404,7 +418,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   formatSport(sport: string) { return sport.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase()); }
   sportIcon(sport: string) { return SPORT_ICONS[sport] ?? '🏅'; }
-  sportIconForUser(i: number) { return this.LEADERBOARD_ICONS[i] ?? '🏅'; }
   sportBg(sport: string) {
     const map: Record<string, string> = {
       running: '#EAF7C9', walking: '#E7F0FF', cycling: '#E7F0FF',
