@@ -17,6 +17,10 @@ public class AppDbContext : DbContext
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<Avatar> Avatars => Set<Avatar>();
     public DbSet<UserAvatar> UserAvatars => Set<UserAvatar>();
+    public DbSet<LootBox> LootBoxes => Set<LootBox>();
+    public DbSet<LootBoxReward> LootBoxRewards => Set<LootBoxReward>();
+    public DbSet<Border> Borders => Set<Border>();
+    public DbSet<UserBorder> UserBorders => Set<UserBorder>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -48,5 +52,16 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<UserAvatar>()
             .HasKey(ua => new { ua.UserId, ua.AvatarId });
+
+        modelBuilder.Entity<UserBorder>()
+            .HasIndex(ub => new { ub.UserId, ub.BorderId })
+            .IsUnique();
+
+        modelBuilder.Entity<LootBox>()
+            .HasOne<LootBoxReward>()
+            .WithMany()
+            .HasForeignKey(lb => lb.RewardId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
