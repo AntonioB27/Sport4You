@@ -26,6 +26,15 @@ public class UsersController : ControllerBase
         return Ok(new { userId = result.UserId });
     }
 
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] RegisterUserRequest request)
+    {
+        var user = await _users.FindByNameAsync(request.FirstName, request.LastName);
+        if (user == null)
+            return NotFound(new { error = "No user found with that name." });
+        return Ok(new { userId = user.Id, firstName = user.FirstName, lastName = user.LastName });
+    }
+
     [HttpGet("{userId}/dashboard")]
     public async Task<IActionResult> GetDashboard(Guid userId)
     {

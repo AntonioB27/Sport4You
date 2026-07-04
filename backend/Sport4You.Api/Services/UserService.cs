@@ -32,4 +32,7 @@ public class UserService : IUserService
         await _avatars.UnlockAndEquipDefaultAsync(user.Id);
         return RegisterResult.Success(user.Id);
     }
+
+    public Task<User?> FindByNameAsync(string firstName, string lastName)
+        => _users.GetByNameAsync(firstName, lastName);
 }

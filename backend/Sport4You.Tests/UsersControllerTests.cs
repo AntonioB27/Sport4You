@@ -45,4 +45,44 @@ public class UsersControllerTests : IClassFixture<TestFactory>
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Login_WithExistingName_ReturnsSameUserId()
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+        var reg = await _client.PostAsJsonAsync("/api/users", new { firstName = "Login", lastName = suffix });
+        var regBody = await reg.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        var r = await _client.PostAsJsonAsync("/api/users/login", new { firstName = "Login", lastName = suffix });
+        Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
+        var body = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal(regBody!["userId"], body.GetProperty("userId").GetString());
+        Assert.Equal("Login", body.GetProperty("firstName").GetString());
+    }
+
+    [Fact]
+    public async Task Login_WithUnknownName_Returns404()
+    {
+        var r = await _client.PostAsJsonAsync("/api/users/login",
+            new { firstName = "Ghost", lastName = Guid.NewGuid().ToString("N")[..6] });
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, r.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_MatchesWithRegisterComparisonSemantics()
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+        await _client.PostAsJsonAsync("/api/users", new { firstName = "Casey", lastName = suffix });
+
+        // register comparison is case-sensitive (SQLite ==) — login must mirror it
+        var r = await _client.PostAsJsonAsync("/api/users/login", new { firstName = "casey", lastName = suffix });
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, r.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_WithMissingFields_Returns400()
+    {
+        var r = await _client.PostAsJsonAsync("/api/users/login", new { firstName = "OnlyFirst" });
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, r.StatusCode);
+    }
 }
