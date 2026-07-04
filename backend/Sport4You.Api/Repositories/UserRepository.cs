@@ -12,12 +12,6 @@ public class UserRepository : IUserRepository
     public Task<User?> GetByIdAsync(Guid id)
         => _db.Users.FirstOrDefaultAsync(u => u.Id == id);
 
-    public Task<bool> ExistsByNameAsync(string firstName, string lastName)
-        => _db.Users.AnyAsync(u => u.FirstName == firstName && u.LastName == lastName);
-
-    public Task<User?> GetByNameAsync(string firstName, string lastName)
-        => _db.Users.FirstOrDefaultAsync(u => u.FirstName == firstName && u.LastName == lastName);
-
     public async Task<User> CreateAsync(User user)
     {
         _db.Users.Add(user);

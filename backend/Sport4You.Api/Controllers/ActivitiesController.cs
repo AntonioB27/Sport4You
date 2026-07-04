@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sport4You.Api.DTOs;
 using Sport4You.Api.Services;
+using System.Security.Claims;
 
 namespace Sport4You.Api.Controllers;
 
@@ -20,8 +22,13 @@ public class ActivitiesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> LogActivity([FromBody] LogActivityRequest request)
     {
+        var sub = User.FindFirstValue("sub");
+        if (sub == null || sub != request.UserId.ToString())
+            return Forbid();
+
         var result = await _activities.LogActivityAsync(request);
         if (result.IsNotFound)
             return NotFound(new { error = result.Error });

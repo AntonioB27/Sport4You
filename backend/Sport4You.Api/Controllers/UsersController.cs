@@ -8,37 +8,17 @@ namespace Sport4You.Api.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly IUserService _users;
     private readonly IDashboardService _dashboard;
     private readonly IActivityService _activities;
     private readonly IXpService _xp;
     private readonly IWeightService _weight;
 
-    public UsersController(IUserService users, IDashboardService dashboard, IActivityService activities, IXpService xp, IWeightService weight)
+    public UsersController(IDashboardService dashboard, IActivityService activities, IXpService xp, IWeightService weight)
     {
-        _users = users;
         _dashboard = dashboard;
         _activities = activities;
         _xp = xp;
         _weight = weight;
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
-    {
-        var result = await _users.RegisterAsync(request);
-        if (result.IsConflict)
-            return Conflict(new { error = result.Error });
-        return Ok(new { userId = result.UserId });
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] RegisterUserRequest request)
-    {
-        var user = await _users.FindByNameAsync(request.FirstName, request.LastName);
-        if (user == null)
-            return NotFound(new { error = "No user found with that name." });
-        return Ok(new { userId = user.Id, firstName = user.FirstName, lastName = user.LastName });
     }
 
     [HttpGet("{userId}/dashboard")]

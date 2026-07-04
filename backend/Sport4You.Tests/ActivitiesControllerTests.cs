@@ -11,17 +11,15 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     public ActivitiesControllerTests(TestFactory factory)
         => _client = factory.CreateClient();
 
-    private async Task<string> CreateUserAsync(string first = "Test", string last = "User")
-    {
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = first, lastName = last });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
-    }
+    private async Task<AuthTestClient.AuthUser> CreateUserAsync(string first = "Test", string last = "User")
+        => await AuthTestClient.RegisterAsync(_client, first, last);
 
     [Fact]
     public async Task LogActivity_Running_ReturnsPoints()
     {
-        var userId = await CreateUserAsync("Run", "Ner");
+        var auth = await CreateUserAsync("Run", "Ner");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
             userId,
@@ -38,7 +36,9 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     [Fact]
     public async Task LogActivity_SwimmingWithDistance_Returns400()
     {
-        var userId = await CreateUserAsync("Swim", "Mer");
+        var auth = await CreateUserAsync("Swim", "Mer");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
             userId,
@@ -57,7 +57,9 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     {
         // The assignment's ingestion schema lists `steps` as a field of this endpoint
         // and Daily Steps as a required sport — it must be accepted here.
-        var userId = await CreateUserAsync("Step", "Per");
+        var auth = await CreateUserAsync("Step", "Per");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
             userId,
@@ -103,8 +105,13 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task LogActivity_UnknownUserId_Returns404()
+    public async Task LogActivity_UnknownUserId_Returns403()
     {
+        // Ownership check runs before the service's NotFound lookup, so a userId that
+        // isn't the caller's own (here, one that doesn't exist at all) is rejected as
+        // Forbidden rather than reaching the "user not found" branch.
+        var auth = await CreateUserAsync();
+        _client.WithBearer(auth.Token);
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
             userId = "00000000-0000-0000-0000-000000000000",
@@ -113,6 +120,6 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
             distance = 5.0
         });
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 }

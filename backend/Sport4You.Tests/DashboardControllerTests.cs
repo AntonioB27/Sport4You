@@ -12,17 +12,15 @@ public class DashboardControllerTests : IClassFixture<TestFactory>
     public DashboardControllerTests(TestFactory factory)
         => _client = factory.CreateClient();
 
-    private async Task<string> CreateUserAsync(string first, string last)
-    {
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = first, lastName = last });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
-    }
+    private async Task<AuthTestClient.AuthUser> CreateUserAsync(string first, string last)
+        => await AuthTestClient.RegisterAsync(_client, first, last);
 
     [Fact]
     public async Task GetDashboard_WithActivity_ReturnsRankGt0AndStreak1()
     {
-        var userId = await CreateUserAsync("Dash", "WithActivity");
+        var auth = await CreateUserAsync("Dash", "WithActivity");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
         await _client.PostAsJsonAsync("/api/activities",
             new { userId, datetime = DateTime.UtcNow.ToString("o"), sport = "running", distance = 5.0 });
 
@@ -37,7 +35,8 @@ public class DashboardControllerTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetDashboard_NoActivities_ReturnsRankGt0AndStreak0()
     {
-        var userId = await CreateUserAsync("Dash", "NoActivity");
+        var auth = await CreateUserAsync("Dash", "NoActivity");
+        var userId = auth.UserId;
 
         var response = await _client.GetAsync($"/api/users/{userId}/dashboard");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

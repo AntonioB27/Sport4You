@@ -1,7 +1,9 @@
 // backend/Sport4You.Api/Controllers/AvatarsController.cs
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sport4You.Api.DTOs;
 using Sport4You.Api.Services;
+using System.Security.Claims;
 
 namespace Sport4You.Api.Controllers;
 
@@ -17,8 +19,13 @@ public class AvatarsController : ControllerBase
         => Ok(await _avatars.GetUserAvatarsAsync(userId));
 
     [HttpPut("avatar")]
+    [Authorize]
     public async Task<IActionResult> SetActiveAvatar(Guid userId, [FromBody] SetActiveAvatarRequest request)
     {
+        var sub = User.FindFirstValue("sub");
+        if (sub == null || sub != userId.ToString())
+            return Forbid();
+
         var success = await _avatars.SetActiveAvatarAsync(userId, request.AvatarId);
         return success ? Ok() : NotFound(new { error = "Avatar not found or not yet unlocked" });
     }

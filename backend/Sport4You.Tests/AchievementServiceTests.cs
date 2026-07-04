@@ -275,10 +275,9 @@ public class AchievementServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task LogActivity_ResponseContainsAchievementsUnlockedArray()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "Wire", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = regBody!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "Wire");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         var r = await _client.PostAsJsonAsync("/api/activities", new
         {
@@ -302,10 +301,8 @@ public class AchievementServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetAchievementsEndpoint_ReturnsXpAnd33Items()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "EndpT", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = regBody!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "EndpT");
+        var userId = auth.UserId;
 
         var r = await _client.GetAsync($"/api/users/{userId}/achievements");
         Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
@@ -372,10 +369,8 @@ public class AchievementServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task Dashboard_ContainsRecentAchievementsField()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "DashA", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = regBody!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "DashA");
+        var userId = auth.UserId;
 
         var r = await _client.GetAsync($"/api/users/{userId}/dashboard");
         Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
@@ -387,9 +382,7 @@ public class AchievementServiceTests : IClassFixture<TestFactory>
 
     private async Task<string> CreateUserAsync()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = "Ach", lastName = suffix });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "Ach");
+        return auth.UserId;
     }
 }

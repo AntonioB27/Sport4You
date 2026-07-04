@@ -61,18 +61,15 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<string> CreateUserAsync()
-    {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = "Xp", lastName = suffix });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
-    }
+    private async Task<AuthTestClient.AuthUser> CreateUserAsync()
+        => await AuthTestClient.RegisterAsync(_client, "Xp");
 
     [Fact]
     public async Task LogActivity_ReturnsXpEarned()
     {
-        var userId = await CreateUserAsync();
+        var auth = await CreateUserAsync();
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
             userId,
@@ -90,7 +87,9 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
     [Fact]
     public async Task LogActivity_ReturnsMissionsCompletedArray()
     {
-        var userId = await CreateUserAsync();
+        var auth = await CreateUserAsync();
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
             userId,
@@ -108,8 +107,8 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
     [Fact]
     public async Task AwardGenericXp_UpdatesUserXpAndCreatesTransaction()
     {
-        var userIdStr = await CreateUserAsync();
-        var userId = Guid.Parse(userIdStr);
+        var auth = await CreateUserAsync();
+        var userId = Guid.Parse(auth.UserId);
 
         using var scope = _factory.Services.CreateScope();
         var xpSvc = scope.ServiceProvider.GetRequiredService<IXpService>();
@@ -130,7 +129,7 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
     [Fact]
     public async Task AwardActivityXp_NoBoost_ReturnsBoostAppliedFalse()
     {
-        var userIdStr = await CreateUserAsync();
+        var userIdStr = (await CreateUserAsync()).UserId;
         var userId = Guid.Parse(userIdStr);
 
         using var scope = _factory.Services.CreateScope();
@@ -145,7 +144,7 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
     [Fact]
     public async Task AwardActivityXp_WithBoost_AppliesMultiplierAndDecrementsCounter()
     {
-        var userIdStr = await CreateUserAsync();
+        var userIdStr = (await CreateUserAsync()).UserId;
         var userId = Guid.Parse(userIdStr);
 
         using var scope = _factory.Services.CreateScope();
@@ -170,7 +169,7 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
     [Fact]
     public async Task AwardActivityXp_BoostExhausted_StopsApplyingAfterThirdActivity()
     {
-        var userIdStr = await CreateUserAsync();
+        var userIdStr = (await CreateUserAsync()).UserId;
         var userId = Guid.Parse(userIdStr);
 
         using var scope = _factory.Services.CreateScope();

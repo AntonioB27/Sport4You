@@ -48,7 +48,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
         var userId = Guid.NewGuid();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Users.Add(new User { Id = userId, FirstName = "Def", LastName = "Test" });
+        db.Users.Add(new User { Id = userId, FirstName = "Def", LastName = "Test", Username = $"def-{userId:N}" });
         await db.SaveChangesAsync();
 
         var svc = scope.ServiceProvider.GetRequiredService<IAvatarService>();
@@ -67,7 +67,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
         var userId = Guid.NewGuid();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Users.Add(new User { Id = userId, FirstName = "Lv", LastName = "Test" });
+        db.Users.Add(new User { Id = userId, FirstName = "Lv", LastName = "Test", Username = $"lv-{userId:N}" });
         // Level 2 requires 200 XP — XpService threshold: Level 2 = 200 XP (JOGGER)
         db.UserXp.Add(new UserXp { UserId = userId, TotalXp = 200, UpdatedAt = DateTime.UtcNow });
         // Need at least 1 activity so streak/activity aggregates compute
@@ -92,7 +92,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
         var userId = Guid.NewGuid();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Users.Add(new User { Id = userId, FirstName = "AchAv", LastName = "Test" });
+        db.Users.Add(new User { Id = userId, FirstName = "AchAv", LastName = "Test", Username = $"achav-{userId:N}" });
         await db.SaveChangesAsync();
 
         // Find "First Blood" achievement and unlock it
@@ -121,7 +121,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
         var userId = Guid.NewGuid();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Users.Add(new User { Id = userId, FirstName = "ActAv", LastName = "Test" });
+        db.Users.Add(new User { Id = userId, FirstName = "ActAv", LastName = "Test", Username = $"actav-{userId:N}" });
 
         // Add exactly 10 activities
         for (var i = 0; i < 10; i++)
@@ -146,7 +146,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
         var userId = Guid.NewGuid();
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Users.Add(new User { Id = userId, FirstName = "Idem", LastName = "Test" });
+        db.Users.Add(new User { Id = userId, FirstName = "Idem", LastName = "Test", Username = $"idem-{userId:N}" });
         for (var i = 0; i < 10; i++)
             db.Activities.Add(new Activity
             {
@@ -200,10 +200,8 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task RegisterUser_AutoUnlocksDefaultAvatarAndSetsActive()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "Reg", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = Guid.Parse(regBody!["userId"]);
+        var auth = await AuthTestClient.RegisterAsync(_client, "Reg");
+        var userId = Guid.Parse(auth.UserId);
 
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -218,10 +216,9 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task LogActivity_ResponseContainsAvatarsUnlockedArray()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "AvAct", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = regBody!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "AvAct");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         var r = await _client.PostAsJsonAsync("/api/activities", new
         {
@@ -240,10 +237,8 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetAvatarsEndpoint_Returns40Items()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "GetAv", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = regBody!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "GetAv");
+        var userId = auth.UserId;
 
         var r = await _client.GetAsync($"/api/users/{userId}/avatars");
         Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
@@ -256,10 +251,8 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     [Fact]
     public async Task Dashboard_ContainsActiveAvatarField()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "DashAv", lastName = suffix });
-        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        var userId = regBody!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "DashAv");
+        var userId = auth.UserId;
 
         var r = await _client.GetAsync($"/api/users/{userId}/dashboard");
         Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
@@ -274,10 +267,8 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
 
     private async Task<string> CreateUserAsync()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..6];
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = "Av", lastName = suffix });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
+        var auth = await AuthTestClient.RegisterAsync(_client, "Av");
+        return auth.UserId;
     }
 
     [Fact]

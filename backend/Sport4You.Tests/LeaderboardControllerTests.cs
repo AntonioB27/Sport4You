@@ -12,21 +12,21 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
     public LeaderboardControllerTests(TestFactory factory)
         => _client = factory.CreateClient();
 
-    private async Task<string> CreateUserAsync(string first, string last)
-    {
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = first, lastName = last });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
-    }
+    private async Task<AuthTestClient.AuthUser> CreateUserAsync(string first, string last)
+        => await AuthTestClient.RegisterAsync(_client, first, last);
 
     [Fact]
     public async Task GetLeaderboard_ReturnsUsersRankedByPoints()
     {
-        var aliceId = await CreateUserAsync("Alice", "Leader");
-        var bobId = await CreateUserAsync("Bob", "Leader");
+        var aliceAuth = await CreateUserAsync("Alice", "Leader");
+        var bobAuth = await CreateUserAsync("Bob", "Leader");
+        var aliceId = aliceAuth.UserId;
+        var bobId = bobAuth.UserId;
 
+        _client.WithBearer(aliceAuth.Token);
         await _client.PostAsJsonAsync("/api/activities",
             new { userId = aliceId, datetime = "2026-06-30T10:00:00Z", sport = "running", distance = 10.0 });
+        _client.WithBearer(bobAuth.Token);
         await _client.PostAsJsonAsync("/api/activities",
             new { userId = bobId, datetime = "2026-06-30T10:00:00Z", sport = "running", distance = 5.0 });
 
@@ -47,14 +47,18 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetLeaderboard_ReturnsCorrectRankTrend()
     {
-        var alphaId = await CreateUserAsync("Trend", "Alpha");
-        var betaId = await CreateUserAsync("Trend", "Beta");
+        var alphaAuth = await CreateUserAsync("Trend", "Alpha");
+        var betaAuth = await CreateUserAsync("Trend", "Beta");
+        var alphaId = alphaAuth.UserId;
+        var betaId = betaAuth.UserId;
 
         var oldDate = DateTime.UtcNow.AddDays(-9).ToString("o");
 
         // Old activities: Beta had more points → Beta was rank 1, Alpha was rank 2
+        _client.WithBearer(betaAuth.Token);
         await _client.PostAsJsonAsync("/api/activities",
             new { userId = betaId, datetime = oldDate, sport = "running", distance = 20.0 });
+        _client.WithBearer(alphaAuth.Token);
         await _client.PostAsJsonAsync("/api/activities",
             new { userId = alphaId, datetime = oldDate, sport = "running", distance = 5.0 });
 
@@ -91,15 +95,19 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetLeaderboard_ReportsPrestigeLevel()
     {
-        var prestigedId = await CreateUserAsync("Prestiged", "Athlete");
-        var plainId = await CreateUserAsync("Plain", "Athlete");
+        var prestigedAuth = await CreateUserAsync("Prestiged", "Athlete");
+        var plainAuth = await CreateUserAsync("Plain", "Athlete");
+        var prestigedId = prestigedAuth.UserId;
+        var plainId = plainAuth.UserId;
 
         // prestigedId climbs to Level 10 and prestiges once.
+        _client.WithBearer(prestigedAuth.Token);
         await ReachLevel10Async(prestigedId);
         var pr = await _client.PostAsync($"/api/users/{prestigedId}/prestige", null);
         Assert.Equal(HttpStatusCode.OK, pr.StatusCode);
 
         // plainId logs a normal activity but never prestiges.
+        _client.WithBearer(plainAuth.Token);
         await _client.PostAsJsonAsync("/api/activities",
             new { userId = plainId, datetime = "2026-06-30T10:00:00Z", sport = "running", distance = 5.0 });
 
@@ -118,7 +126,9 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetLeaderboard_IncludesActiveAvatarImagePath()
     {
-        var userId = await CreateUserAsync("Avatar", "Leaderboard");
+        var auth = await CreateUserAsync("Avatar", "Leaderboard");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         await _client.PostAsJsonAsync("/api/activities",
             new { userId, datetime = "2026-06-30T10:00:00Z", sport = "running", distance = 1.0 });

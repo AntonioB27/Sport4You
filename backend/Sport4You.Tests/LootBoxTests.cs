@@ -16,17 +16,14 @@ public class LootBoxTests : IClassFixture<TestFactory>
         _client = factory.CreateClient();
     }
 
-    private async Task<string> CreateUserAsync(string first, string last)
-    {
-        var r = await _client.PostAsJsonAsync("/api/users", new { firstName = first, lastName = last });
-        var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        return body!["userId"];
-    }
+    private async Task<AuthTestClient.AuthUser> CreateUserAsync(string first, string last)
+        => await AuthTestClient.RegisterAsync(_client, first, last);
 
     [Fact]
     public async Task GetBoxes_NewUser_ReturnsPendingCountZero()
     {
-        var userId = await CreateUserAsync("Box", "NewUser");
+        var auth = await CreateUserAsync("Box", "NewUser");
+        var userId = auth.UserId;
         var response = await _client.GetAsync($"/api/users/{userId}/boxes");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
@@ -36,7 +33,9 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task OpenBox_NoPendingBoxes_ReturnsBadRequest()
     {
-        var userId = await CreateUserAsync("Box", "EarnOpen");
+        var auth = await CreateUserAsync("Box", "EarnOpen");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         var getResp = await _client.GetAsync($"/api/users/{userId}/boxes");
         Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
@@ -48,7 +47,9 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task EarnBox_ViaStreak_OpenBox_GrantsRewardAndDecrementsPending()
     {
-        var userId = await CreateUserAsync("Box", "OpenReward");
+        var auth = await CreateUserAsync("Box", "OpenReward");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         // Log yesterday's activity to establish streak base
         var yesterday = DateTime.UtcNow.AddDays(-1).ToString("o");
@@ -99,7 +100,9 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task LogActivity_ThatExtendsStreak_EarnsOneStreakBox()
     {
-        var userId = await CreateUserAsync("Streak", "BoxEarner");
+        var auth = await CreateUserAsync("Streak", "BoxEarner");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         // Log yesterday's activity to establish a streak
         var yesterday = DateTime.UtcNow.AddDays(-1).ToString("o");
@@ -125,7 +128,9 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task LogActivity_MissionCompletion_EarnsBox()
     {
-        var userId = await CreateUserAsync("Mission", "BoxEarner");
+        var auth = await CreateUserAsync("Mission", "BoxEarner");
+        var userId = auth.UserId;
+        _client.WithBearer(auth.Token);
 
         // "Log any activity today" is always one of the daily easy missions.
         // Logging one activity completes it and should grant 1 mission box.
@@ -142,7 +147,8 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task GetBorders_NewUser_ReturnsAllBordersLocked()
     {
-        var userId = await CreateUserAsync("Border", "NewUser");
+        var auth = await CreateUserAsync("Border", "NewUser");
+        var userId = auth.UserId;
         var response = await _client.GetAsync($"/api/users/{userId}/borders");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -155,7 +161,7 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task OpenBox_ShopSpecialReason_UsesSkewedRarityOdds()
     {
-        var userId = await CreateUserAsync("Shop", "SpecialOdds");
+        var userId = (await CreateUserAsync("Shop", "SpecialOdds")).UserId;
         using var scope = _factory.Services.CreateScope();
         var lootBox = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Services.ILootBoxService>();
         var uid = Guid.Parse(userId);
@@ -182,7 +188,7 @@ public class LootBoxTests : IClassFixture<TestFactory>
     [Fact]
     public async Task OpenBox_ShopNormalReason_UsesSameOddsAsFreeBoxes()
     {
-        var userId = await CreateUserAsync("Shop", "NormalOdds");
+        var userId = (await CreateUserAsync("Shop", "NormalOdds")).UserId;
         using var scope = _factory.Services.CreateScope();
         var lootBox = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Services.ILootBoxService>();
         var uid = Guid.Parse(userId);
