@@ -22,6 +22,31 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
 
+    @keyframes heroGlow {
+      0%, 100% { box-shadow: 0 20px 40px -18px rgba(30,79,184,.7); }
+      50%       { box-shadow: 0 20px 40px -18px rgba(30,79,184,.7), 0 0 60px rgba(198,230,59,.55); }
+    }
+    .hero-card--glow { animation: heroGlow 1s ease-in-out 2; }
+
+    @keyframes levelBadgePop {
+      0%   { transform: scale(1);   background: rgba(255,255,255,.14); color: #C6E63B; }
+      25%  { transform: scale(1.5); background: rgba(198,230,59,.9);   color: #0f1e3b; }
+      65%  { transform: scale(1.1); }
+      100% { transform: scale(1);   background: rgba(255,255,255,.14); color: #C6E63B; }
+    }
+    .level-badge--pop { animation: levelBadgePop 600ms ease-out forwards; }
+
+    .level-ring {
+      position: absolute; top: 10px; left: 18px;
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid #C6E63B; opacity: 0; pointer-events: none;
+    }
+    @keyframes ringExpand {
+      0%   { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(3);   opacity: 0; }
+    }
+    .level-ring--active { animation: ringExpand 700ms ease-out forwards; }
+
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 1100px; }
     .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
 
@@ -95,8 +120,16 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
     }
     .xp-meta { display: flex; justify-content: space-between; max-width: 62%; font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #dbe8ff; margin-bottom: 6px; }
     .xp-meta span:last-child { color: #8fb0ee; }
-    .xp-bar { height: 12px; border-radius: 999px; background: rgba(0,0,0,.24); max-width: 62%; overflow: hidden; }
+    .xp-bar { height: 12px; border-radius: 999px; background: rgba(0,0,0,.24); max-width: 62%; overflow: hidden; position: relative; }
     .xp-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 16px rgba(198,230,59,.95); }
+    .xp-fill--boot { transition: width 1.3s cubic-bezier(0.15, 0.9, 0.3, 1); }
+    .xp-fill--gain { transition: width 0.7s ease-in-out; }
+    .xp-flash {
+      position: absolute; inset: 0; border-radius: 999px;
+      background: rgba(255,255,255,0.7); opacity: 0; pointer-events: none;
+    }
+    @keyframes xpFlash { 0% { opacity: 0; } 30% { opacity: 0.6; } 100% { opacity: 0; } }
+    .xp-flash--active { animation: xpFlash 400ms ease-out forwards; }
 
     /* ── Stat tiles ── */
     .stat-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
@@ -184,11 +217,11 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
   `],
   template: `
     <div class="page">
-      <div class="spinner-wrap" *ngIf="loading">
+      <div class="spinner-wrap" *ngIf="loading && !data">
         <mat-spinner diameter="48"></mat-spinner>
       </div>
 
-      <ng-container *ngIf="!loading && data">
+      <ng-container *ngIf="data">
         <!-- Top bar -->
         <div class="top-bar">
           <div>
@@ -208,13 +241,14 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
           <!-- LEFT COLUMN -->
           <div class="col">
             <!-- Hero card -->
-            <div class="hero-card">
+            <div class="hero-card" [class.hero-card--glow]="levelUpActive">
+              <div class="level-ring" [class.level-ring--active]="levelUpActive"></div>
               <div class="hero-mascot">
                 <div class="hero-mascot-shadow"></div>
                 <img [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
                      [alt]="data.activeAvatar?.name ?? 'Sporty'" />
               </div>
-              <div class="level-badge">⚡ LEVEL {{ level }} · {{ levelTitle }}</div>
+              <div class="level-badge" [class.level-badge--pop]="levelUpActive">⚡ LEVEL {{ displayedLevel }} · {{ levelTitle }}</div>
               <div class="hero-points">{{ data.totalPoints | number }}</div>
               <div class="hero-pts-label">TOTAL POINTS</div>
               <div class="xp-meta">
@@ -222,7 +256,13 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
                 <span>{{ xpForNextLevel }} → LV {{ level + 1 }}</span>
               </div>
               <div class="xp-bar">
-                <div class="xp-fill" [style.width.%]="xpPercent"></div>
+                <div class="xp-fill"
+                     [class.xp-fill--boot]="isBootUp"
+                     [class.xp-fill--gain]="!isBootUp"
+                     [style.width.%]="displayedXpPercent"></div>
+                <div class="xp-flash"
+                     [class.xp-flash--active]="xpFlashActive"
+                     (animationend)="xpFlashActive = false"></div>
               </div>
             </div>
 
@@ -346,7 +386,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   weeklyPoints = 0;
   topEntries: any[] = [];
   pendingBoxes = 0;
+  displayedXpPercent = 0;
+  isBootUp = true;
+  xpFlashActive = false;
+  prevLevel = 0;
+  levelUpActive = false;
+  displayedLevel = 1;
   private sub?: Subscription;
+  private _levelTicker?: ReturnType<typeof setInterval>;
+  private _levelReset?: ReturnType<typeof setTimeout>;
 
   // XP / level (from API data.xp)
   get level(): number { return this.data?.xp?.level ?? 1; }
@@ -373,7 +421,27 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.sub = this.activityLogged.activityLogged$.subscribe(() => this.loadData());
   }
 
-  ngOnDestroy() { this.sub?.unsubscribe(); }
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+    clearInterval(this._levelTicker);
+    clearTimeout(this._levelReset);
+  }
+
+  private triggerLevelUp(fromLevel: number, toLevel: number): void {
+    this.levelUpActive = true;
+    this.xpFlashActive = true;
+    this.displayedLevel = fromLevel;
+
+    const steps = toLevel - fromLevel;
+    let step = 0;
+    this._levelTicker = setInterval(() => {
+      step++;
+      this.displayedLevel = fromLevel + step;
+      if (step >= steps) clearInterval(this._levelTicker);
+    }, 80);
+
+    this._levelReset = setTimeout(() => { this.levelUpActive = false; }, 2000);
+  }
 
   loadData(userId?: string) {
     const uid = userId ?? localStorage.getItem('userId');
@@ -381,6 +449,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.api.getDashboard(uid).subscribe({
       next: data => {
+        const bootUp = this.isBootUp;
         this.data = data;
         this.loadPendingBoxes(uid);
         if (data.xp) {
@@ -391,6 +460,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
           .reduce((s, p) => s + p.points, 0);
         this.loading = false;
         this.loadLeaderboard(uid);
+
+        if (bootUp) {
+          // Sync level display and snapshot on first load — no burst
+          this.displayedLevel = this.level;
+          this.prevLevel = this.level;
+          setTimeout(() => {
+            this.displayedXpPercent = this.xpPercent;
+            setTimeout(() => { this.isBootUp = false; }, 1350);
+          }, 0);
+        } else {
+          // Check for level crossing before updating snapshot
+          if (this.level > this.prevLevel) {
+            this.triggerLevelUp(this.prevLevel, this.level);
+          } else {
+            this.xpFlashActive = true;
+          }
+          this.displayedXpPercent = this.xpPercent;
+          this.prevLevel = this.level;
+        }
       },
       error: (err) => {
         this.loading = false;
