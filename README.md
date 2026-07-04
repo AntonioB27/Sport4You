@@ -71,3 +71,14 @@ sport4you/
 | Swimming | mm:ss | floor(minutes × 15) |
 | Gym | mm:ss | floor(minutes × 5) |
 | Daily Steps | count | floor(steps ÷ 100) |
+
+## Bonus: Full Auth Variant
+
+`main` intentionally keeps the assignment's anonymous API contracts
+(name-only registration, unauthenticated ingestion). A full
+username/password/JWT variant — register/login pages, bearer-protected
+write endpoints, logout — lives on branch
+[`feature/auth`](../../tree/feature/auth). It changes the registration
+contract, which is why it is kept out of `main` by design. When running
+that branch for the first time, delete `backend/Sport4You.Api/sport4you.db`
+so the new schema seeds (demo accounts: `maria` / `demo1234`).
