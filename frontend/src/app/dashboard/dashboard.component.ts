@@ -9,7 +9,8 @@ import { ApiService } from '../shared/services/api.service';
 import { ActivityLoggedService } from '../shared/services/activity-logged.service';
 import { UserStateService } from '../shared/services/user-state.service';
 import { DashboardData, ActivityItem, DailyMissionItem } from '../shared/models/dashboard.model';
-import { SPORT_COLORS, SPORT_ICONS } from '../shared/constants/sport.constants';
+import { SPORT_COLORS, SPORT_ICON_NAMES } from '../shared/constants/sport.constants';
+import { IconComponent } from '../shared/components/icon/icon.component';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
 import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
 import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
@@ -17,7 +18,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent],
   styles: [`
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
@@ -147,7 +148,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
     /* ── Quests ── */
     .quest-list { display: flex; flex-direction: column; gap: 11px; }
     .quest-item { display: flex; align-items: center; gap: 13px; }
-    .quest-icon { width: 40px; height: 40px; border-radius: 12px; background: #EAF7C9; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .quest-icon { width: 40px; height: 40px; border-radius: 12px; background: #EAF7C9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .quest-icon.done { background: linear-gradient(150deg,#C6E63B,#9ECF10); }
     .quest-body { flex: 1; }
     .quest-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; color: #10203E; }
@@ -196,7 +197,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
     /* ── Activity feed ── */
     .activity-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; }
     .activity-item { display: flex; align-items: center; gap: 11px; }
-    .activity-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .activity-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .activity-body { flex: 1; }
     .activity-sport { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
     .activity-meta { font-family: 'Chakra Petch', sans-serif; font-size: 11px; color: #8592ad; font-weight: 700; margin-top: 2px; }
@@ -226,13 +227,13 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
         <div class="top-bar">
           <div>
             <div class="welcome-label">WELCOME BACK</div>
-            <div class="welcome-name">Hi, {{ data.user.firstName }} 👋</div>
+            <div class="welcome-name">Hi, {{ data.user.firstName }}</div>
           </div>
           <div class="top-badges">
-            <div class="streak-badge" *ngIf="(data?.currentStreak ?? 0) > 0">🔥 {{ data!.currentStreak }} day streak</div>
-            <div class="coins-badge">🪙 {{ data.totalPoints | number }}</div>
+            <div class="streak-badge" *ngIf="(data?.currentStreak ?? 0) > 0"><app-icon name="flame" [size]="16" /> {{ data!.currentStreak }} day streak</div>
+            <div class="coins-badge"><app-icon name="coin" [size]="16" /> {{ data.totalPoints | number }}</div>
             @if (pendingBoxes > 0) {
-              <div class="box-badge" (click)="openBoxModal()">📦 {{ pendingBoxes }}</div>
+              <div class="box-badge" (click)="openBoxModal()"><app-icon name="package" [size]="16" /> {{ pendingBoxes }}</div>
             }
           </div>
         </div>
@@ -248,7 +249,9 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
                 <img [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
                      [alt]="data.activeAvatar?.name ?? 'Sporty'" />
               </div>
-              <div class="level-badge" [class.level-badge--pop]="levelUpActive">⚡ LEVEL {{ displayedLevel }} · {{ levelTitle }}</div>
+              <div class="level-badge" [class.level-badge--pop]="levelUpActive">
+                <app-icon name="lightning" [size]="14" /> LEVEL {{ displayedLevel }} · {{ levelTitle }}
+              </div>
               <div class="hero-points">{{ data.totalPoints | number }}</div>
               <div class="hero-pts-label">TOTAL POINTS</div>
               <div class="xp-meta">
@@ -278,7 +281,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
               </div>
               <div class="stat-tile">
                 <div class="stat-label">ACTIVITIES</div>
-                <div class="stat-value">{{ data.activities.length }} 🎖️</div>
+                <div class="stat-value">{{ data.activities.length }} <app-icon name="medal" [size]="22" /></div>
               </div>
             </div>
 
@@ -290,7 +293,9 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
               </div>
               <div class="quest-list">
                 <div class="quest-item" *ngFor="let m of data?.dailyMissions">
-                  <div class="quest-icon" [class.done]="m.completed">{{ m.completed ? '✓' : tierIcon(m.tier) }}</div>
+                  <div class="quest-icon" [class.done]="m.completed">
+                    @if (m.completed) { ✓ } @else { <app-icon [name]="tierIcon(m.tier)" [size]="20" /> }
+                  </div>
                   <div class="quest-body">
                     <div class="quest-name" [class.done-text]="m.completed">{{ m.description }}</div>
                     <div class="quest-done-label" *ngIf="m.completed">COMPLETE</div>
@@ -312,7 +317,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
             <!-- Leaderboard snippet -->
             <div class="card">
               <div class="card-header">
-                <span class="card-title">🏆 LEADERBOARD</span>
+                <span class="card-title"><app-icon name="trophy" [size]="18" /> LEADERBOARD</span>
                 <span class="lb-link">All time</span>
               </div>
               <div class="lb-list">
@@ -335,7 +340,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
               <div class="card-title">RECENT ACTIVITY</div>
               <div class="activity-list">
                 <div class="activity-item" *ngFor="let a of data.activities.slice(0, 6)">
-                  <div class="activity-icon" [style.background]="sportBg(a.sport)">{{ sportIcon(a.sport) }}</div>
+                  <div class="activity-icon" [style.background]="sportBg(a.sport)"><app-icon [name]="sportIconName(a.sport)" [size]="20" /></div>
                   <div class="activity-body">
                     <div class="activity-sport">{{ formatSport(a.sport) }} · {{ formatMetric(a) }}</div>
                     <div class="activity-meta">{{ formatDate(a.dateTime) }}</div>
@@ -349,7 +354,7 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
             <!-- Recent Achievements -->
             <div class="achievements-card">
               <div class="achievements-title">
-                <span>🏅 RECENT ACHIEVEMENTS</span>
+                <span><app-icon name="medal" [size]="18" /> RECENT ACHIEVEMENTS</span>
                 <a class="achievements-see-all" routerLink="/achievements">SEE ALL →</a>
               </div>
               @if ((data?.recentAchievements?.length ?? 0) === 0) {
@@ -524,7 +529,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   tierIcon(tier: string): string {
-    return tier === 'easy' ? '⭐' : tier === 'medium' ? '🏆' : '🔥';
+    return tier === 'easy' ? 'star' : tier === 'medium' ? 'trophy' : 'flame';
   }
 
   tierColor(tier: string): string {
@@ -542,7 +547,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   formatSport(sport: string) { return sport.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase()); }
-  sportIcon(sport: string) { return SPORT_ICONS[sport] ?? '🏅'; }
+  sportIconName(sport: string): string { return SPORT_ICON_NAMES[sport] ?? 'medal'; }
   sportBg(sport: string) {
     const map: Record<string, string> = {
       running: '#EAF7C9', walking: '#E7F0FF', cycling: '#E7F0FF',

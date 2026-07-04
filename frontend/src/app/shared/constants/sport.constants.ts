@@ -7,13 +7,13 @@ export const SPORT_COLORS: Record<string, string> = {
   daily_steps: '#ffa726',
 };
 
-export const SPORT_ICONS: Record<string, string> = {
-  running: '🏃',
-  walking: '🚶',
-  cycling: '🚴',
-  swimming: '🏊',
-  gym: '🏋️',
-  daily_steps: '👟',
+export const SPORT_ICON_NAMES: Record<string, string> = {
+  running:     'person-run',
+  walking:     'person-walk',
+  cycling:     'bicycle',
+  swimming:    'waves',
+  gym:         'barbell',
+  daily_steps: 'sneaker',
 };
 
 export const SPORTS = [

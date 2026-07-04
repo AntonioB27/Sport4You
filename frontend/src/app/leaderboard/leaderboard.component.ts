@@ -5,12 +5,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { LeaderboardEntry } from '../shared/models/leaderboard.model';
+import { IconComponent } from '../shared/components/icon/icon.component';
 
 
 @Component({
   selector: 'app-leaderboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, IconComponent],
   styles: [`
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 860px; }
     .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
@@ -93,7 +94,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
   `],
   template: `
     <div class="page">
-      <div class="lb-header">🏆 LEADERBOARD</div>
+      <div class="lb-header"><app-icon name="trophy" [size]="22" /> LEADERBOARD</div>
 
       <div class="spinner-wrap" *ngIf="loading">
         <mat-spinner diameter="48"></mat-spinner>
@@ -119,7 +120,7 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
           <!-- 1st place (center) -->
           <div class="podium-slot" (click)="viewProfile(entries[0])">
             <div class="podium-card" style="background: linear-gradient(150deg,#FFE27A,#FFC200); box-shadow: 0 0 28px rgba(255,194,0,.5);">
-              <div style="font-size:34px">👑</div>
+              <app-icon name="crown" [size]="34" style="color:#fff;" />
               @if (entries[0].activeAvatarImagePath) {
                 <img class="av-thumb lg" [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName"
                      [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">

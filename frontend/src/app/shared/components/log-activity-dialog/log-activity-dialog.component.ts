@@ -357,7 +357,7 @@ const SPORTS: Sport[] = [
           <div class="splash-item conf-pill-row" style="animation-delay:.39s">
             <div class="conf-pill">{{ sport.name.toUpperCase() }} · {{ displayValue }} {{ sport.unit }}</div>
           </div>
-          <button class="splash-item ach-next" style="animation-delay:.47s" (click)="done()">DONE 🎉</button>
+          <button class="splash-item ach-next" style="animation-delay:.47s" (click)="done()">DONE</button>
         </div>
       </div>
       }
@@ -383,7 +383,7 @@ const SPORTS: Sport[] = [
           <div class="splash-item splash-desc" style="animation-delay:.39s">{{ ach.description }}</div>
           <div class="splash-item splash-xp" style="animation-delay:.47s">+{{ displayedXp }} XP</div>
           <button class="splash-item ach-next" style="animation-delay:.55s" (click)="nextAchievement()">
-            {{ achievementQueue.length > 0 ? 'NEXT →' : 'AWESOME! 🏅' }}
+            {{ achievementQueue.length > 0 ? 'NEXT →' : 'AWESOME!' }}
           </button>
         </div>
       </div>
@@ -403,7 +403,7 @@ const SPORTS: Sport[] = [
           <div class="splash-item splash-name" style="animation-delay:.23s">{{ av.name }}</div>
           <div class="splash-item splash-desc" style="animation-delay:.31s">{{ av.description }}</div>
           <button class="splash-item ach-next" style="animation-delay:.39s" (click)="nextAvatar()">
-            {{ avatarQueue.length > 0 ? 'NEXT →' : 'NICE! 🎭' }}
+            {{ avatarQueue.length > 0 ? 'NEXT →' : 'NICE!' }}
           </button>
         </div>
       </div>

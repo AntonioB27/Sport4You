@@ -19,7 +19,7 @@ import { ApiService } from '../../services/api.service';
     ReactiveFormsModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ mode === 'register' ? 'Welcome to Sport4You 🏃' : 'Welcome back 👋' }}</h2>
+    <h2 mat-dialog-title>{{ mode === 'register' ? 'Welcome to Sport4You' : 'Welcome back' }}</h2>
     <mat-dialog-content>
       <p style="color: #666; margin-bottom: 16px;">
         {{ mode === 'register'

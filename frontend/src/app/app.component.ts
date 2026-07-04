@@ -5,11 +5,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { RegisterDialogComponent } from './shared/components/register-dialog/register-dialog.component';
 import { LogActivityDialogComponent } from './shared/components/log-activity-dialog/log-activity-dialog.component';
 import { UserStateService } from './shared/services/user-state.service';
+import { IconComponent } from './shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, AsyncPipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, AsyncPipe, IconComponent],
   styles: [`
     :host { display: flex; min-height: 100vh; background: #EEF3FB; font-family: 'Nunito', system-ui, sans-serif; }
 
@@ -32,7 +33,6 @@ import { UserStateService } from './shared/services/user-state.service';
     }
     .nav-item:hover { background: #F4F6FB; }
     .nav-item.active { background: linear-gradient(150deg,#2E6BE6,#1B47AE); color: #fff; box-shadow: 0 10px 20px -10px rgba(46,107,230,.7); }
-    .nav-item .icon { font-size: 18px; }
 
     .xp-widget { margin-top: auto; border-radius: 16px; padding: 16px; background: radial-gradient(120% 80% at 80% 0%, rgba(198,230,59,.35), transparent), #F4FBE3; border: 1px solid rgba(158,207,16,.5); text-align: center; }
     .xp-label { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #5f7a00; }
@@ -64,7 +64,6 @@ import { UserStateService } from './shared/services/user-state.service';
       font-size: 10px; letter-spacing: .06em; text-decoration: none; transition: color .15s;
     }
     .bottom-nav-item.active { color: #2E6BE6; }
-    .bottom-nav-item .icon { font-size: 20px; }
     .bottom-fab {
       width: 52px; height: 52px; margin-top: -28px; border-radius: 16px;
       background: linear-gradient(150deg,#C6E63B,#9ECF10); box-shadow: 0 0 22px rgba(158,207,16,.7);
@@ -87,16 +86,16 @@ import { UserStateService } from './shared/services/user-state.service';
       </div>
       <nav class="nav-items">
         <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
-          <span class="icon">🏠</span> Home
+          <app-icon name="house" [size]="18" /> Home
         </a>
         <a class="nav-item" routerLink="/leaderboard" routerLinkActive="active">
-          <span class="icon">🏆</span> Leaderboard
+          <app-icon name="trophy" [size]="18" /> Leaderboard
         </a>
         <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
-          <span class="icon">🏅</span> BADGES
+          <app-icon name="medal" [size]="18" /> BADGES
         </a>
         <a class="nav-item" [routerLink]="profileRoute" routerLinkActive="active">
-          <span class="icon">👤</span> PROFILE
+          <app-icon name="user" [size]="18" /> PROFILE
         </a>
       </nav>
       @if (userState.xp$ | async; as xp) {
@@ -122,15 +121,15 @@ import { UserStateService } from './shared/services/user-state.service';
 
     <nav class="bottom-nav">
       <a class="bottom-nav-item" routerLink="/dashboard" routerLinkActive="active">
-        <span class="icon">🏠</span> HOME
+        <app-icon name="house" [size]="20" /> HOME
       </a>
       <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
-        <span class="icon">🏆</span> RANK
+        <app-icon name="trophy" [size]="20" /> RANK
       </a>
       <button class="bottom-fab" (click)="openLogActivity()">+</button>
-      <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active"><span class="icon">🏅</span> BADGES</a>
+      <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active"><app-icon name="medal" [size]="20" /> BADGES</a>
       <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
-        <span class="icon">👤</span> PROFILE
+        <app-icon name="user" [size]="20" /> PROFILE
       </a>
     </nav>
   `,
