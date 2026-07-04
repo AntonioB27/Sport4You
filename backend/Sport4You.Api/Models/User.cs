@@ -8,5 +8,7 @@ public class User
     public Guid? ActiveAvatarId { get; set; }
     public Guid? RivalUserId { get; set; }
     public bool? RivalAheadLastSeen { get; set; }
+    public string Username { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = string.Empty;
     public ICollection<Activity> Activities { get; set; } = new List<Activity>();
 }

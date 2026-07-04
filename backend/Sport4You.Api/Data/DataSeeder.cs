@@ -5,6 +5,8 @@ namespace Sport4You.Api.Data;
 
 public static class DataSeeder
 {
+    private static readonly Microsoft.AspNetCore.Identity.PasswordHasher<User> Hasher = new();
+
     public static async Task SeedAsync(
         AppDbContext db, IScoringService scoring, IXpService xp,
         IAchievementService achievements, IAvatarService avatars, SeedOptions options)
@@ -49,12 +51,23 @@ public static class DataSeeder
         var activities = new List<Activity>();
         var xpTransactions = new List<XpTransaction>();
         var userXpRows = new List<UserXp>();
+        var usedUsernames = new HashSet<string>();
 
         for (var i = 0; i < count; i++)
         {
             var parts = SeedFullNames[i].Split(' ', 2);
             var user = new User { Id = Guid.NewGuid(), FirstName = parts[0], LastName = parts[1] };
             users.Add(user);
+
+            // Auth: give each seeded user a unique login username (first name, numeric
+            // suffix on collision) + the shared demo password hash.
+            var baseUsername = user.FirstName.ToLowerInvariant();
+            var username = baseUsername;
+            var suffix = 1;
+            while (!usedUsernames.Add(username))
+                username = $"{baseUsername}{++suffix}";
+            user.Username = username;
+            user.PasswordHash = Hasher.HashPassword(user, "demo1234");
 
             var n = rng.Next(options.ActivitiesPerUserMin, options.ActivitiesPerUserMax + 1);
             var totalXp = 0;

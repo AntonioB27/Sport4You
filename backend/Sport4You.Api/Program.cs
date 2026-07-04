@@ -27,7 +27,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IScoringService, ScoringService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
@@ -55,12 +54,30 @@ builder.Services.AddScoped<IRivalService, RivalService>();
 builder.Services.AddScoped<IPersonalRecordsService, PersonalRecordsService>();
 builder.Services.AddScoped<IShopService, ShopService>();
 builder.Services.AddScoped<IWeightService, WeightService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins("http://localhost:4200", "http://localhost:4201")
               .AllowAnyHeader()
               .AllowAnyMethod()));
+
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;   // keep "sub"/"name" claim names as-is
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = false,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        };
+    });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 // Enabled in every environment so the API is browsable at /swagger even in the
@@ -68,6 +85,8 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sport4You API v1"));
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseMiddleware<Sport4You.Api.Middleware.ExceptionMiddleware>();
 app.UseSerilogRequestLogging();
 app.MapControllers();

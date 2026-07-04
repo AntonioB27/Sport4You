@@ -26,15 +26,9 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // NOCASE collation makes the unique index below — and every `==` lookup on
-        // these columns (register duplicate check, login recovery) — case-insensitive,
-        // so "Ivan Horvat" and "ivan horvat" are treated as the same person.
-        modelBuilder.Entity<User>().Property(u => u.FirstName).UseCollation("NOCASE");
-        modelBuilder.Entity<User>().Property(u => u.LastName).UseCollation("NOCASE");
-
-        modelBuilder.Entity<User>()
-            .HasIndex(u => new { u.FirstName, u.LastName })
-            .IsUnique();
+        // Note: no DB-level unique index on (FirstName, LastName) — display names are not
+        // required to be unique; only the Username is (enforced by AuthService.RegisterAsync).
+        modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
 
         modelBuilder.Entity<User>()
             .HasOne<Avatar>()
