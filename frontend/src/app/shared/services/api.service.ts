@@ -20,14 +20,6 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  registerUser(firstName: string, lastName: string): Observable<{ userId: string }> {
-    return this.http.post<{ userId: string }>(`${this.base}/users`, { firstName, lastName });
-  }
-
-  loginUser(firstName: string, lastName: string): Observable<{ userId: string }> {
-    return this.http.post<{ userId: string }>(`${this.base}/users/login`, { firstName, lastName });
-  }
-
   getLeaderboard(period: 'all' | '7d' | '30d' = 'all', sport: string = 'all'): Observable<LeaderboardEntry[]> {
     return this.http.get<LeaderboardEntry[]>(`${this.base}/leaderboard`, { params: { period, sport } });
   }

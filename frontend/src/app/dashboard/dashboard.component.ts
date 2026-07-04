@@ -12,13 +12,13 @@ import { DashboardData, ActivityItem, DailyMissionItem } from '../shared/models/
 import { SPORT_COLORS, SPORT_ICON_NAMES } from '../shared/constants/sport.constants';
 import { IconComponent } from '../shared/components/icon/icon.component';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
-import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
 import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
 import { AiCoachDialogComponent } from './ai-coach/ai-coach-dialog.component';
 import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.component';
 import { RivalCardComponent } from './rival-card/rival-card.component';
 import { WeightCardComponent } from './weight-card/weight-card.component';
 import { StatsPanelComponent } from './stats-panel/stats-panel.component';
+import { AuthService } from '../shared/services/auth.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -600,6 +600,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private dialog: MatDialog,
     private activityLogged: ActivityLoggedService,
     private userState: UserStateService,
+    private auth: AuthService,
   ) {}
 
   ngOnInit() {
@@ -675,11 +676,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.loading = false;
         if (err.status === 404) {
-          localStorage.removeItem('userId');
-          this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px', panelClass: 's4y-welcome-dialog' })
-            .afterClosed().subscribe(userId => {
-              if (userId) window.location.reload();
-            });
+          this.auth.logout();
           return;
         }
         this.snackBar.open('Failed to load dashboard. Please try again.', 'OK', { duration: 4000 });

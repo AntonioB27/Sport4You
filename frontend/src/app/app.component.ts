@@ -1,22 +1,22 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
-import { RegisterDialogComponent } from './shared/components/register-dialog/register-dialog.component';
 import { WelcomeDialogComponent } from './shared/components/welcome-dialog/welcome-dialog.component';
 import { LogActivityDialogComponent } from './shared/components/log-activity-dialog/log-activity-dialog.component';
 import { UserStateService } from './shared/services/user-state.service';
 import { IconComponent } from './shared/components/icon/icon.component';
 import { TourOverlayComponent } from './shared/tour/tour-overlay.component';
 import { TourService } from './shared/tour/tour.service';
+import { AuthService } from './shared/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, IconComponent, TourOverlayComponent],
-  // Frost + freeze the whole shell while logged out. The registration modal
-  // lives in Material's CDK overlay (outside app-root), so it stays sharp.
-  host: { '[class.app-locked]': '!isLoggedIn || welcomeOpen' },
+  // Blur + freeze the shell while the welcome splash is up. Logged-out gating is
+  // handled by the auth guard, which redirects to the full-page /login route.
+  host: { '[class.app-locked]': 'welcomeOpen' },
   styles: [`
     :host { display: flex; min-height: 100vh; background: #EEF3FB; font-family: 'Nunito', system-ui, sans-serif; }
     :host(.app-locked) { filter: blur(7px); pointer-events: none; user-select: none; }
@@ -86,6 +86,15 @@ import { TourService } from './shared/tour/tour.service';
     }
     .help-btn:hover { color: #2E6BE6; border-color: #2E6BE6; }
 
+    .logout-btn {
+      margin-top: 8px; text-align: center;
+      background: transparent; color: #9aa6bd;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .05em;
+      padding: 11px; border-radius: 14px; border: 1px solid #E3EAF5;
+      cursor: pointer; width: 100%; transition: background .15s, color .15s;
+    }
+    .logout-btn:hover { background: #F4F6FB; color: #d64545; }
+
     .sidebar-gap { width: 230px; flex-shrink: 0; }
     .main-content { flex: 1; min-height: 100vh; min-width: 0; overflow-x: hidden; }
 
@@ -124,105 +133,102 @@ import { TourService } from './shared/tour/tour.service';
     }
   `],
   template: `
-    <aside class="sidebar">
-      <div class="logo">
-        <img src="assets/sporty_wave.png" alt="Spotry" />
-        <div class="logo-text">SPORT<span>4</span>YOU</div>
-      </div>
-      <nav class="nav-items">
-        <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
-          <app-icon name="house" [size]="18" /> HOME
-        </a>
-        <a class="nav-item" routerLink="/leaderboard" routerLinkActive="active">
-          <app-icon name="trophy" [size]="18" /> LEADERBOARD
-        </a>
-        <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
-          <app-icon name="medal" [size]="18" /> BADGES
-        </a>
-        <a class="nav-item" routerLink="/shop" routerLinkActive="active">
-          <app-icon name="coin" [size]="18" /> SHOP
-        </a>
-        <a class="nav-item" routerLink="/avatars" routerLinkActive="active">
-          <app-icon name="crown" [size]="18" /> AVATARS
-        </a>
-        <a class="nav-item" [routerLink]="profileRoute" routerLinkActive="active">
-          <app-icon name="user" [size]="18" /> PROFILE
-        </a>
-      </nav>
-      @if (userState.xp(); as xp) {
-        <div class="xp-widget">
-          <div class="xp-label">NEXT LEVEL IN</div>
-          <div class="xp-value">{{ xp.xpForNextLevel - xp.xpInLevel }} XP</div>
-          <div class="xp-bar"><div class="xp-bar-fill" [style.width.%]="xp.xpPercent"></div></div>
+    @if (!onLoginPage) {
+      <aside class="sidebar">
+        <div class="logo">
+          <img src="assets/sporty_wave.png" alt="Spotry" />
+          <div class="logo-text">SPORT<span>4</span>YOU</div>
         </div>
-      } @else {
-        <div class="xp-widget">
-          <div class="xp-label">NEXT LEVEL IN</div>
-          <div class="xp-value">— XP</div>
-          <div class="xp-bar"><div class="xp-bar-fill" style="width: 0%"></div></div>
-        </div>
-      }
-      <button class="log-btn" (click)="openLogActivity()">+ LOG ACTIVITY</button>
-      <button class="help-btn" (click)="startTour()">? TUTORIAL</button>
-      <button class="signout-btn" (click)="signOut()">⏻ SIGN OUT / RESET</button>
-    </aside>
+        <nav class="nav-items">
+          <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
+            <app-icon name="house" [size]="18" /> HOME
+          </a>
+          <a class="nav-item" routerLink="/leaderboard" routerLinkActive="active">
+            <app-icon name="trophy" [size]="18" /> LEADERBOARD
+          </a>
+          <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
+            <app-icon name="medal" [size]="18" /> BADGES
+          </a>
+          <a class="nav-item" routerLink="/shop" routerLinkActive="active">
+            <app-icon name="coin" [size]="18" /> SHOP
+          </a>
+          <a class="nav-item" routerLink="/avatars" routerLinkActive="active">
+            <app-icon name="crown" [size]="18" /> AVATARS
+          </a>
+          <a class="nav-item" [routerLink]="profileRoute" routerLinkActive="active">
+            <app-icon name="user" [size]="18" /> PROFILE
+          </a>
+        </nav>
+        @if (userState.xp(); as xp) {
+          <div class="xp-widget">
+            <div class="xp-label">NEXT LEVEL IN</div>
+            <div class="xp-value">{{ xp.xpForNextLevel - xp.xpInLevel }} XP</div>
+            <div class="xp-bar"><div class="xp-bar-fill" [style.width.%]="xp.xpPercent"></div></div>
+          </div>
+        } @else {
+          <div class="xp-widget">
+            <div class="xp-label">NEXT LEVEL IN</div>
+            <div class="xp-value">— XP</div>
+            <div class="xp-bar"><div class="xp-bar-fill" style="width: 0%"></div></div>
+          </div>
+        }
+        <button class="log-btn" (click)="openLogActivity()">+ LOG ACTIVITY</button>
+        <button class="help-btn" (click)="startTour()">? TUTORIAL</button>
+        @if (auth.isLoggedIn) {
+          <button class="logout-btn" (click)="logout()">LOG OUT</button>
+        }
+      </aside>
 
-    <div class="sidebar-gap"></div>
+      <div class="sidebar-gap"></div>
+    }
     <div class="main-content">
       <router-outlet />
     </div>
 
-    <nav class="bottom-nav">
-      <div class="nav-side">
-        <a class="bottom-nav-item" routerLink="/dashboard" routerLinkActive="active">
-          <app-icon name="house" [size]="20" /> HOME
-        </a>
-        <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
-          <app-icon name="trophy" [size]="20" /> RANK
-        </a>
-        <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active">
-          <app-icon name="medal" [size]="20" /> BADGES
-        </a>
-      </div>
-      <button class="bottom-fab" (click)="openLogActivity()">+</button>
-      <div class="nav-side">
-        <a class="bottom-nav-item" routerLink="/shop" routerLinkActive="active">
-          <app-icon name="coin" [size]="20" /> SHOP
-        </a>
-        <a class="bottom-nav-item" routerLink="/avatars" routerLinkActive="active">
-          <app-icon name="crown" [size]="20" /> AVATARS
-        </a>
-        <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
-          <app-icon name="user" [size]="20" /> PROFILE
-        </a>
-      </div>
-    </nav>
+    @if (!onLoginPage) {
+      <nav class="bottom-nav">
+        <div class="nav-side">
+          <a class="bottom-nav-item" routerLink="/dashboard" routerLinkActive="active">
+            <app-icon name="house" [size]="20" /> HOME
+          </a>
+          <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
+            <app-icon name="trophy" [size]="20" /> RANK
+          </a>
+          <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active">
+            <app-icon name="medal" [size]="20" /> BADGES
+          </a>
+        </div>
+        <button class="bottom-fab" (click)="openLogActivity()">+</button>
+        <div class="nav-side">
+          <a class="bottom-nav-item" routerLink="/shop" routerLinkActive="active">
+            <app-icon name="coin" [size]="20" /> SHOP
+          </a>
+          <a class="bottom-nav-item" routerLink="/avatars" routerLinkActive="active">
+            <app-icon name="crown" [size]="20" /> AVATARS
+          </a>
+          <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
+            <app-icon name="user" [size]="20" /> PROFILE
+          </a>
+        </div>
+      </nav>
+    }
 
     <app-tour-overlay />
   `,
 })
 export class AppComponent implements OnInit {
-  // Set before first paint so the shell renders locked/blurred until an
-  // identity exists. Login/register reloads the page, so this re-evaluates.
-  isLoggedIn = !!localStorage.getItem('userId');
   // Blurs the shell (same treatment as the logged-out gate) while the welcome splash is up.
   welcomeOpen = false;
 
   constructor(
     private dialog: MatDialog,
+    private router: Router,
+    public auth: AuthService,
     public userState: UserStateService,
     private tour: TourService,
   ) {}
 
   ngOnInit() {
-    if (!localStorage.getItem('userId')) {
-      this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px', panelClass: 's4y-welcome-dialog' })
-        .afterClosed().subscribe(userId => {
-          // reload so every view picks up the new/recovered account
-          if (userId) window.location.reload();
-        });
-      return;
-    }
     if (this.tour.consumePending()) {
       // First-run sequence: welcome splash (over a blurred shell), then the spotlight tour.
       this.welcomeOpen = true;
@@ -233,6 +239,11 @@ export class AppComponent implements OnInit {
         this.startTour();
       });
     }
+  }
+
+  // Hide the shell chrome (sidebar + bottom nav) on the full-page login route.
+  get onLoginPage(): boolean {
+    return this.router.url.startsWith('/login');
   }
 
   // Replay entry point (the "? TUTORIAL" button) — the tour only, without the intro splash.
@@ -248,12 +259,7 @@ export class AppComponent implements OnInit {
     this.dialog.open(LogActivityDialogComponent, { width: '560px', maxWidth: '95vw', panelClass: 's4y-watch-dialog' });
   }
 
-  signOut() {
-    const ok = confirm(
-      'Sign out and reset this device?\n\nYour account stays on the leaderboard — sign back in any time by re-entering your name.'
-    );
-    if (!ok) return;
-    localStorage.clear();
-    window.location.reload();
+  logout() {
+    this.auth.logout();
   }
 }

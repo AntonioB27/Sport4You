@@ -5,6 +5,11 @@ import { authGuard } from './shared/guards/auth.guard';
 export const routes: Routes = [
   { path: '', redirectTo: 'leaderboard', pathMatch: 'full' },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./auth/login-page.component').then(m => m.LoginPageComponent),
+  },
+  {
     path: 'leaderboard',
     canActivate: [authGuard],
     loadComponent: () =>
