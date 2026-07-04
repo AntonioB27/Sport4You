@@ -21,23 +21,23 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task Seed_Creates35Avatars()
+    public async Task Seed_Creates33Avatars()
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         // 20 regular avatars + 15 loot-box avatars = 35 total
-        Assert.Equal(35, await db.Avatars.CountAsync());
+        Assert.Equal(33, await db.Avatars.CountAsync());
     }
 
     [Fact]
-    public async Task GetUserAvatars_ReturnsAll35WithLockedState()
+    public async Task GetUserAvatars_ReturnsAll33WithLockedState()
     {
         var userId = Guid.Parse(await CreateUserAsync());
         using var scope = _factory.Services.CreateScope();
         var svc = scope.ServiceProvider.GetRequiredService<IAvatarService>();
         var list = await svc.GetUserAvatarsAsync(userId);
         // 20 regular + 15 loot-box avatars; default is unlocked at registration, rest are locked
-        Assert.Equal(35, list.Count);
+        Assert.Equal(33, list.Count);
         Assert.Equal(1, list.Count(a => a.Unlocked));
         Assert.True(list.Single(a => a.Unlocked).IsActive);
     }
@@ -238,7 +238,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task GetAvatarsEndpoint_Returns35Items()
+    public async Task GetAvatarsEndpoint_Returns33Items()
     {
         var suffix = Guid.NewGuid().ToString("N")[..6];
         var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "GetAv", lastName = suffix });
@@ -250,7 +250,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
 
         var body = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         Assert.Equal(System.Text.Json.JsonValueKind.Array, body.ValueKind);
-        Assert.Equal(35, body.GetArrayLength());
+        Assert.Equal(33, body.GetArrayLength());
     }
 
     [Fact]

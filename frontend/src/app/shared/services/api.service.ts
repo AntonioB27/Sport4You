@@ -7,6 +7,7 @@ import {
   AchievementsPage, AvatarStatus, DashboardData,
   LogActivityRequest, LogActivityResponse,
 } from '../models/dashboard.model';
+import { BorderStatus, BoxInfo, OpenBoxResult } from '../models/border.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -40,5 +41,21 @@ export class ApiService {
 
   setActiveAvatar(userId: string, avatarId: string): Observable<void> {
     return this.http.put<void>(`${this.base}/users/${userId}/avatar`, { avatarId });
+  }
+
+  getBoxes(userId: string): Observable<BoxInfo> {
+    return this.http.get<BoxInfo>(`${this.base}/users/${userId}/boxes`);
+  }
+
+  openBox(userId: string): Observable<OpenBoxResult> {
+    return this.http.post<OpenBoxResult>(`${this.base}/users/${userId}/boxes/open`, {});
+  }
+
+  getBorders(userId: string): Observable<BorderStatus[]> {
+    return this.http.get<BorderStatus[]>(`${this.base}/users/${userId}/borders`);
+  }
+
+  equipBorder(userId: string, borderId: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/users/${userId}/border`, { borderId });
   }
 }

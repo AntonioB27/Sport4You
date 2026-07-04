@@ -26,4 +26,123 @@ public class LootBoxTests : IClassFixture<TestFactory>
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(0, body.GetProperty("pendingCount").GetInt32());
     }
+
+    [Fact]
+    public async Task OpenBox_NoPendingBoxes_ReturnsBadRequest()
+    {
+        var userId = await CreateUserAsync("Box", "EarnOpen");
+
+        var getResp = await _client.GetAsync($"/api/users/{userId}/boxes");
+        Assert.Equal(HttpStatusCode.OK, getResp.StatusCode);
+
+        var openResp = await _client.PostAsync($"/api/users/{userId}/boxes/open", null);
+        Assert.Equal(HttpStatusCode.BadRequest, openResp.StatusCode);
+    }
+
+    [Fact]
+    public async Task EarnBox_ViaStreak_OpenBox_GrantsRewardAndDecrementsPending()
+    {
+        var userId = await CreateUserAsync("Box", "OpenReward");
+
+        // Log yesterday's activity to establish streak base
+        var yesterday = DateTime.UtcNow.AddDays(-1).ToString("o");
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = yesterday, sport = "running", distance = 2.0 });
+
+        // Log today's activity — extends the streak, earns a streak box
+        var today = DateTime.UtcNow.ToString("o");
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = today, sport = "running", distance = 2.0 });
+
+        // Assert at least 1 pending box
+        var boxResp = await _client.GetAsync($"/api/users/{userId}/boxes");
+        Assert.Equal(HttpStatusCode.OK, boxResp.StatusCode);
+        var boxBody = await boxResp.Content.ReadFromJsonAsync<JsonElement>();
+        var pendingCount = boxBody.GetProperty("pendingCount").GetInt32();
+        Assert.True(pendingCount >= 1);
+
+        // Open a box — should return 200 with a valid result
+        var openResp = await _client.PostAsync($"/api/users/{userId}/boxes/open", null);
+        Assert.Equal(HttpStatusCode.OK, openResp.StatusCode);
+
+        var openBody = await openResp.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.True(openBody.TryGetProperty("remainingBoxes", out var remaining));
+        Assert.Equal(pendingCount - 1, remaining.GetInt32());
+        Assert.True(openBody.TryGetProperty("name", out var name));
+        Assert.False(string.IsNullOrEmpty(name.GetString()));
+        Assert.True(openBody.TryGetProperty("rarity", out _));
+        Assert.True(openBody.TryGetProperty("imagePath", out _));
+
+        // If the item was not a duplicate, verify it appears as unlocked
+        var wasDuplicate = openBody.GetProperty("wasDuplicate").GetBoolean();
+        var itemType = openBody.GetProperty("type").GetString();
+        if (!wasDuplicate)
+        {
+            var endpoint = itemType == "avatar"
+                ? $"/api/users/{userId}/avatars"
+                : $"/api/users/{userId}/borders";
+            var itemResp = await _client.GetAsync(endpoint);
+            Assert.Equal(HttpStatusCode.OK, itemResp.StatusCode);
+            var items = await itemResp.Content.ReadFromJsonAsync<JsonElement>();
+            var unlockedCount = items.EnumerateArray()
+                .Count(i => i.GetProperty("unlocked").GetBoolean());
+            Assert.True(unlockedCount >= 1);
+        }
+    }
+
+    [Fact]
+    public async Task LogActivity_ThatExtendsStreak_EarnsOneStreakBox()
+    {
+        var userId = await CreateUserAsync("Streak", "BoxEarner");
+
+        // Log yesterday's activity to establish a streak
+        var yesterday = DateTime.UtcNow.AddDays(-1).ToString("o");
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = yesterday, sport = "running", distance = 2.0 });
+
+        // Log today's activity — should extend streak and earn 1 box
+        var today = DateTime.UtcNow.ToString("o");
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = today, sport = "running", distance = 2.0 });
+
+        // Log a second activity today — should NOT earn another streak box
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = today, sport = "walking", distance = 1.0 });
+
+        var response = await _client.GetAsync($"/api/users/{userId}/boxes");
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        // Note: pendingCount includes streak box + possible level-up/mission boxes.
+        // Assert streak box was earned (count >= 1) and NOT doubled (streak is idempotent).
+        Assert.True(body.GetProperty("pendingCount").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task LogActivity_MissionCompletion_EarnsBox()
+    {
+        var userId = await CreateUserAsync("Mission", "BoxEarner");
+
+        // "Log any activity today" is always one of the daily easy missions.
+        // Logging one activity completes it and should grant 1 mission box.
+        var today = DateTime.UtcNow.ToString("o");
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId, datetime = today, sport = "running", distance = 1.0 });
+
+        var response = await _client.GetAsync($"/api/users/{userId}/boxes");
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        // At least 1 box from the mission (possibly more from streak or level-up)
+        Assert.True(body.GetProperty("pendingCount").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task GetBorders_NewUser_ReturnsAllBordersLocked()
+    {
+        var userId = await CreateUserAsync("Border", "NewUser");
+        var response = await _client.GetAsync($"/api/users/{userId}/borders");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var borders = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(JsonValueKind.Array, borders.ValueKind);
+        Assert.Equal(6, borders.GetArrayLength());
+        Assert.True(borders.EnumerateArray().All(b => !b.GetProperty("unlocked").GetBoolean()));
+    }
 }

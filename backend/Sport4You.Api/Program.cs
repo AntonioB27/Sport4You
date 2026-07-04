@@ -19,6 +19,8 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IXpService, XpService>();
 builder.Services.AddScoped<IAchievementService, AchievementService>();
 builder.Services.AddScoped<IAvatarService, AvatarService>();
+builder.Services.AddScoped<IBorderService, BorderService>();
+builder.Services.AddScoped<ILootBoxService, LootBoxService>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>

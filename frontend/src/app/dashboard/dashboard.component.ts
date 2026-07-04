@@ -12,11 +12,12 @@ import { DashboardData, ActivityItem, DailyMissionItem } from '../shared/models/
 import { SPORT_COLORS, SPORT_ICONS } from '../shared/constants/sport.constants';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
 import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
+import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent],
   styles: [`
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
@@ -41,6 +42,14 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
       box-shadow: 0 8px 18px -10px rgba(158,207,16,.5);
       font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #5f7a00; font-size: 14px;
     }
+    .box-badge {
+      display: flex; align-items: center; gap: 7px; background: #fff;
+      border: 1px solid rgba(46,107,230,.4); padding: 8px 14px; border-radius: 999px;
+      box-shadow: 0 8px 18px -10px rgba(46,107,230,.4); cursor: pointer;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #2E6BE6; font-size: 14px;
+      transition: opacity .15s;
+    }
+    .box-badge:hover { opacity: .85; }
 
     /* ── Grid ── */
     .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; }
@@ -189,6 +198,9 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
           <div class="top-badges">
             <div class="streak-badge" *ngIf="(data?.currentStreak ?? 0) > 0">🔥 {{ data!.currentStreak }} day streak</div>
             <div class="coins-badge">🪙 {{ data.totalPoints | number }}</div>
+            @if (pendingBoxes > 0) {
+              <div class="box-badge" (click)="openBoxModal()">📦 {{ pendingBoxes }}</div>
+            }
           </div>
         </div>
 
@@ -333,6 +345,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
   weeklyPoints = 0;
   topEntries: any[] = [];
+  pendingBoxes = 0;
   private sub?: Subscription;
 
   // XP / level (from API data.xp)
@@ -369,6 +382,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.api.getDashboard(uid).subscribe({
       next: data => {
         this.data = data;
+        this.loadPendingBoxes(uid);
         if (data.xp) {
           this.userState.setXp(data.xp);
         }
@@ -395,6 +409,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: entries => {
         this.topEntries = entries.slice(0, 4).map(e => ({ ...e, isMe: e.userId === myId }));
       },
+    });
+  }
+
+  private loadPendingBoxes(userId: string): void {
+    this.api.getBoxes(userId).subscribe({
+      next: info => { this.pendingBoxes = info.pendingCount; },
+      error: () => {},
+    });
+  }
+
+  openBoxModal(): void {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    const ref = this.dialog.open(LootBoxModalComponent, {
+      data: { userId },
+      width: '380px',
+      disableClose: false,
+    });
+    ref.afterClosed().subscribe(remaining => {
+      if (remaining !== undefined) this.pendingBoxes = remaining;
     });
   }
 

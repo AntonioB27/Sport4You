@@ -8,12 +8,15 @@ public class LeaderboardService : ILeaderboardService
     private readonly IUserRepository _users;
     private readonly IActivityRepository _activities;
     private readonly IAvatarService _avatars;
+    private readonly IBorderService _borders;
 
-    public LeaderboardService(IUserRepository users, IActivityRepository activities, IAvatarService avatars)
+    public LeaderboardService(IUserRepository users, IActivityRepository activities,
+        IAvatarService avatars, IBorderService borders)
     {
         _users = users;
         _activities = activities;
         _avatars = avatars;
+        _borders = borders;
     }
 
     public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync()
@@ -21,6 +24,7 @@ public class LeaderboardService : ILeaderboardService
         var users = await _users.GetAllAsync();
         var allActivities = await _activities.GetAllAsync();
         var avatarImageMap = await _avatars.GetAvatarImageMapAsync();
+        var activeBorderMap = await _borders.GetActiveBorderCssMapAsync();
         var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
         var oldActivities = allActivities.Where(a => a.DateTime < sevenDaysAgo).ToList();
 
@@ -45,6 +49,7 @@ public class LeaderboardService : ILeaderboardService
         return currentRanked.Select(c =>
         {
             avatarImageMap.TryGetValue(c.User.ActiveAvatarId ?? Guid.Empty, out var imagePath);
+            activeBorderMap.TryGetValue(c.User.Id, out var borderCss);
             return new LeaderboardEntryDto
             {
                 Rank = c.Rank,
@@ -56,6 +61,7 @@ public class LeaderboardService : ILeaderboardService
                     ? prevRank - c.Rank
                     : 0,
                 ActiveAvatarImagePath = c.User.ActiveAvatarId.HasValue ? imagePath : null,
+                ActiveBorderCss = borderCss,
             };
         }).ToList();
     }

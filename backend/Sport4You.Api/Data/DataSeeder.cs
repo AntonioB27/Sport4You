@@ -281,30 +281,28 @@ public static class DataSeeder
 
         db.Avatars.AddRange(
             // Common
-            LV("Shadow Sporty",  "shadow-sporty"),
-            LV("Crystal Sporty", "crystal-sporty"),
-            LV("Neon Sporty",    "neon-sporty"),
-            LV("Forest Sporty",  "forest-sporty"),
-            LV("Ocean Sporty",   "ocean-sporty"),
+            LV("Cap Sporty",          "cap-sporty",          "Casual day out in the park"),
+            LV("Summer Sporty",       "summer-sporty",       "Ice cream on the boardwalk"),
+            LV("Autumn Sporty",       "autumn-sporty",       "Cozy season, still moving"),
             // Rare
-            LV("Galaxy Sporty",  "galaxy-sporty"),
-            LV("Flame Sporty",   "flame-sporty"),
-            LV("Arctic Sporty",  "arctic-sporty"),
-            LV("Thunder Sporty", "thunder-sporty"),
-            LV("Prism Sporty",   "prism-sporty"),
+            LV("Referee Sporty",      "referee-sporty",      "Keeps every match fair"),
+            LV("Karate Sporty",       "karate-sporty",       "Discipline meets hydration"),
+            LV("Climber Sporty",      "climber-sporty",      "Summit at sunrise"),
+            LV("DJ Sporty",           "dj-sporty",           "Drops beats and PRs"),
             // Legendary
-            LV("Phantom Sporty", "phantom-sporty"),
-            LV("Inferno Sporty", "inferno-sporty"),
-            LV("Cosmos Sporty",  "cosmos-sporty"),
-            LV("Void Sporty",    "void-sporty"),
-            LV("Titan Sporty",   "titan-sporty")
+            LV("Astronaut Sporty",    "astronaut-sporty",    "One small step for Sporty"),
+            LV("Hero Sporty",         "hero-sporty",         "Caped defender of leg day"),
+            LV("Wizard Sporty",       "wizard-sporty",       "Casts hydration spells"),
+            LV("King Sporty",         "king-sporty",         "Rules the leaderboard realm"),
+            LV("Dragon Rider Sporty", "dragon-rider-sporty", "Tamed a dragon on a rest day"),
+            LV("Windrunner Sporty",   "windrunner-sporty",   "Life before death. Strength before finish lines.")
         );
 
         db.SaveChanges();
     }
 
-    private static Avatar LV(string name, string slug)
-        => new() { Id = Guid.NewGuid(), Name = name, Description = "Loot box exclusive",
+    private static Avatar LV(string name, string slug, string desc)
+        => new() { Id = Guid.NewGuid(), Name = name, Description = desc,
                    UnlockType = "loot_box", UnlockValue = 0, UnlockAchievementId = null,
                    ImagePath = $"assets/avatars/loot-box/{slug}.png" };
 
@@ -320,23 +318,21 @@ public static class DataSeeder
 
         db.LootBoxRewards.AddRange(
             // Common avatars
-            R("avatar", "common", "Shadow Sporty",   $"assets/avatars/loot-box/shadow-sporty.png",   avatarId: avatarByName["Shadow Sporty"]),
-            R("avatar", "common", "Crystal Sporty",  $"assets/avatars/loot-box/crystal-sporty.png",  avatarId: avatarByName["Crystal Sporty"]),
-            R("avatar", "common", "Neon Sporty",     $"assets/avatars/loot-box/neon-sporty.png",     avatarId: avatarByName["Neon Sporty"]),
-            R("avatar", "common", "Forest Sporty",   $"assets/avatars/loot-box/forest-sporty.png",   avatarId: avatarByName["Forest Sporty"]),
-            R("avatar", "common", "Ocean Sporty",    $"assets/avatars/loot-box/ocean-sporty.png",    avatarId: avatarByName["Ocean Sporty"]),
+            R("avatar", "common", "Cap Sporty",       $"assets/avatars/loot-box/cap-sporty.png",       avatarId: avatarByName["Cap Sporty"]),
+            R("avatar", "common", "Summer Sporty",    $"assets/avatars/loot-box/summer-sporty.png",    avatarId: avatarByName["Summer Sporty"]),
+            R("avatar", "common", "Autumn Sporty",    $"assets/avatars/loot-box/autumn-sporty.png",    avatarId: avatarByName["Autumn Sporty"]),
             // Rare avatars
-            R("avatar", "rare",   "Galaxy Sporty",   $"assets/avatars/loot-box/galaxy-sporty.png",   avatarId: avatarByName["Galaxy Sporty"]),
-            R("avatar", "rare",   "Flame Sporty",    $"assets/avatars/loot-box/flame-sporty.png",    avatarId: avatarByName["Flame Sporty"]),
-            R("avatar", "rare",   "Arctic Sporty",   $"assets/avatars/loot-box/arctic-sporty.png",   avatarId: avatarByName["Arctic Sporty"]),
-            R("avatar", "rare",   "Thunder Sporty",  $"assets/avatars/loot-box/thunder-sporty.png",  avatarId: avatarByName["Thunder Sporty"]),
-            R("avatar", "rare",   "Prism Sporty",    $"assets/avatars/loot-box/prism-sporty.png",    avatarId: avatarByName["Prism Sporty"]),
+            R("avatar", "rare",   "Referee Sporty",   $"assets/avatars/loot-box/referee-sporty.png",   avatarId: avatarByName["Referee Sporty"]),
+            R("avatar", "rare",   "Karate Sporty",    $"assets/avatars/loot-box/karate-sporty.png",    avatarId: avatarByName["Karate Sporty"]),
+            R("avatar", "rare",   "Climber Sporty",   $"assets/avatars/loot-box/climber-sporty.png",   avatarId: avatarByName["Climber Sporty"]),
+            R("avatar", "rare",   "DJ Sporty",        $"assets/avatars/loot-box/dj-sporty.png",        avatarId: avatarByName["DJ Sporty"]),
             // Legendary avatars
-            R("avatar", "legendary","Phantom Sporty",$"assets/avatars/loot-box/phantom-sporty.png",  avatarId: avatarByName["Phantom Sporty"]),
-            R("avatar", "legendary","Inferno Sporty",$"assets/avatars/loot-box/inferno-sporty.png",  avatarId: avatarByName["Inferno Sporty"]),
-            R("avatar", "legendary","Cosmos Sporty", $"assets/avatars/loot-box/cosmos-sporty.png",   avatarId: avatarByName["Cosmos Sporty"]),
-            R("avatar", "legendary","Void Sporty",   $"assets/avatars/loot-box/void-sporty.png",     avatarId: avatarByName["Void Sporty"]),
-            R("avatar", "legendary","Titan Sporty",  $"assets/avatars/loot-box/titan-sporty.png",    avatarId: avatarByName["Titan Sporty"]),
+            R("avatar", "legendary","Astronaut Sporty",    $"assets/avatars/loot-box/astronaut-sporty.png",    avatarId: avatarByName["Astronaut Sporty"]),
+            R("avatar", "legendary","Hero Sporty",         $"assets/avatars/loot-box/hero-sporty.png",         avatarId: avatarByName["Hero Sporty"]),
+            R("avatar", "legendary","Wizard Sporty",       $"assets/avatars/loot-box/wizard-sporty.png",       avatarId: avatarByName["Wizard Sporty"]),
+            R("avatar", "legendary","King Sporty",         $"assets/avatars/loot-box/king-sporty.png",         avatarId: avatarByName["King Sporty"]),
+            R("avatar", "legendary","Dragon Rider Sporty", $"assets/avatars/loot-box/dragon-rider-sporty.png", avatarId: avatarByName["Dragon Rider Sporty"]),
+            R("avatar", "legendary","Windrunner Sporty",   $"assets/avatars/loot-box/windrunner-sporty.png",   avatarId: avatarByName["Windrunner Sporty"]),
             // Common borders
             R("border", "common", "Iron Ring",        "assets/borders/iron-ring.png",    borderId: borderByName["Iron Ring"]),
             R("border", "common", "Leaf Ring",        "assets/borders/leaf-ring.png",    borderId: borderByName["Leaf Ring"]),

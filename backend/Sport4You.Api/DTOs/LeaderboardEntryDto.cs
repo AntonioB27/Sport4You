@@ -9,4 +9,5 @@ public class LeaderboardEntryDto
     public int TotalPoints { get; set; }
     public int RankTrend { get; set; }
     public string? ActiveAvatarImagePath { get; set; }
+    public string? ActiveBorderCss { get; set; }
 }

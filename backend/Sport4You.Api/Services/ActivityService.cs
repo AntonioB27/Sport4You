@@ -16,11 +16,13 @@ public class ActivityService : IActivityService
     private readonly IXpService _xp;
     private readonly IAchievementService _achievements;
     private readonly IAvatarService _avatars;
+    private readonly ILootBoxService _lootBox;
 
     public ActivityService(
         IUserRepository users, IActivityRepository activities,
         IScoringService scoring, IXpService xp,
-        IAchievementService achievements, IAvatarService avatars)
+        IAchievementService achievements, IAvatarService avatars,
+        ILootBoxService lootBox)
     {
         _users = users;
         _activities = activities;
@@ -28,6 +30,7 @@ public class ActivityService : IActivityService
         _xp = xp;
         _achievements = achievements;
         _avatars = avatars;
+        _lootBox = lootBox;
     }
 
     public async Task<ActivityResult> LogActivityAsync(LogActivityRequest request)
@@ -47,6 +50,10 @@ public class ActivityService : IActivityService
             return ActivityResult.BadRequest(error!);
 
         var points = _scoring.CalculatePoints(sport, request.Distance, request.Duration, request.Steps);
+
+        // Capture existing activities before creating the new one (for streak comparison)
+        var previousActivities = await _activities.GetByUserIdAsync(userId);
+        var prevStreak = ActivityStreakHelper.ComputeCurrentStreak(previousActivities.Select(a => a.DateTime));
 
         var activity = new Activity
         {
@@ -70,6 +77,12 @@ public class ActivityService : IActivityService
 
         var newAchievements = await _achievements.EvaluateAchievementsAsync(userId);
         var newAvatars = await _avatars.EvaluateAvatarsAsync(userId);
+
+        // Award a streak box if today extended the streak (idempotent inside EarnBoxAsync)
+        var newStreak = ActivityStreakHelper.ComputeCurrentStreak(
+            previousActivities.Concat(new[] { activity }).Select(a => a.DateTime));
+        if (newStreak > prevStreak)
+            await _lootBox.EarnBoxAsync(userId, "streak");
 
         return ActivityResult.Success(
             activity.Id, points, xpEarned,

@@ -80,12 +80,11 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
     .av-thumb, .av-initial {
       display:inline-block; border-radius:50%; object-fit:cover; vertical-align:middle; flex-shrink:0;
     }
-    .av-thumb  { border:2px solid rgba(255,255,255,.35); }
+    .av-thumb  { }
     .av-initial {
       background:#2E6BE6; color:#fff;
       font-family:'Chakra Petch',sans-serif; font-weight:700;
       display:inline-flex; align-items:center; justify-content:center;
-      border:2px solid rgba(255,255,255,.35);
     }
     /* list row size */
     .av-thumb.sm, .av-initial.sm { width:32px; height:32px; font-size:13px; }
@@ -107,9 +106,10 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
           <div class="podium-slot" (click)="viewProfile(entries[1])">
             <div class="podium-card" [style.background]="'#F7F7F7'">
               @if (entries[1].activeAvatarImagePath) {
-                <img class="av-thumb lg" [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName">
+                <img class="av-thumb lg" [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName"
+                     [style.border]="entries[1].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
               } @else {
-                <span class="av-initial lg">{{ entries[1].firstName[0] }}</span>
+                <span class="av-initial lg" [style.border]="entries[1].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[1].firstName[0] }}</span>
               }
               <div class="podium-name">{{ entries[1].firstName }} {{ entries[1].lastName }}</div>
               <div class="podium-pts">{{ entries[1].totalPoints | number }}</div>
@@ -121,9 +121,10 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
             <div class="podium-card" style="background: linear-gradient(150deg,#FFE27A,#FFC200); box-shadow: 0 0 28px rgba(255,194,0,.5);">
               <div style="font-size:34px">👑</div>
               @if (entries[0].activeAvatarImagePath) {
-                <img class="av-thumb lg" [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName">
+                <img class="av-thumb lg" [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName"
+                     [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
               } @else {
-                <span class="av-initial lg">{{ entries[0].firstName[0] }}</span>
+                <span class="av-initial lg" [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[0].firstName[0] }}</span>
               }
               <div class="podium-name">{{ entries[0].firstName }} {{ entries[0].lastName }}</div>
               <div class="podium-pts">{{ entries[0].totalPoints | number }}</div>
@@ -134,9 +135,10 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
           <div class="podium-slot" (click)="viewProfile(entries[2])">
             <div class="podium-card" [style.background]="'#FDF0E6'">
               @if (entries[2].activeAvatarImagePath) {
-                <img class="av-thumb lg" [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName">
+                <img class="av-thumb lg" [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName"
+                     [style.border]="entries[2].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
               } @else {
-                <span class="av-initial lg">{{ entries[2].firstName[0] }}</span>
+                <span class="av-initial lg" [style.border]="entries[2].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[2].firstName[0] }}</span>
               }
               <div class="podium-name">{{ entries[2].firstName }} {{ entries[2].lastName }}</div>
               <div class="podium-pts">{{ entries[2].totalPoints | number }}</div>
@@ -163,9 +165,10 @@ import { LeaderboardEntry } from '../shared/models/leaderboard.model';
             </div>
             <div class="athlete-name">
               @if (e.activeAvatarImagePath) {
-                <img class="av-thumb sm" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
+                <img class="av-thumb sm" [src]="e.activeAvatarImagePath" [alt]="e.firstName"
+                     [style.border]="e.activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
               } @else {
-                <span class="av-initial sm">{{ e.firstName[0] }}</span>
+                <span class="av-initial sm" [style.border]="e.activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ e.firstName[0] }}</span>
               }
               {{ e.firstName }} {{ e.lastName }}
               <span class="you-badge" *ngIf="isMe(e)">YOU</span>

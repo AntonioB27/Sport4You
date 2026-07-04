@@ -8,7 +8,13 @@ namespace Sport4You.Api.Services;
 public class XpService : IXpService
 {
     private readonly AppDbContext _db;
-    public XpService(AppDbContext db) => _db = db;
+    private readonly ILootBoxService _lootBox;
+
+    public XpService(AppDbContext db, ILootBoxService lootBox)
+    {
+        _db = db;
+        _lootBox = lootBox;
+    }
 
     private static readonly (int Threshold, string Title)[] Levels =
     [
@@ -66,10 +72,11 @@ public class XpService : IXpService
         var now = DateTime.UtcNow;
 
         var row = await _db.UserXp.FindAsync(userId);
+        var previousXp = row?.TotalXp ?? 0;
+        var levelBefore = GetLevelInfo(previousXp).Level;
+
         if (row == null)
-        {
             _db.UserXp.Add(new UserXp { UserId = userId, TotalXp = xpEarned, UpdatedAt = now });
-        }
         else
         {
             row.TotalXp += xpEarned;
@@ -83,6 +90,10 @@ public class XpService : IXpService
         });
 
         await _db.SaveChangesAsync();
+
+        var levelAfter = GetLevelInfo(previousXp + xpEarned).Level;
+        await AwardLevelUpBoxesAsync(userId, levelBefore, levelAfter);
+
         return xpEarned;
     }
 
@@ -151,9 +162,15 @@ public class XpService : IXpService
             }
         }
 
+        var missionPreviousXp = 0;
+        var missionLevelBefore = 0;
+
         if (xpAwarded > 0)
         {
             var row = await _db.UserXp.FindAsync(userId);
+            missionPreviousXp = row?.TotalXp ?? 0;
+            missionLevelBefore = GetLevelInfo(missionPreviousXp).Level;
+
             if (row == null)
             {
                 _db.UserXp.Add(new UserXp { UserId = userId, TotalXp = xpAwarded, UpdatedAt = now });
@@ -166,6 +183,17 @@ public class XpService : IXpService
         }
 
         await _db.SaveChangesAsync();
+
+        if (xpAwarded > 0)
+        {
+            var missionLevelAfter = GetLevelInfo(missionPreviousXp + xpAwarded).Level;
+            await AwardLevelUpBoxesAsync(userId, missionLevelBefore, missionLevelAfter);
+        }
+
+        // Award one box per newly completed mission
+        foreach (var _ in newlyCompleted)
+            await _lootBox.EarnBoxAsync(userId, "mission");
+
         return new MissionEvaluationResult(newlyCompleted, xpAwarded);
     }
 
@@ -208,6 +236,9 @@ public class XpService : IXpService
     {
         var now = DateTime.UtcNow;
         var row = await _db.UserXp.FindAsync(userId);
+        var previousXp = row?.TotalXp ?? 0;
+        var levelBefore = GetLevelInfo(previousXp).Level;
+
         if (row == null)
             _db.UserXp.Add(new UserXp { UserId = userId, TotalXp = xp, UpdatedAt = now });
         else
@@ -223,10 +254,20 @@ public class XpService : IXpService
         });
 
         await _db.SaveChangesAsync();
+
+        var levelAfter = GetLevelInfo(previousXp + xp).Level;
+        await AwardLevelUpBoxesAsync(userId, levelBefore, levelAfter);
+
         return xp;
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    private async Task AwardLevelUpBoxesAsync(Guid userId, int levelBefore, int levelAfter)
+    {
+        for (var lvl = levelBefore + 1; lvl <= levelAfter; lvl++)
+            await _lootBox.EarnBoxAsync(userId, "level_up");
+    }
 
     private record DailyAggregates(
         int TotalActivityCount,

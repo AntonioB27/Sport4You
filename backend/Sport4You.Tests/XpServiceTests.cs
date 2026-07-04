@@ -7,7 +7,7 @@ namespace Sport4You.Tests;
 
 public class XpServiceTests
 {
-    private readonly XpService _svc = new(null!);  // null DbContext — pure methods only
+    private readonly XpService _svc = new(null!, null!);  // null deps — pure methods only
 
     [Theory]
     [InlineData("running",     5.0,  null,    null,  100)]  // floor(5 * 20)   = 100

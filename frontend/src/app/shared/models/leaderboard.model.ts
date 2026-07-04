@@ -6,4 +6,5 @@ export interface LeaderboardEntry {
   totalPoints: number;
   rankTrend: number;
   activeAvatarImagePath?: string;
+  activeBorderCss?: string;
 }
