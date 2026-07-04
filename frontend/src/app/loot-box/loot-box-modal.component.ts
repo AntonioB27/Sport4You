@@ -1,11 +1,13 @@
-import { Component, Inject } from '@angular/core';
+import { Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { OpenBoxResult } from '../shared/models/border.model';
 
-type ModalState = 'idle' | 'opening' | 'revealed';
+// idle: loop video + OPEN · opening: API in flight, loop keeps playing ·
+// burst: rarity video plays once · revealed: reward card
+type ModalState = 'idle' | 'opening' | 'burst' | 'revealed';
 
 const RARITY_COLOR: Record<string, string> = {
   common: '#9E9E9E',
@@ -19,24 +21,25 @@ const RARITY_COLOR: Record<string, string> = {
   imports: [CommonModule, MatDialogModule, MatSnackBarModule],
   styles: [`
     .modal-wrap {
-      padding: 32px 28px 24px; text-align: center;
-      font-family: 'Nunito', system-ui, sans-serif; min-width: 300px;
+      padding: 28px 28px 24px; text-align: center;
+      font-family: 'Nunito', system-ui, sans-serif; min-width: 340px;
     }
 
-    /* ── Box graphic ── */
-    .box-graphic {
-      font-size: 80px; line-height: 1; display: block;
-      margin: 0 auto 24px; transition: transform .1s;
+    /* ── Box stage (videos) ── */
+    .box-stage {
+      position: relative; width: 300px; height: 300px; margin: 0 auto 20px;
+      border-radius: 18px; overflow: hidden; background: #0f1e3b;
+      box-shadow: 0 24px 44px -24px rgba(15,30,59,.8);
     }
-    .box-graphic.pop {
-      animation: popOpen .6s cubic-bezier(.36,.07,.19,.97);
+    .box-vid { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .box-vid.hidden-vid { opacity: 0; pointer-events: none; }
+
+    /* ── Reveal flash ── */
+    .reveal-flash {
+      position: fixed; inset: 0; background: #fff; pointer-events: none; z-index: 10;
+      animation: flashOut .5s ease-out both;
     }
-    @keyframes popOpen {
-      0%   { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
-      30%  { transform: scale(1.35); filter: drop-shadow(0 0 18px rgba(46,107,230,.7)); }
-      60%  { transform: scale(0.88); }
-      100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
-    }
+    @keyframes flashOut { from { opacity: 1; } to { opacity: 0; } }
 
     /* ── Reward card ── */
     .reward-card {
@@ -47,7 +50,7 @@ const RARITY_COLOR: Record<string, string> = {
       from { transform: translateY(18px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
-    .reward-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+    .reward-img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; object-position: 50% 22%; margin-bottom: 10px; }
     .reward-img.duplicate { opacity: .4; filter: grayscale(.8); }
     .rarity-badge {
       display: inline-block; border-radius: 999px; padding: 3px 12px;
@@ -74,17 +77,28 @@ const RARITY_COLOR: Record<string, string> = {
   `],
   template: `
     <div class="modal-wrap">
-      @if (state === 'idle' || state === 'opening') {
-        <span class="box-graphic" [class.pop]="state === 'opening'">📦</span>
+      @if (state !== 'revealed') {
+        <div class="box-stage">
+          <video #idleVid class="box-vid" [class.hidden-vid]="state === 'burst'"
+                 src="assets/videos/lootbox-idle.mp4"
+                 [muted]="true" autoplay loop playsinline
+                 (timeupdate)="onIdleTick(idleVid)"></video>
+          @if (burstSrc) {
+            <video #burstVid class="box-vid" [class.hidden-vid]="state !== 'burst'"
+                   [src]="burstSrc" [muted]="true" playsinline preload="auto"
+                   (ended)="onBurstEnded()"></video>
+          }
+        </div>
         <div class="btn-row">
-          <button class="btn btn-primary" (click)="open()" [disabled]="state === 'opening'">
-            OPEN
+          <button class="btn btn-primary" (click)="open()" [disabled]="state !== 'idle'">
+            {{ state === 'idle' ? 'OPEN' : 'OPENING…' }}
           </button>
-          <button class="btn btn-secondary" (click)="close()">DONE</button>
+          <button class="btn btn-secondary" (click)="close()" [disabled]="state === 'burst'">DONE</button>
         </div>
       }
 
       @if (state === 'revealed' && result) {
+        <div class="reveal-flash"></div>
         <div class="reward-card">
           <img class="reward-img" [class.duplicate]="result.wasDuplicate"
                [src]="result.imagePath" [alt]="result.name">
@@ -109,9 +123,16 @@ const RARITY_COLOR: Record<string, string> = {
   `,
 })
 export class LootBoxModalComponent {
+  @ViewChild('burstVid') burstVid?: ElementRef<HTMLVideoElement>;
+
   state: ModalState = 'idle';
   result: OpenBoxResult | null = null;
+  burstSrc = '';
   lastRemaining: number | undefined = undefined;
+
+  private pendingResult: OpenBoxResult | null = null;
+  private opensCount = 0;
+  private burstFallbackId: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { userId: string },
@@ -121,24 +142,58 @@ export class LootBoxModalComponent {
   ) {}
 
   open(): void {
+    if (this.state !== 'idle') return;
     this.state = 'opening';
-    setTimeout(() => {
-      this.api.openBox(this.data.userId).subscribe({
-        next: result => {
-          this.result = result;
-          this.lastRemaining = result.remainingBoxes;
-          this.state = 'revealed';
-        },
-        error: () => {
-          this.state = 'idle';
-          this.snackBar.open('Failed to open box. Please try again.', 'OK', { duration: 4000 });
-        },
-      });
-    }, 600);
+    this.opensCount++;
+
+    this.api.openBox(this.data.userId).subscribe({
+      next: result => {
+        this.pendingResult = result;
+        this.lastRemaining = result.remainingBoxes;
+        this.burstSrc = `assets/videos/lootbox-open-${result.rarity}.mp4`;
+        // Safety net: if the idle loop never hits its boundary (e.g. video
+        // failed to play), start the burst anyway after one loop length.
+        this.burstFallbackId = setTimeout(() => this.startBurst(), 3500);
+      },
+      error: () => {
+        this.state = 'idle';
+        this.snackBar.open('Failed to open box. Please try again.', 'OK', { duration: 4000 });
+      },
+    });
+  }
+
+  // The idle clip's first and last frames match the burst clips' first frame,
+  // so cutting at the loop boundary is seamless.
+  onIdleTick(idle: HTMLVideoElement): void {
+    if (this.state === 'opening' && this.pendingResult && idle.currentTime < 0.15) {
+      this.startBurst();
+    }
+  }
+
+  private startBurst(): void {
+    if (this.state !== 'opening' || !this.pendingResult) return;
+    if (this.burstFallbackId) { clearTimeout(this.burstFallbackId); this.burstFallbackId = null; }
+
+    this.state = 'burst';
+    const vid = this.burstVid?.nativeElement;
+    if (vid) {
+      // Repeat opens skip some ceremony
+      vid.playbackRate = this.opensCount > 1 ? 1.5 : 1;
+      vid.play().catch(() => this.onBurstEnded());
+    } else {
+      this.onBurstEnded();
+    }
+  }
+
+  onBurstEnded(): void {
+    this.result = this.pendingResult;
+    this.pendingResult = null;
+    this.state = 'revealed';
   }
 
   reset(): void {
     this.result = null;
+    this.burstSrc = '';
     this.state = 'idle';
   }
 
