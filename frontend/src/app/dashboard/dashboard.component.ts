@@ -14,11 +14,12 @@ import { IconComponent } from '../shared/components/icon/icon.component';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
 import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
 import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
+import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent],
   styles: [`
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
@@ -372,6 +373,11 @@ import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
                 }
               }
             </div>
+
+            <!-- Today's Steps widget -->
+            <app-today-steps-card
+              [todaySteps]="data?.todaySteps ?? 0"
+              (stepsAdded)="loadData()"></app-today-steps-card>
 
             <!-- Log Activity CTA -->
             <button class="log-card" (click)="openLogActivity()">+ LOG ACTIVITY</button>
