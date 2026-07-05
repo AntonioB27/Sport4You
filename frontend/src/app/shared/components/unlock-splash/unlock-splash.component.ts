@@ -125,6 +125,10 @@ export class UnlockSplashComponent implements OnChanges {
   private xpRaf = 0;
 
   ngOnChanges(_: SimpleChanges): void {
+    this.currentAchievement = null;
+    this.achievementQueue = [];
+    this.currentAvatar = null;
+    this.avatarQueue = [];
     const achievements = this.achievements ?? [];
     const avatars = this.avatars ?? [];
     if (achievements.length > 0) {
@@ -135,8 +139,6 @@ export class UnlockSplashComponent implements OnChanges {
     } else if (avatars.length > 0) {
       this.currentAvatar = avatars[0];
       this.avatarQueue = avatars.slice(1);
-    } else {
-      this.finished.emit();
     }
   }
 
