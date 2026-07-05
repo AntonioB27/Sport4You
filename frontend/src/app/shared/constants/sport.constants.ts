@@ -17,5 +17,5 @@ export const SPORT_ICON_NAMES: Record<string, string> = {
 };
 
 export const SPORTS = [
-  'running', 'walking', 'cycling', 'swimming', 'gym', 'daily_steps',
+  'running', 'walking', 'cycling', 'swimming', 'gym',
 ] as const;

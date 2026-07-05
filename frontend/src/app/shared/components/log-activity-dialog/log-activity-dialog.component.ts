@@ -20,7 +20,6 @@ const SPORTS: Sport[] = [
   { key:'cycling',     name:'Cycling',     label:'DISTANCE', unit:'km',    step:1,   min:1,   ppu:25,   video:'assets/videos/sporty_bk.mp4',  bg:'linear-gradient(160deg,#1b5e20,#2e7d32 45%,#43a047)', pose:'assets/sporty_bike.png' },
   { key:'swimming',    name:'Swimming',    label:'DURATION', unit:'min',   step:5,   min:5,   ppu:15,   video:'assets/videos/sporty_sw.mp4',  bg:'linear-gradient(160deg,#004d40,#00695c 45%,#00897b)', pose:'assets/sporty_swimming.png' },
   { key:'gym',         name:'Gym',         label:'DURATION', unit:'min',   step:5,   min:5,   ppu:5,    video:'assets/videos/sporty_wl.mp4',  bg:'linear-gradient(160deg,#4a148c,#6a1b9a 45%,#8e24aa)', pose:'assets/sporty_gym.png' },
-  { key:'daily_steps', name:'Daily Steps', label:'STEPS',    unit:'steps', step:500, min:500, ppu:0.01, video:'',                             bg:'linear-gradient(160deg,#bf360c,#d84315 45%,#f4511e)', pose:'assets/sporty_wave.png' },
 ];
 
 @Component({
