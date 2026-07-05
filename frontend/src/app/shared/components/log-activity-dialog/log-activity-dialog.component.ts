@@ -7,7 +7,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
 import { ActivityLoggedService } from '../../services/activity-logged.service';
 import { UnlockedAchievement, UnlockedAvatar } from '../../models/dashboard.model';
-import { achievementIconPath } from '../../utils/achievement-icon';
+import { UnlockSplashComponent } from '../unlock-splash/unlock-splash.component';
 
 interface Sport {
   key: string; name: string; label: string; unit: string;
@@ -26,7 +26,7 @@ const SPORTS: Sport[] = [
 @Component({
   selector: 'app-log-activity-dialog',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, UnlockSplashComponent],
   styles: [`
     @keyframes s4y-conf { 0%{transform:translateY(-14px) rotate(0);opacity:0} 15%{opacity:1} 100%{transform:translateY(360px) rotate(420deg);opacity:0} }
     @keyframes s4y-pop  { 0%{transform:scale(.5) rotate(-8deg);opacity:0} 55%{transform:scale(1.1) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
@@ -192,45 +192,14 @@ const SPORTS: Sport[] = [
     .conf-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff; font-family:'Chakra Petch',sans-serif; font-weight:700; padding:8px 16px; border-radius:999px; font-size:13px; }
     .conf-pill-row { margin-bottom:16px; }
 
-    /* unlock splash (achievements + avatars) */
-    .splash {
-      position:absolute; inset:0; border-radius:34px; z-index:50;
-      overflow:hidden; display:flex; flex-direction:column; justify-content:flex-end;
-      background:#0e1a34;
-    }
-    .splash-art {
-      position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-      animation:s4y-kenburns 8s ease-out both;
-    }
-    @keyframes s4y-kenburns { from { transform:scale(1); } to { transform:scale(1.12); } }
+    /* shared splash utilities (conf-splash reuses these) */
     .splash-wash { position:absolute; inset:0; }
-    .splash-wash.bronze { background:linear-gradient(180deg, transparent 38%, rgba(74,42,10,.82) 72%, rgba(46,24,4,.97)); }
-    .splash-wash.silver { background:linear-gradient(180deg, transparent 38%, rgba(42,52,70,.82) 72%, rgba(20,28,42,.97)); }
-    .splash-wash.gold   { background:linear-gradient(180deg, transparent 38%, rgba(96,62,0,.82) 72%, rgba(58,36,0,.97)); }
-    .splash-wash.blue   { background:linear-gradient(180deg, transparent 38%, rgba(23,59,146,.82) 72%, rgba(12,30,74,.97)); }
     .splash-flash { position:absolute; inset:0; z-index:60; pointer-events:none; animation:s4y-flash .4s ease-out both; }
-    .splash-flash.bronze { background:#F5D3A3; }
-    .splash-flash.silver { background:#E8EEF7; }
-    .splash-flash.gold   { background:#FDE9A7; }
-    .splash-flash.blue   { background:#9db3dd; }
     @keyframes s4y-flash { from { opacity:.9; } to { opacity:0; } }
-    .splash-shimmer {
-      position:absolute; inset:0; z-index:55; pointer-events:none;
-      background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.4) 48%, transparent 60%);
-      background-size:220% 100%; animation:s4y-shimmer 1.6s ease-out .3s both;
-    }
-    @keyframes s4y-shimmer { from { background-position:220% 0; } to { background-position:-120% 0; } }
     .splash-content { position:relative; z-index:58; padding:0 30px 28px; }
     .splash-item { animation:s4y-rise .5s cubic-bezier(.2,.7,.3,1) both; }
     @keyframes s4y-rise { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
     .splash-tag { font-family:'Chakra Petch',sans-serif; font-size:11px; letter-spacing:.28em; font-weight:700; color:#C6E63B; text-shadow:0 0 14px rgba(198,230,59,.6); margin-bottom:8px; }
-    .splash-tier { font-family:'Chakra Petch',sans-serif; font-size:12px; letter-spacing:.24em; font-weight:700; margin-bottom:6px; }
-    .splash-tier.bronze { color:#F5D3A3; }
-    .splash-tier.silver { color:#dfe7f2; }
-    .splash-tier.gold   { color:#FDE9A7; }
-    .splash-name { font-family:'Chakra Petch',sans-serif; font-size:32px; font-weight:700; color:#fff; line-height:1.05; margin-bottom:6px; text-shadow:0 4px 18px rgba(0,0,0,.5); }
-    .splash-desc { font-family:'Nunito',sans-serif; font-size:14px; color:rgba(255,255,255,.85); margin-bottom:10px; max-width:300px; }
-    .splash-xp { font-family:'Chakra Petch',sans-serif; font-size:22px; font-weight:700; color:#C6E63B; letter-spacing:.05em; margin-bottom:16px; text-shadow:0 0 16px rgba(198,230,59,.5); }
     .splash-confetti { position:absolute; border-radius:2px; z-index:57; }
     .ach-next  {
       background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E;
@@ -362,52 +331,10 @@ const SPORTS: Sport[] = [
       </div>
       }
 
-      <!-- Achievement unlock splash (queued, shown on top of conf) -->
-      @for (ach of currentAchievement ? [currentAchievement] : []; track ach.id) {
-      <div class="splash">
-        <img class="splash-art" [src]="achievementArt(ach)" [alt]="ach.name">
-        <div class="splash-wash" [class]="ach.tier"></div>
-        @if (ach.tier === 'gold') { <div class="splash-shimmer"></div> }
-        <div class="splash-flash" [class]="ach.tier"></div>
-        <div class="splash-confetti" style="left:14%;top:8%;width:11px;height:11px;background:#C6E63B;animation:s4y-conf 2.4s ease-in infinite;"></div>
-        <div class="splash-confetti" style="left:38%;top:5%;width:10px;height:10px;background:#FFD54A;border-radius:50%;animation:s4y-conf 2.9s ease-in .3s infinite;"></div>
-        <div class="splash-confetti" style="left:62%;top:7%;width:12px;height:12px;background:#fff;animation:s4y-conf 2.2s ease-in .5s infinite;"></div>
-        <div class="splash-confetti" style="left:84%;top:11%;width:10px;height:10px;background:#C6E63B;border-radius:50%;animation:s4y-conf 3.1s ease-in .1s infinite;"></div>
-        <div class="splash-confetti" style="left:26%;top:4%;width:9px;height:9px;background:#FFD54A;animation:s4y-conf 2.6s ease-in .7s infinite;"></div>
-        <div class="splash-content">
-          <div class="splash-item splash-tag" style="animation-delay:.15s">ACHIEVEMENT UNLOCKED</div>
-          <div class="splash-item splash-tier" [class]="ach.tier" style="animation-delay:.23s">
-            {{ ach.tier.toUpperCase() }} · {{ rarityLabel(ach.tier) }}
-          </div>
-          <div class="splash-item splash-name" style="animation-delay:.31s">{{ ach.name }}</div>
-          <div class="splash-item splash-desc" style="animation-delay:.39s">{{ ach.description }}</div>
-          <div class="splash-item splash-xp" style="animation-delay:.47s">+{{ displayedXp }} XP</div>
-          <button class="splash-item ach-next" style="animation-delay:.55s" (click)="nextAchievement()">
-            {{ achievementQueue.length > 0 ? 'NEXT →' : 'AWESOME!' }}
-          </button>
-        </div>
-      </div>
-      }
-
-      <!-- Avatar unlock splash (shown after all achievement splashes) -->
-      @for (av of currentAvatar ? [currentAvatar] : []; track av.id) {
-      <div class="splash">
-        <img class="splash-art" [src]="av.imagePath" [alt]="av.name">
-        <div class="splash-wash blue"></div>
-        <div class="splash-flash blue"></div>
-        <div class="splash-confetti" style="left:14%;top:8%;width:11px;height:11px;background:#C6E63B;animation:s4y-conf 2.4s ease-in infinite;"></div>
-        <div class="splash-confetti" style="left:38%;top:5%;width:10px;height:10px;background:#FFD54A;border-radius:50%;animation:s4y-conf 2.9s ease-in .3s infinite;"></div>
-        <div class="splash-confetti" style="left:62%;top:7%;width:12px;height:12px;background:#fff;animation:s4y-conf 2.2s ease-in .5s infinite;"></div>
-        <div class="splash-content">
-          <div class="splash-item splash-tag" style="animation-delay:.15s">AVATAR UNLOCKED</div>
-          <div class="splash-item splash-name" style="animation-delay:.23s">{{ av.name }}</div>
-          <div class="splash-item splash-desc" style="animation-delay:.31s">{{ av.description }}</div>
-          <button class="splash-item ach-next" style="animation-delay:.39s" (click)="nextAvatar()">
-            {{ avatarQueue.length > 0 ? 'NEXT →' : 'NICE!' }}
-          </button>
-        </div>
-      </div>
-      }
+      <app-unlock-splash
+        [achievements]="unlockedAchievements"
+        [avatars]="unlockedAvatars"
+        (finished)="onUnlocksFinished()"></app-unlock-splash>
     </div>
   `,
 })
@@ -430,13 +357,10 @@ export class LogActivityDialogComponent implements AfterViewInit {
   errorMsg = '';
   earnedPoints = 0;
   earnedXp = 0;
-  achievementQueue: UnlockedAchievement[] = [];
-  currentAchievement: UnlockedAchievement | null = null;
-  displayedXp = 0;
   displayedPoints = 0;
+  unlockedAchievements: UnlockedAchievement[] = [];
+  unlockedAvatars: UnlockedAvatar[] = [];
   private tickerIds: Record<string, number> = {};
-  avatarQueue: UnlockedAvatar[] = [];
-  currentAvatar: UnlockedAvatar | null = null;
   frontIdx = 0;
   busy = false;
 
@@ -604,7 +528,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
         this.earnedXp = res.xpEarned ?? 0;
         this.activityLogged.notify();
         this.logged = true;
-        this.startCountUp('displayedPoints', res.points);
+        this.startCountUp(res.points);
 
         const missions: { description: string; xpEarned: number }[] = res.missionsCompleted ?? [];
         missions.forEach((m, i) => {
@@ -617,18 +541,8 @@ export class LogActivityDialogComponent implements AfterViewInit {
           }, i * 600);
         });
 
-        const achievements: UnlockedAchievement[] = res.achievementsUnlocked ?? [];
-        const avatars: UnlockedAvatar[] = res.avatarsUnlocked ?? [];
-
-        if (achievements.length > 0) {
-          this.achievementQueue = achievements.slice(1);
-          this.currentAchievement = achievements[0];
-          this.startXpTicker(achievements[0].xpReward);
-          this.avatarQueue = avatars;         // shown after achievements are dismissed
-        } else if (avatars.length > 0) {
-          this.avatarQueue = avatars.slice(1);
-          this.currentAvatar = avatars[0];
-        }
+        this.unlockedAchievements = res.achievementsUnlocked ?? [];
+        this.unlockedAvatars = res.avatarsUnlocked ?? [];
       },
       error: () => {
         this.loading = false;
@@ -637,42 +551,20 @@ export class LogActivityDialogComponent implements AfterViewInit {
     });
   }
 
-  rarityLabel(tier: string): string {
-    return { bronze: 'COMMON', silver: 'RARE', gold: 'LEGENDARY' }[tier] ?? '';
-  }
-
-  achievementArt(a: UnlockedAchievement): string {
-    return achievementIconPath(a);
-  }
-
-  private startCountUp(prop: 'displayedXp' | 'displayedPoints', target: number): void {
-    cancelAnimationFrame(this.tickerIds[prop] ?? 0);
+  private startCountUp(target: number): void {
+    const key = 'displayedPoints';
+    cancelAnimationFrame(this.tickerIds[key] ?? 0);
     const start = performance.now();
     const duration = 800;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration);
-      this[prop] = Math.round(target * (1 - Math.pow(1 - t, 3)));
-      if (t < 1) this.tickerIds[prop] = requestAnimationFrame(tick);
+      this.displayedPoints = Math.round(target * (1 - Math.pow(1 - t, 3)));
+      if (t < 1) this.tickerIds[key] = requestAnimationFrame(tick);
     };
-    this.tickerIds[prop] = requestAnimationFrame(tick);
+    this.tickerIds[key] = requestAnimationFrame(tick);
   }
 
-  private startXpTicker(target: number): void {
-    this.startCountUp('displayedXp', target);
-  }
-
-  nextAchievement(): void {
-    this.currentAchievement = this.achievementQueue.shift() ?? null;
-    if (this.currentAchievement) {
-      this.startXpTicker(this.currentAchievement.xpReward);
-    } else if (this.avatarQueue.length > 0) {
-      this.currentAvatar = this.avatarQueue.shift() ?? null;
-    }
-  }
-
-  nextAvatar(): void {
-    this.currentAvatar = this.avatarQueue.shift() ?? null;
-  }
+  onUnlocksFinished(): void { /* conf-splash DONE button remains for the user */ }
 
   done() {
     this.dialogRef.close({ points: this.earnedPoints });
