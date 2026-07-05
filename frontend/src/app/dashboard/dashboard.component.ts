@@ -247,7 +247,8 @@ import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.com
               <div class="level-ring" [class.level-ring--active]="levelUpActive"></div>
               <div class="hero-mascot">
                 <div class="hero-mascot-shadow"></div>
-                <img [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
+                <img [style.border]="data.activeBorderCss ?? '4px solid #C6E63B'"
+                     [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
                      [alt]="data.activeAvatar?.name ?? 'Sporty'" />
               </div>
               <div class="level-badge" [class.level-badge--pop]="levelUpActive">
@@ -326,9 +327,9 @@ import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.com
                      class="lb-row" [class.me]="e.isMe">
                   <span class="lb-rank" [class.me]="e.isMe" [class.grey]="i > 0 && !e.isMe">{{ e.rank }}</span>
                   @if (e.activeAvatarImagePath) {
-                    <img class="lb-av" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
+                    <img class="lb-av" [style.border]="e.activeBorderCss ?? '2px solid #E3EAF5'" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
                   } @else {
-                    <span class="lb-av-initial">{{ e.firstName[0] }}</span>
+                    <span class="lb-av-initial" [style.border]="e.activeBorderCss ?? '2px solid #E3EAF5'">{{ e.firstName[0] }}</span>
                   }
                   <span class="lb-name">{{ e.firstName }} {{ e.lastName }}{{ e.isMe ? ' (You)' : '' }}</span>
                   <span class="lb-pts" [class.me]="e.isMe">{{ e.totalPoints | number }}</span>
@@ -525,8 +526,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
     const ref = this.dialog.open(LootBoxModalComponent, {
-      data: { userId },
-      width: '380px',
+      data: { userId, pending: this.pendingBoxes },
+      width: '400px',
       disableClose: false,
     });
     ref.afterClosed().subscribe(remaining => {
