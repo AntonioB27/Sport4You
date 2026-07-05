@@ -22,13 +22,15 @@ public class AchievementsController : ControllerBase
     {
         var achievements = await _achievements.GetUserAchievementsAsync(userId);
         var xpSummary = await _xp.GetXpSummaryAsync(userId);
+        var prestigeLevel = await _xp.GetPrestigeLevelAsync(userId);
         var xpDto = new XpDto(
             xpSummary.TotalXp,
             xpSummary.LevelInfo.Level,
             xpSummary.LevelInfo.Title,
             xpSummary.LevelInfo.XpInLevel,
             xpSummary.LevelInfo.XpForNextLevel,
-            xpSummary.LevelInfo.XpPercent);
+            xpSummary.LevelInfo.XpPercent,
+            prestigeLevel);
 
         return Ok(new AchievementsPageDto(xpDto, achievements));
     }

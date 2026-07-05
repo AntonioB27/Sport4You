@@ -68,11 +68,13 @@ public class XpService : IXpService
         Guid userId, Guid activityId, string sport,
         decimal? distance, string? duration, int? steps)
     {
-        var xpEarned = CalculateActivityXp(sport, distance, duration, steps);
+        var baseXp = CalculateActivityXp(sport, distance, duration, steps);
         var now = DateTime.UtcNow;
 
         var row = await _db.UserXp.FindAsync(userId);
         var previousXp = row?.TotalXp ?? 0;
+        var prestigeLevel = row?.PrestigeLevel ?? 0;
+        var xpEarned = (int)(baseXp * (1 + 0.05 * prestigeLevel));
         var levelBefore = GetLevelInfo(previousXp).Level;
 
         if (row == null)
@@ -259,6 +261,29 @@ public class XpService : IXpService
         await AwardLevelUpBoxesAsync(userId, levelBefore, levelAfter);
 
         return xp;
+    }
+
+    public async Task<int> GetPrestigeLevelAsync(Guid userId)
+        => (await _db.UserXp.FindAsync(userId))?.PrestigeLevel ?? 0;
+
+    public async Task<PrestigeResult> PrestigeAsync(Guid userId)
+    {
+        var row = await _db.UserXp.FindAsync(userId);
+        var totalXp = row?.TotalXp ?? 0;
+        if (GetLevelInfo(totalXp).Level < Levels.Length)
+            return new PrestigeResult(false, "Reach Level 10 (IMMORTAL) before you can prestige.", null);
+
+        if (row == null)
+        {
+            row = new UserXp { UserId = userId, TotalXp = 0, UpdatedAt = DateTime.UtcNow };
+            _db.UserXp.Add(row);
+        }
+        row.TotalXp = 0;
+        row.PrestigeLevel += 1;
+        row.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        return new PrestigeResult(true, null, new XpSummary(0, GetLevelInfo(0)));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

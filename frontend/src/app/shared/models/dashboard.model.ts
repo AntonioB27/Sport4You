@@ -36,6 +36,7 @@ export interface XpInfo {
   xpInLevel: number;
   xpForNextLevel: number;
   xpPercent: number;
+  prestigeLevel: number;
 }
 
 export interface DailyMissionItem {

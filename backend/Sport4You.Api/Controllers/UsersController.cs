@@ -11,12 +11,14 @@ public class UsersController : ControllerBase
     private readonly IUserService _users;
     private readonly IDashboardService _dashboard;
     private readonly IActivityService _activities;
+    private readonly IXpService _xp;
 
-    public UsersController(IUserService users, IDashboardService dashboard, IActivityService activities)
+    public UsersController(IUserService users, IDashboardService dashboard, IActivityService activities, IXpService xp)
     {
         _users = users;
         _dashboard = dashboard;
         _activities = activities;
+        _xp = xp;
     }
 
     [HttpPost]
@@ -62,6 +64,24 @@ public class UsersController : ControllerBase
             missionsCompleted = result.MissionsCompleted,
             achievementsUnlocked = result.AchievementsUnlocked,
             avatarsUnlocked = result.AvatarsUnlocked,
+        });
+    }
+
+    [HttpPost("{userId}/prestige")]
+    public async Task<IActionResult> Prestige(Guid userId)
+    {
+        var result = await _xp.PrestigeAsync(userId);
+        if (!result.Success) return BadRequest(new { error = result.Error });
+        var s = result.Summary!;
+        return Ok(new
+        {
+            totalXp = s.TotalXp,
+            level = s.LevelInfo.Level,
+            levelTitle = s.LevelInfo.Title,
+            xpInLevel = s.LevelInfo.XpInLevel,
+            xpForNextLevel = s.LevelInfo.XpForNextLevel,
+            xpPercent = s.LevelInfo.XpPercent,
+            prestigeLevel = await _xp.GetPrestigeLevelAsync(userId),
         });
     }
 }

@@ -38,6 +38,7 @@ public class DashboardService : IDashboardService
 
         var activities = await _activities.GetByUserIdAsync(userId);
         var xpSummary = await _xp.GetXpSummaryAsync(userId);
+        var prestigeLevel = await _xp.GetPrestigeLevelAsync(userId);
         var missionStatuses = await _xp.GetDailyMissionStatusAsync(userId, DateOnly.FromDateTime(DateTime.UtcNow));
         var allAchievements = await _achievements.GetUserAchievementsAsync(userId);
         var recentAchievements = allAchievements
@@ -82,7 +83,8 @@ public class DashboardService : IDashboardService
             xpSummary.LevelInfo.Title,
             xpSummary.LevelInfo.XpInLevel,
             xpSummary.LevelInfo.XpForNextLevel,
-            xpSummary.LevelInfo.XpPercent);
+            xpSummary.LevelInfo.XpPercent,
+            prestigeLevel);
 
         var missionDtos = missionStatuses.Select(m => new DailyMissionDto(
             m.Id, m.Tier, m.Description, m.XpReward,

@@ -136,7 +136,12 @@ import { ContributionHeatmapComponent } from './contribution-heatmap/contributio
               <span class="hero-initial">{{ data.user.firstName[0] }}</span>
             }
             <div class="hero-name">{{ data.user.firstName }} {{ data.user.lastName }}</div>
-            <div class="level-badge">Lv. {{ data.xp.level }} · {{ data.xp.levelTitle }}</div>
+            <div class="level-badge">
+              @if (data.xp.prestigeLevel > 0) {
+                <span style="font-weight:800; margin-right:4px;">★{{ data.xp.prestigeLevel }}</span>
+              }
+              Lv. {{ data.xp.level }} · {{ data.xp.levelTitle }}
+            </div>
             @if (!isOwnProfile) {
               <button class="equip-btn" style="width:auto; padding:8px 18px; margin-bottom:16px;"
                       (click)="toggleRival()">

@@ -51,9 +51,9 @@ public record CompletedMissionDto(string Description, int XpEarned);
 
 public record XpDto(
     int Total, int Level, string LevelTitle,
-    int XpInLevel, int XpForNextLevel, int XpPercent)
+    int XpInLevel, int XpForNextLevel, int XpPercent, int PrestigeLevel)
 {
-    public XpDto() : this(0, 0, string.Empty, 0, 0, 0) { }
+    public XpDto() : this(0, 0, string.Empty, 0, 0, 0, 0) { }
 }
 
 public record DailyMissionDto(

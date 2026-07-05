@@ -5,6 +5,7 @@ namespace Sport4You.Api.Services;
 public record LevelInfo(int Level, string Title, int XpInLevel, int XpForNextLevel, int XpPercent);
 public record XpSummary(int TotalXp, LevelInfo LevelInfo);
 public record MissionEvaluationResult(List<CompletedMissionDto> NewlyCompleted, int XpAwarded);
+public record PrestigeResult(bool Success, string? Error, XpSummary? Summary);
 public record DailyMissionStatus(
     Guid Id, string Tier, string Description, int XpReward,
     bool Completed, double Progress, double ProgressMax);
@@ -21,4 +22,6 @@ public interface IXpService
     Task<XpSummary> GetXpSummaryAsync(Guid userId);
     Task<DailyMissionStatus[]> GetDailyMissionStatusAsync(Guid userId, DateOnly date);
     Task<int> AwardGenericXpAsync(Guid userId, int xp, string source, Guid sourceId);
+    Task<int> GetPrestigeLevelAsync(Guid userId);
+    Task<PrestigeResult> PrestigeAsync(Guid userId);
 }

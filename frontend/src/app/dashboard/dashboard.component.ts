@@ -113,6 +113,15 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
       color: #C6E63B; font-family: 'Chakra Petch', sans-serif; font-weight: 700;
       font-size: 12px; letter-spacing: .14em; padding: 5px 12px; border-radius: 999px;
     }
+    .prestige-chip {
+      font-weight: 800; color: #C6E63B; margin-right: 4px; text-shadow: 0 0 8px rgba(198,230,59,.7);
+    }
+    .prestige-btn {
+      display: block; margin: 8px auto 0; border: 1px solid rgba(198,230,59,.5); cursor: pointer;
+      background: rgba(198,230,59,.14); color: #C6E63B; font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700; font-size: 11px; letter-spacing: .08em; padding: 6px 16px; border-radius: 999px;
+    }
+    .prestige-btn:hover { background: rgba(198,230,59,.24); }
     .hero-points {
       font-family: 'Chakra Petch', sans-serif; font-size: 46px; font-weight: 700;
       color: #fff; line-height: 1; margin: 14px 0 2px; text-shadow: 0 0 20px rgba(46,107,230,.5);
@@ -253,8 +262,14 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
                      [alt]="data.activeAvatar?.name ?? 'Sporty'" />
               </div>
               <div class="level-badge" [class.level-badge--pop]="levelUpActive">
+                @if (prestigeLevel > 0) {
+                  <span class="prestige-chip">★{{ prestigeLevel }}</span>
+                }
                 <app-icon name="lightning" [size]="14" /> LEVEL {{ displayedLevel }} · {{ levelTitle }}
               </div>
+              @if (isMaxLevel) {
+                <button class="prestige-btn" (click)="promptPrestige()">PRESTIGE</button>
+              }
               <div class="hero-points">{{ data.totalPoints | number }}</div>
               <div class="hero-pts-label">TOTAL POINTS</div>
               <div class="xp-meta">
@@ -422,6 +437,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get xpPercent(): number { return this.data?.xp?.xpPercent ?? 0; }
   get xpInLevel(): number { return this.data?.xp?.xpInLevel ?? 0; }
   get xpForNextLevel(): number { return this.data?.xp?.xpForNextLevel ?? 200; }
+  get prestigeLevel(): number { return this.data?.xp?.prestigeLevel ?? 0; }
+  get isMaxLevel(): boolean { return this.level >= 10; }
 
   get missionsDone(): number { return this.data?.dailyMissions?.filter(m => m.completed).length ?? 0; }
 
@@ -544,6 +561,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ref.afterClosed().subscribe(remaining => {
       if (remaining !== undefined) this.pendingBoxes = remaining;
     });
+  }
+
+  promptPrestige(): void {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    this.snackBar.open(
+      'Reset to Level 1 for +5% activity XP, forever?', 'Prestige', { duration: 8000 }
+    ).onAction().subscribe(() => this.confirmPrestige(userId));
+  }
+
+  private confirmPrestige(userId: string): void {
+    this.api.prestige(userId).subscribe({
+      next: ({ prestigeLevel }) => {
+        this.loadData(userId);
+        this.triggerPrestigeCelebration();
+        this.snackBar.open(
+          `🎉 Prestige ${prestigeLevel}! +${prestigeLevel * 5}% activity XP, forever.`, '',
+          { duration: 5000, panelClass: 's4y-toast' }
+        );
+      },
+      error: () => this.snackBar.open('Failed to prestige. Please try again.', 'OK', { duration: 4000 }),
+    });
+  }
+
+  private triggerPrestigeCelebration(): void {
+    this.levelUpActive = true;
+    this.xpFlashActive = true;
+    this.displayedLevel = 1;
+    this._levelReset = setTimeout(() => { this.levelUpActive = false; }, 2000);
   }
 
   tierIcon(tier: string): string {

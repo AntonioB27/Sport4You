@@ -78,4 +78,8 @@ export class ApiService {
   clearRival(userId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/users/${userId}/rival`);
   }
+
+  prestige(userId: string): Observable<{ prestigeLevel: number }> {
+    return this.http.post<{ prestigeLevel: number }>(`${this.base}/users/${userId}/prestige`, {});
+  }
 }
