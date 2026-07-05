@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LeaderboardEntry } from '../models/leaderboard.model';
 import {
-  AchievementsPage, AvatarStatus, DashboardData,
+  AddStepsResponse, AchievementsPage, AvatarStatus, DashboardData,
   LogActivityRequest, LogActivityResponse,
 } from '../models/dashboard.model';
 import { BorderStatus, BoxInfo, OpenBoxResult } from '../models/border.model';
@@ -33,6 +33,10 @@ export class ApiService {
 
   logActivity(request: LogActivityRequest): Observable<LogActivityResponse> {
     return this.http.post<LogActivityResponse>(`${this.base}/activities`, request);
+  }
+
+  addSteps(userId: string, steps: number): Observable<AddStepsResponse> {
+    return this.http.post<AddStepsResponse>(`${this.base}/users/${userId}/steps`, { steps });
   }
 
   getAchievements(userId: string): Observable<AchievementsPage> {

@@ -4,6 +4,7 @@ export interface DashboardData {
   totalPoints: number;
   rank: number;
   currentStreak: number;
+  todaySteps: number;
   activities: ActivityItem[];
   pointsOverTime: { date: string; points: number }[];
   sportBreakdown: { sport: string; points: number }[];
@@ -11,6 +12,7 @@ export interface DashboardData {
   dailyMissions: DailyMissionItem[];
   recentAchievements: AchievementStatus[];
   activeAvatar: AvatarStatus | null;
+  activeBorderCss: string | null;
 }
 
 export interface XpInfo {
@@ -97,6 +99,15 @@ export interface AvatarStatus extends UnlockedAvatar {
 export interface LogActivityResponse {
   activityId: string;
   points: number;
+  xpEarned: number;
+  missionsCompleted: CompletedMission[];
+  achievementsUnlocked: UnlockedAchievement[];
+  avatarsUnlocked: UnlockedAvatar[];
+}
+
+export interface AddStepsResponse {
+  todayTotalSteps: number;
+  pointsEarned: number;
   xpEarned: number;
   missionsCompleted: CompletedMission[];
   achievementsUnlocked: UnlockedAchievement[];
