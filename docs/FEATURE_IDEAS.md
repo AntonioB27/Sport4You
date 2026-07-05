@@ -7,8 +7,8 @@ making sense.
 
 ## Status
 
-- [ ] Rivals — **up next**
-- [ ] Contribution heatmap
+- [x] Rivals — shipped 2026-07-05
+- [ ] Contribution heatmap — **up next**
 - [ ] Prestige
 - [ ] Loot box pity timer
 - [ ] Personal records page
