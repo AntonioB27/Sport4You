@@ -66,4 +66,16 @@ export class ApiService {
   equipBorder(userId: string, borderId: string): Observable<void> {
     return this.http.put<void>(`${this.base}/users/${userId}/border`, { borderId });
   }
+
+  getRival(userId: string): Observable<{ rivalUserId: string | null }> {
+    return this.http.get<{ rivalUserId: string | null }>(`${this.base}/users/${userId}/rival`);
+  }
+
+  setRival(userId: string, rivalUserId: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/users/${userId}/rival`, { rivalUserId });
+  }
+
+  clearRival(userId: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/users/${userId}/rival`);
+  }
 }

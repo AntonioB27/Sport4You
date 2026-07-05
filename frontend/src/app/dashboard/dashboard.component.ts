@@ -15,11 +15,12 @@ import { LogActivityDialogComponent } from '../shared/components/log-activity-di
 import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
 import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
 import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.component';
+import { RivalCardComponent } from './rival-card/rival-card.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent, RivalCardComponent],
   styles: [`
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
@@ -337,6 +338,13 @@ import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.com
               </div>
             </div>
 
+            <!-- Rival -->
+            <app-rival-card
+              [rivalStatus]="data.rivalStatus"
+              [myFirstName]="data.user.firstName"
+              [myAvatarImagePath]="data.activeAvatar?.imagePath ?? null"
+              [myBorderCss]="data.activeBorderCss"></app-rival-card>
+
             <!-- Recent activity -->
             <div class="card">
               <div class="card-title">RECENT ACTIVITY</div>
@@ -463,6 +471,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       next: data => {
         const bootUp = this.isBootUp;
         this.data = data;
+        if (data.rivalStatus?.justFlipped && !data.rivalStatus.imAhead) {
+          this.snackBar.open(`${data.rivalStatus.firstName} just passed you!`, '', { duration: 4000, panelClass: 's4y-toast' });
+        }
         this.loadPendingBoxes(uid);
         if (data.xp) {
           this.userState.setXp(data.xp);

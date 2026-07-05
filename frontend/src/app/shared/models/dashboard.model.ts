@@ -1,4 +1,17 @@
 // frontend/src/app/shared/models/dashboard.model.ts
+export interface RivalStatus {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  imagePath: string | null;
+  borderCss: string | null;
+  myPoints: number;
+  rivalPoints: number;
+  pointsGap: number;
+  imAhead: boolean;
+  justFlipped: boolean;
+}
+
 export interface DashboardData {
   user: { firstName: string; lastName: string };
   totalPoints: number;
@@ -13,6 +26,7 @@ export interface DashboardData {
   recentAchievements: AchievementStatus[];
   activeAvatar: AvatarStatus | null;
   activeBorderCss: string | null;
+  rivalStatus: RivalStatus | null;
 }
 
 export interface XpInfo {

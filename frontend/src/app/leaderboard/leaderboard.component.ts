@@ -41,11 +41,11 @@ import { IconComponent } from '../shared/components/icon/icon.component';
 
     /* ── Ranked list ── */
     .list-card { background: #fff; border-radius: 20px; box-shadow: 0 12px 28px -16px rgba(16,32,62,.3); overflow: hidden; }
-    .list-header { display: grid; grid-template-columns: 52px 1fr 120px 80px; gap: 0; padding: 12px 20px 10px; border-bottom: 1px solid #EAEEF6; }
+    .list-header { display: grid; grid-template-columns: 52px 1fr 120px 80px 110px; gap: 0; padding: 12px 20px 10px; border-bottom: 1px solid #EAEEF6; }
     .list-header span { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: #8592ad; }
 
     .list-row {
-      display: grid; grid-template-columns: 52px 1fr 120px 80px; gap: 0;
+      display: grid; grid-template-columns: 52px 1fr 120px 80px 110px; gap: 0;
       padding: 13px 20px; align-items: center; border-bottom: 1px solid #F4F6FB;
       cursor: pointer; transition: background .12s;
     }
@@ -76,6 +76,14 @@ import { IconComponent } from '../shared/components/icon/icon.component';
     .trend.up { color: #4CAF50; }
     .trend.down { color: #f44336; }
     .trend.neutral { color: #b0b8cb; }
+
+    .rival-btn {
+      justify-self: end; border: 1px solid #d6e0ee; cursor: pointer;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: .06em;
+      color: #5c6881; background: #fff; padding: 7px 12px; border-radius: 8px; transition: opacity .15s;
+    }
+    .rival-btn:hover { opacity: .8; }
+    .rival-btn.active { color: #fff; background: linear-gradient(150deg,#2E6BE6,#1B47AE); border-color: transparent; }
 
     /* avatar thumbnails */
     .av-thumb, .av-initial {
@@ -155,6 +163,7 @@ import { IconComponent } from '../shared/components/icon/icon.component';
             <span>ATHLETE</span>
             <span>POINTS</span>
             <span style="text-align:right">7-DAY</span>
+            <span></span>
           </div>
           <div class="list-row"
                *ngFor="let e of entries; let i = index"
@@ -176,6 +185,14 @@ import { IconComponent } from '../shared/components/icon/icon.component';
             </div>
             <div class="pts-val" [class.me]="isMe(e)">{{ e.totalPoints | number }}</div>
             <div class="trend" [class]="trendClass(e.rankTrend)">{{ trendLabel(e.rankTrend) }}</div>
+            <div>
+              @if (!isMe(e)) {
+                <button class="rival-btn" [class.active]="e.userId === myRivalUserId"
+                        (click)="toggleRival(e, $event)">
+                  {{ e.userId === myRivalUserId ? 'YOUR RIVAL' : 'RIVAL' }}
+                </button>
+              }
+            </div>
           </div>
         </div>
       </ng-container>
@@ -186,6 +203,7 @@ export class LeaderboardComponent implements OnInit {
   entries: LeaderboardEntry[] = [];
   loading = true;
   private myId = localStorage.getItem('userId') ?? '';
+  myRivalUserId: string | null = null;
 
   constructor(private api: ApiService, private router: Router, private snackBar: MatSnackBar) {}
 
@@ -197,6 +215,12 @@ export class LeaderboardComponent implements OnInit {
         this.snackBar.open('Failed to load leaderboard. Please try again.', 'OK', { duration: 4000 });
       },
     });
+    if (this.myId) {
+      this.api.getRival(this.myId).subscribe({
+        next: r => { this.myRivalUserId = r.rivalUserId; },
+        error: () => {},
+      });
+    }
   }
 
   isMe(e: LeaderboardEntry) { return e.userId === this.myId; }
@@ -223,5 +247,29 @@ export class LeaderboardComponent implements OnInit {
 
   viewProfile(entry: LeaderboardEntry) {
     this.router.navigate(['/profile', entry.userId]);
+  }
+
+  toggleRival(e: LeaderboardEntry, event: Event): void {
+    event.stopPropagation();
+    if (!this.myId) return;
+
+    if (e.userId === this.myRivalUserId) {
+      this.api.clearRival(this.myId).subscribe({
+        next: () => {
+          this.myRivalUserId = null;
+          this.snackBar.open('Rival cleared.', '', { duration: 2500 });
+        },
+      });
+    } else {
+      this.api.setRival(this.myId, e.userId).subscribe({
+        next: () => {
+          this.myRivalUserId = e.userId;
+          this.snackBar.open(`${e.firstName} is now your rival!`, '', { duration: 2500 });
+        },
+        error: () => {
+          this.snackBar.open('Failed to set rival. Please try again.', 'OK', { duration: 4000 });
+        },
+      });
+    }
   }
 }

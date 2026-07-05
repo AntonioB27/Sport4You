@@ -57,6 +57,13 @@ public class AppDbContext : DbContext
             .HasIndex(ub => new { ub.UserId, ub.BorderId })
             .IsUnique();
 
+        modelBuilder.Entity<User>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(u => u.RivalUserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<LootBox>()
             .HasOne<LootBoxReward>()
             .WithMany()

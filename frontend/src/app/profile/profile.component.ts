@@ -136,6 +136,12 @@ import { AvatarLockerComponent } from './avatar-locker.component';
             }
             <div class="hero-name">{{ data.user.firstName }} {{ data.user.lastName }}</div>
             <div class="level-badge">Lv. {{ data.xp.level }} · {{ data.xp.levelTitle }}</div>
+            @if (!isOwnProfile) {
+              <button class="equip-btn" style="width:auto; padding:8px 18px; margin-bottom:16px;"
+                      (click)="toggleRival()">
+                {{ userId === myRivalUserId ? '✓ YOUR RIVAL' : 'SET AS RIVAL' }}
+              </button>
+            }
             <div class="stats-row">
               <div class="stat-chip">
                 <span class="stat-label">RANK</span>
@@ -224,6 +230,8 @@ export class ProfileComponent implements OnInit {
   error = false;
 
   activeTab: 'overview' | 'avatars' = 'overview';
+  myRivalUserId: string | null = null;
+  private myId = localStorage.getItem('userId') ?? '';
 
   avatars: AvatarStatus[] = [];
   avatarsLoading = false;
@@ -249,7 +257,15 @@ export class ProfileComponent implements OnInit {
       next: data => {
         this.data = data;
         this.loading = false;
-        if (!this.isOwnProfile) this.loadAvatars();
+        if (!this.isOwnProfile) {
+          this.loadAvatars();
+          if (this.myId) {
+            this.api.getRival(this.myId).subscribe({
+              next: r => { this.myRivalUserId = r.rivalUserId; },
+              error: () => {},
+            });
+          }
+        }
       },
       error: () => { this.loading = false; this.error = true; },
     });
@@ -332,5 +348,19 @@ export class ProfileComponent implements OnInit {
       },
       error: () => { this.equipping = false; this.snackBar.open('Failed to equip avatar. Please try again.', 'OK', { duration: 4000 }); },
     });
+  }
+
+  toggleRival(): void {
+    if (!this.myId) return;
+    if (this.userId === this.myRivalUserId) {
+      this.api.clearRival(this.myId).subscribe({
+        next: () => { this.myRivalUserId = null; this.snackBar.open('Rival cleared.', '', { duration: 2500 }); },
+      });
+    } else {
+      this.api.setRival(this.myId, this.userId).subscribe({
+        next: () => { this.myRivalUserId = this.userId; this.snackBar.open('Rival set!', '', { duration: 2500 }); },
+        error: () => this.snackBar.open('Failed to set rival. Please try again.', 'OK', { duration: 4000 }),
+      });
+    }
   }
 }
