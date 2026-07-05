@@ -89,6 +89,81 @@ public class ActivityService : IActivityService
             missionResult.NewlyCompleted, newAchievements, newAvatars);
     }
 
+    public async Task<StepsResult> LogDailyStepsAsync(Guid userId, int steps)
+    {
+        if (steps <= 0 || steps > 100_000)
+            return StepsResult.BadRequest("Steps must be between 1 and 100000");
+
+        var user = await _users.GetByIdAsync(userId);
+        if (user == null)
+            return StepsResult.NotFound("User not found");
+
+        var now = DateTime.UtcNow;
+        var todayStart = now.Date;
+        var todayEnd = todayStart.AddDays(1);
+
+        // Capture existing activities before mutating (for streak comparison)
+        var previousActivities = await _activities.GetByUserIdAsync(userId);
+        var prevStreak = ActivityStreakHelper.ComputeCurrentStreak(previousActivities.Select(a => a.DateTime));
+
+        var todayRow = previousActivities.FirstOrDefault(a =>
+            a.Sport == "daily_steps" && a.DateTime >= todayStart && a.DateTime < todayEnd);
+
+        var oldTotal = todayRow?.Steps ?? 0;
+        var newTotal = oldTotal + steps;
+
+        var pointsEarned = _scoring.CalculatePoints("daily_steps", null, null, newTotal)
+                         - _scoring.CalculatePoints("daily_steps", null, null, oldTotal);
+        var xpEarned = _xp.CalculateActivityXp("daily_steps", null, null, newTotal)
+                     - _xp.CalculateActivityXp("daily_steps", null, null, oldTotal);
+
+        Activity row;
+        if (todayRow != null)
+        {
+            todayRow.Steps = newTotal;
+            todayRow.Points = _scoring.CalculatePoints("daily_steps", null, null, newTotal);
+            todayRow.DateTime = now;
+            await _activities.UpdateAsync(todayRow);
+            row = todayRow;
+        }
+        else
+        {
+            row = new Activity
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                DateTime = now,
+                Sport = "daily_steps",
+                Distance = null,
+                Duration = null,
+                Steps = newTotal,
+                Points = _scoring.CalculatePoints("daily_steps", null, null, newTotal),
+            };
+            await _activities.CreateAsync(row);
+        }
+
+        if (xpEarned > 0)
+            await _xp.AwardGenericXpAsync(userId, xpEarned, "activity", row.Id);
+
+        var missionResult = await _xp.EvaluateDailyMissionsAsync(
+            userId, DateOnly.FromDateTime(now));
+
+        var newAchievements = await _achievements.EvaluateAchievementsAsync(userId);
+        var newAvatars = await _avatars.EvaluateAvatarsAsync(userId);
+
+        // Streak box only if today extended the streak (a same-day second entry does not)
+        var updatedActivities = todayRow != null
+            ? previousActivities
+            : previousActivities.Concat(new[] { row });
+        var newStreak = ActivityStreakHelper.ComputeCurrentStreak(updatedActivities.Select(a => a.DateTime));
+        if (newStreak > prevStreak)
+            await _lootBox.EarnBoxAsync(userId, "streak");
+
+        return StepsResult.Success(
+            newTotal, pointsEarned, xpEarned,
+            missionResult.NewlyCompleted, newAchievements, newAvatars);
+    }
+
     private static (bool isValid, string? error, string sport) ValidateSportMetrics(LogActivityRequest r)
     {
         var sport = r.Sport?.ToLower();

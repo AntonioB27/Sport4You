@@ -10,11 +10,13 @@ public class UsersController : ControllerBase
 {
     private readonly IUserService _users;
     private readonly IDashboardService _dashboard;
+    private readonly IActivityService _activities;
 
-    public UsersController(IUserService users, IDashboardService dashboard)
+    public UsersController(IUserService users, IDashboardService dashboard, IActivityService activities)
     {
         _users = users;
         _dashboard = dashboard;
+        _activities = activities;
     }
 
     [HttpPost]
@@ -42,5 +44,24 @@ public class UsersController : ControllerBase
         if (dashboard == null)
             return NotFound(new { error = "User not found" });
         return Ok(dashboard);
+    }
+
+    [HttpPost("{userId}/steps")]
+    public async Task<IActionResult> AddSteps(Guid userId, [FromBody] LogStepsRequest request)
+    {
+        var result = await _activities.LogDailyStepsAsync(userId, request.Steps);
+        if (result.IsNotFound)
+            return NotFound(new { error = result.Error });
+        if (result.IsError)
+            return BadRequest(new { error = result.Error });
+        return Ok(new
+        {
+            todayTotalSteps = result.TodayTotalSteps,
+            pointsEarned = result.PointsEarned,
+            xpEarned = result.XpEarned,
+            missionsCompleted = result.MissionsCompleted,
+            achievementsUnlocked = result.AchievementsUnlocked,
+            avatarsUnlocked = result.AvatarsUnlocked,
+        });
     }
 }
