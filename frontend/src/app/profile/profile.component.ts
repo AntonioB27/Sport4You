@@ -8,11 +8,12 @@ import { DashboardData, AchievementStatus, AvatarStatus } from '../shared/models
 import { BorderStatus } from '../shared/models/border.model';
 import { achievementIconPath } from '../shared/utils/achievement-icon';
 import { AvatarLockerComponent } from './avatar-locker.component';
+import { ContributionHeatmapComponent } from './contribution-heatmap/contribution-heatmap.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent],
+  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent, ContributionHeatmapComponent],
   styles: [`
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 680px; margin: 0 auto; }
     .page.wide { max-width: 1160px; }
@@ -162,6 +163,11 @@ import { AvatarLockerComponent } from './avatar-locker.component';
               </div>
               <div class="xp-label">{{ data.xp.xpInLevel }} / {{ data.xp.xpForNextLevel }} XP</div>
             </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">ACTIVITY</div>
+            <app-contribution-heatmap [pointsOverTime]="data.pointsOverTime"></app-contribution-heatmap>
           </div>
 
           <div class="section">
