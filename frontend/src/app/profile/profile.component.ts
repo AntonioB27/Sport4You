@@ -130,7 +130,7 @@ import { AvatarLockerComponent } from './avatar-locker.component';
         @if (activeTab === 'overview') {
           <div class="hero-card">
             @if (data.activeAvatar) {
-              <img class="hero-av" [src]="data.activeAvatar.imagePath" [alt]="data.activeAvatar.name">
+              <img class="hero-av" [style.border]="data.activeBorderCss ?? '3px solid #2E6BE6'" [src]="data.activeAvatar.imagePath" [alt]="data.activeAvatar.name">
             } @else {
               <span class="hero-initial">{{ data.user.firstName[0] }}</span>
             }

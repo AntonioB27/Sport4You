@@ -7,4 +7,5 @@ public interface IBorderService
     Task<List<BorderStatusDto>> GetUserBordersAsync(Guid userId);
     Task<bool> SetActiveBorderAsync(Guid userId, Guid borderId);
     Task<Dictionary<Guid, string>> GetActiveBorderCssMapAsync();
+    Task<string?> GetActiveBorderCssAsync(Guid userId);
 }

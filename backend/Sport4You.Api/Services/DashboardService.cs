@@ -12,11 +12,13 @@ public class DashboardService : IDashboardService
     private readonly IAchievementService _achievements;
     private readonly IAvatarService _avatars;
     private readonly ILeaderboardService _leaderboard;
+    private readonly IBorderService _borders;
 
     public DashboardService(
         IUserRepository users, IActivityRepository activities,
         IXpService xp, IAchievementService achievements,
-        IAvatarService avatars, ILeaderboardService leaderboard)
+        IAvatarService avatars, ILeaderboardService leaderboard,
+        IBorderService borders)
     {
         _users = users;
         _activities = activities;
@@ -24,6 +26,7 @@ public class DashboardService : IDashboardService
         _achievements = achievements;
         _avatars = avatars;
         _leaderboard = leaderboard;
+        _borders = borders;
     }
 
     public async Task<DashboardDto?> GetDashboardAsync(Guid userId)
@@ -41,6 +44,7 @@ public class DashboardService : IDashboardService
             .Take(6)
             .ToList();
         var activeAvatar = await _avatars.GetActiveAvatarAsync(userId);
+        var activeBorderCss = await _borders.GetActiveBorderCssAsync(userId);
         var leaderboard = await _leaderboard.GetLeaderboardAsync();
         var leaderboardEntry = leaderboard.FirstOrDefault(e => e.UserId == userId);
 
@@ -104,6 +108,7 @@ public class DashboardService : IDashboardService
             DailyMissions = missionDtos,
             RecentAchievements = recentAchievements,
             ActiveAvatar = activeAvatar,
+            ActiveBorderCss = activeBorderCss,
         };
     }
 }

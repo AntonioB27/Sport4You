@@ -38,6 +38,15 @@ public class BorderService : IBorderService
         return true;
     }
 
+    public async Task<string?> GetActiveBorderCssAsync(Guid userId)
+    {
+        var active = await _db.UserBorders
+            .FirstOrDefaultAsync(ub => ub.UserId == userId && ub.IsActive);
+        if (active == null) return null;
+        var border = await _db.Borders.FindAsync(active.BorderId);
+        return border?.BorderCss;
+    }
+
     public async Task<Dictionary<Guid, string>> GetActiveBorderCssMapAsync()
     {
         var activeBorders = await _db.UserBorders.Where(ub => ub.IsActive).ToListAsync();

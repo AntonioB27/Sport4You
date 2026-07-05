@@ -14,6 +14,7 @@ public class DashboardDto
     public List<DailyMissionDto> DailyMissions { get; set; } = [];
     public List<AchievementStatusDto> RecentAchievements { get; set; } = [];
     public AvatarStatusDto? ActiveAvatar { get; set; }
+    public string? ActiveBorderCss { get; set; }
 }
 
 public class UserInfoDto
