@@ -101,4 +101,26 @@ public class DailyStepsControllerTests : IClassFixture<TestFactory>
 
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
+
+    [Fact]
+    public async Task Dashboard_TodaySteps_ReflectsAccumulatedTotal()
+    {
+        var userId = await CreateUserAsync("Step", "Dash");
+        await _client.PostAsJsonAsync($"/api/users/{userId}/steps", new { steps = 6000 });
+        await _client.PostAsJsonAsync($"/api/users/{userId}/steps", new { steps = 1500 });
+
+        var dash = await _client.GetFromJsonAsync<Dictionary<string, JsonElement>>($"/api/users/{userId}/dashboard");
+
+        Assert.Equal(7500, dash!["todaySteps"].GetInt32());
+    }
+
+    [Fact]
+    public async Task Dashboard_TodaySteps_ZeroWhenNoneToday()
+    {
+        var userId = await CreateUserAsync("Step", "None");
+
+        var dash = await _client.GetFromJsonAsync<Dictionary<string, JsonElement>>($"/api/users/{userId}/dashboard");
+
+        Assert.Equal(0, dash!["todaySteps"].GetInt32());
+    }
 }

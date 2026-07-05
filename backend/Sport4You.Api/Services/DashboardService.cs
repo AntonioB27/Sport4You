@@ -44,6 +44,12 @@ public class DashboardService : IDashboardService
         var leaderboard = await _leaderboard.GetLeaderboardAsync();
         var leaderboardEntry = leaderboard.FirstOrDefault(e => e.UserId == userId);
 
+        var todayStart = DateTime.UtcNow.Date;
+        var todayEnd = todayStart.AddDays(1);
+        var todaySteps = activities
+            .Where(a => a.Sport == "daily_steps" && a.DateTime >= todayStart && a.DateTime < todayEnd)
+            .Sum(a => a.Steps ?? 0);
+
         var pointsOverTime = activities
             .GroupBy(a => a.DateTime.Date)
             .Select(g => new PointsOverTimeDto
@@ -81,6 +87,7 @@ public class DashboardService : IDashboardService
             TotalPoints = activities.Sum(a => a.Points),
             Rank = leaderboardEntry?.Rank ?? 0,
             CurrentStreak = ActivityStreakHelper.ComputeCurrentStreak(activities.Select(a => a.DateTime)),
+            TodaySteps = todaySteps,
             Activities = activities.Select(a => new ActivityDto
             {
                 Id = a.Id,
