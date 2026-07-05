@@ -16,6 +16,12 @@ public class ActivityRepository : IActivityRepository
         return activity;
     }
 
+    public async Task UpdateAsync(Activity activity)
+    {
+        _db.Activities.Update(activity);
+        await _db.SaveChangesAsync();
+    }
+
     public Task<List<Activity>> GetByUserIdAsync(Guid userId)
         => _db.Activities.Where(a => a.UserId == userId).OrderByDescending(a => a.DateTime).ToListAsync();
 
