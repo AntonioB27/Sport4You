@@ -8,9 +8,9 @@ making sense.
 ## Status
 
 - [x] Rivals — shipped 2026-07-05
-- [ ] Contribution heatmap — **up next**
-- [ ] Prestige
-- [ ] Loot box pity timer
+- [x] Contribution heatmap — shipped 2026-07-05
+- [x] Prestige — shipped 2026-07-05
+- [ ] Loot box pity timer — **up next**
 - [ ] Personal records page
 - [ ] Seasonal leaderboard resets
 - [ ] Limited-time events
