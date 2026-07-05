@@ -507,7 +507,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.loading = false;
         if (err.status === 404) {
           localStorage.removeItem('userId');
-          this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px' })
+          this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px', panelClass: 's4y-welcome-dialog' })
             .afterClosed().subscribe(userId => {
               if (userId) window.location.reload();
             });

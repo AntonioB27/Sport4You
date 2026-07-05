@@ -142,7 +142,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     if (!localStorage.getItem('userId')) {
-      this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px' })
+      this.dialog.open(RegisterDialogComponent, { disableClose: true, width: '400px', panelClass: 's4y-welcome-dialog' })
         .afterClosed().subscribe(userId => {
           // reload so every view picks up the new/recovered account
           if (userId) window.location.reload();

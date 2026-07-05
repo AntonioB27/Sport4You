@@ -1,55 +1,97 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
 
 @Component({
   selector: 'app-register-dialog',
   standalone: true,
-  imports: [
-    MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatSnackBarModule,
-    ReactiveFormsModule,
-  ],
+  imports: [ReactiveFormsModule, MatSnackBarModule],
+  styles: [`
+    @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+
+    :host { display: block; font-family: 'Nunito', system-ui, sans-serif; }
+
+    .card {
+      width: 380px; max-width: 90vw; background: #fff; border-radius: 24px;
+      overflow: hidden; box-shadow: 0 40px 80px -24px rgba(10,20,44,.5);
+    }
+
+    /* ── Hero band ── */
+    .hero-band {
+      position: relative; padding: 26px 24px 20px; text-align: center;
+      background: linear-gradient(150deg, #2E6BE6, #173B92);
+    }
+    .mascot { width: 76px; height: 76px; object-fit: contain; animation: floaty 4s ease-in-out infinite; filter: drop-shadow(0 10px 14px rgba(0,0,0,.3)); }
+    .brand { margin-top: 6px; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .12em; color: #fff; }
+    .brand span { color: #C6E63B; }
+
+    /* ── Body ── */
+    .body { padding: 24px 24px 26px; }
+    .title { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 21px; color: #10203E; margin: 0 0 6px; text-align: center; }
+    .subtitle { font-size: 13px; color: #8592ad; text-align: center; margin: 0 0 20px; line-height: 1.5; }
+
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block; font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: .12em; color: #8592ad; margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px;
+      border: 1px solid #E3EAF5; background: #F9FBFF; font-family: 'Nunito', sans-serif; font-size: 14px;
+      color: #10203E; outline: none; transition: border-color .15s, background .15s;
+    }
+    .field input:focus { border-color: #2E6BE6; background: #fff; }
+    .field input::placeholder { color: #b0bcd4; }
+
+    .cta {
+      width: 100%; margin-top: 8px; border: none; cursor: pointer;
+      background: linear-gradient(150deg, #C6E63B, #9ECF10); color: #10203E;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .04em;
+      padding: 13px; border-radius: 13px; box-shadow: 0 5px 0 #7c9c00, 0 10px 20px -10px rgba(158,207,16,.7);
+      transition: transform .1s, box-shadow .1s;
+    }
+    .cta:hover:not(:disabled) { transform: translateY(-1px); }
+    .cta:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 0 #7c9c00; }
+    .cta:disabled { opacity: .5; cursor: not-allowed; }
+
+    .toggle-link {
+      display: block; text-align: center; margin-top: 16px;
+      font-size: 12.5px; color: #2E6BE6; font-weight: 700; cursor: pointer;
+    }
+  `],
   template: `
-    <h2 mat-dialog-title>{{ mode === 'register' ? 'Welcome to Sport4You' : 'Welcome back' }}</h2>
-    <mat-dialog-content>
-      <p style="color: #666; margin-bottom: 16px;">
-        {{ mode === 'register'
-          ? 'Enter your name to join the fitness challenge and start competing on the leaderboard.'
-          : 'Enter the name you registered with to recover your account.' }}
-      </p>
-      <form [formGroup]="form" style="display: flex; flex-direction: column; gap: 8px;">
-        <mat-form-field appearance="outline">
-          <mat-label>First Name</mat-label>
-          <input matInput formControlName="firstName" placeholder="e.g. Alice" />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Last Name</mat-label>
-          <input matInput formControlName="lastName" placeholder="e.g. Smith" />
-        </mat-form-field>
-      </form>
-      <a style="font-size: 13px; color: #2E6BE6; cursor: pointer;" (click)="toggleMode()">
-        {{ mode === 'register' ? 'Already have an account? Log back in' : 'New here? Create an account' }}
-      </a>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button
-        mat-raised-button
-        color="primary"
-        [disabled]="form.invalid || loading"
-        (click)="submit()"
-      >
-        {{ loading ? 'One moment…' : (mode === 'register' ? 'Join the Challenge' : 'Welcome back') }}
-      </button>
-    </mat-dialog-actions>
+    <div class="card">
+      <div class="hero-band">
+        <img class="mascot" src="assets/sporty_wave.png" alt="Spotry">
+        <div class="brand">SPORT<span>4</span>YOU</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{ mode === 'register' ? 'Welcome!' : 'Welcome back' }}</h2>
+        <p class="subtitle">
+          {{ mode === 'register'
+            ? 'Enter your name to join the fitness challenge and start competing on the leaderboard.'
+            : 'Enter the name you registered with to recover your account.' }}
+        </p>
+        <form [formGroup]="form">
+          <div class="field">
+            <label>FIRST NAME</label>
+            <input formControlName="firstName" placeholder="e.g. Alice" (keyup.enter)="submit()">
+          </div>
+          <div class="field">
+            <label>LAST NAME</label>
+            <input formControlName="lastName" placeholder="e.g. Smith" (keyup.enter)="submit()">
+          </div>
+        </form>
+        <button class="cta" [disabled]="form.invalid || loading" (click)="submit()">
+          {{ loading ? 'One moment…' : (mode === 'register' ? 'Join the Challenge' : 'Welcome back') }}
+        </button>
+        <a class="toggle-link" (click)="toggleMode()">
+          {{ mode === 'register' ? 'Already have an account? Log back in' : 'New here? Create an account' }}
+        </a>
+      </div>
+    </div>
   `,
 })
 export class RegisterDialogComponent {

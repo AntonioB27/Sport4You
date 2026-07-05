@@ -15,6 +15,16 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
   overflow: visible !important;
 }
 
+/* Welcome dialog — transparent container so the branded card shows through */
+.s4y-welcome-dialog .mat-mdc-dialog-container,
+.s4y-welcome-dialog .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 24px !important;
+  overflow: visible !important;
+}
+
 .s4y-toast .mdc-snackbar__surface {
   background: #1a2d54 !important;
   color: #C6E63B !important;
