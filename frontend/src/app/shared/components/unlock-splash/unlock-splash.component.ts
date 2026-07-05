@@ -9,7 +9,7 @@ import { achievementIconPath } from '../../utils/achievement-icon';
   imports: [CommonModule],
   styles: [`
     :host { position:absolute; inset:0; display:block; pointer-events:none; z-index:50; }
-    :host ::ng-deep .splash, .splash { pointer-events:auto; }
+    .splash { pointer-events:auto; }
 
     @keyframes s4y-conf { 0%{transform:translateY(-14px) rotate(0);opacity:0} 15%{opacity:1} 100%{transform:translateY(360px) rotate(420deg);opacity:0} }
 

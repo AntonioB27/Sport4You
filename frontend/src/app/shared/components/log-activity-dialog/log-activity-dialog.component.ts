@@ -350,7 +350,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
   readonly sports = SPORTS;
   selIdx = 0;
   morphStyle: 'ripple'|'iris'|'portal'|'sweep' = 'sweep';
-  metrics: Record<string, number> = { running:5, walking:5, cycling:20, swimming:30, gym:45, daily_steps:5000 };
+  metrics: Record<string, number> = { running:5, walking:5, cycling:20, swimming:30, gym:45 };
   logged = false;
   loading = false;
   errorMsg = '';
@@ -518,7 +518,6 @@ export class LogActivityDialogComponent implements AfterViewInit {
     const req: any = { userId, sport: sp.key, datetime: new Date().toISOString() };
     if (sp.unit === 'km')    req.distance = val;
     else if (sp.unit === 'min') { const m = Math.floor(val); const s = Math.round((val-m)*60); req.duration = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
-    else { delete req.sport; req.steps = val; }  // API infers daily_steps; sending sport is rejected
 
     this.api.logActivity(req).subscribe({
       next: (res: any) => {
