@@ -53,7 +53,7 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task LogActivity_StepsWithoutSport_ReturnsDailyStepsPoints()
+    public async Task LogActivity_Steps_IsRejected()
     {
         var userId = await CreateUserAsync("Step", "Per");
         var response = await _client.PostAsJsonAsync("/api/activities", new
@@ -63,9 +63,9 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
             steps = 1000
         });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-        Assert.Equal(10, ((System.Text.Json.JsonElement)body!["points"]).GetInt32());
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+        Assert.Contains("steps", body!["error"], StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

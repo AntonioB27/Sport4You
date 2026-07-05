@@ -172,11 +172,7 @@ public class ActivityService : IActivityService
             return (false, "Either sport or steps must be provided", string.Empty);
 
         if (r.Steps.HasValue && sport == null)
-        {
-            if (r.Distance.HasValue || r.Duration != null)
-                return (false, "Steps activity cannot include distance or duration", string.Empty);
-            return (true, null, "daily_steps");
-        }
+            return (false, "Daily steps must be logged via POST /api/users/{userId}/steps", string.Empty);
 
         if (DistanceSports.Contains(sport!))
         {
