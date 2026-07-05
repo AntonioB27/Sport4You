@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -44,7 +45,7 @@ const STEP_GOAL = 10000;
       <div class="ring-row">
         <div class="ring" [style.--p]="progressPercent">
           <div class="ring-inner">
-            <div class="ring-val">{{ todaySteps.toLocaleString('en-US') }}</div>
+            <div class="ring-val">{{ displaySteps.toLocaleString('en-US') }}</div>
             <div class="ring-goal">/ {{ goal.toLocaleString('en-US') }}</div>
           </div>
         </div>
@@ -54,7 +55,7 @@ const STEP_GOAL = 10000;
         </div>
       </div>
       <div class="add-row">
-        <input class="add-input" type="number" inputmode="numeric" min="1"
+        <input class="add-input" type="number" inputmode="numeric" min="1" max="100000"
                placeholder="Add steps…" [(ngModel)]="entry" [disabled]="loading"
                (keyup.enter)="add()">
         <button class="add-btn" [disabled]="loading" (click)="add()">ADD</button>
@@ -68,25 +69,34 @@ const STEP_GOAL = 10000;
     </div>
   `,
 })
-export class TodayStepsCardComponent {
+export class TodayStepsCardComponent implements OnChanges {
   @Input() todaySteps = 0;
   @Output() stepsAdded = new EventEmitter<void>();
 
   readonly goal = STEP_GOAL;
+  displaySteps = 0;
   entry: number | null = null;
   loading = false;
   errorMsg = '';
   unlockedAchievements: UnlockedAchievement[] = [];
   unlockedAvatars: UnlockedAvatar[] = [];
 
-  constructor(private api: ApiService, private snackBar: MatSnackBar) {}
+  constructor(
+    private api: ApiService,
+    private snackBar: MatSnackBar,
+    private destroyRef: DestroyRef,
+  ) {}
+
+  ngOnChanges(): void {
+    this.displaySteps = this.todaySteps;
+  }
 
   get progressPercent(): number {
-    return Math.min(100, Math.round((this.todaySteps / this.goal) * 100));
+    return Math.min(100, Math.round((this.displaySteps / this.goal) * 100));
   }
 
   get pointsFromSteps(): number {
-    return Math.floor(this.todaySteps / 100);
+    return Math.floor(this.displaySteps / 100);
   }
 
   add(): void {
@@ -97,11 +107,13 @@ export class TodayStepsCardComponent {
     if (steps > 100000) { this.errorMsg = 'Max 100,000 steps per entry.'; return; }
 
     this.loading = true; this.errorMsg = '';
-    this.api.addSteps(userId, steps).subscribe({
+    this.api.addSteps(userId, steps)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: res => {
         this.loading = false;
         this.entry = null;
-        this.todaySteps = res.todayTotalSteps;
+        this.displaySteps = res.todayTotalSteps;
 
         res.missionsCompleted.forEach((m, i) => {
           setTimeout(() => {
