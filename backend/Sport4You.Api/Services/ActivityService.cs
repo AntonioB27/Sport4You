@@ -45,6 +45,22 @@ public class ActivityService : IActivityService
         if (!DateTime.TryParse(request.Datetime, out var dateTime))
             return ActivityResult.BadRequest("Invalid datetime format");
 
+        // Daily Steps is one of the required sports and the assignment's schema lists `steps`
+        // as a field of this endpoint — accept it here too, delegating to the same accumulator
+        // used by the dedicated POST /users/{userId}/steps endpoint so a day's total steps
+        // stay consistent regardless of which endpoint a caller used.
+        if (request.Sport == null && request.Steps.HasValue)
+        {
+            var stepsResult = await LogDailyStepsAsync(userId, request.Steps.Value);
+            return stepsResult.IsError
+                ? (stepsResult.IsNotFound
+                    ? ActivityResult.NotFound(stepsResult.Error!)
+                    : ActivityResult.BadRequest(stepsResult.Error!))
+                : ActivityResult.Success(
+                    Guid.Empty, stepsResult.PointsEarned, stepsResult.XpEarned,
+                    stepsResult.MissionsCompleted, stepsResult.AchievementsUnlocked, stepsResult.AvatarsUnlocked);
+        }
+
         var (isValid, error, sport) = ValidateSportMetrics(request);
         if (!isValid)
             return ActivityResult.BadRequest(error!);
@@ -171,8 +187,8 @@ public class ActivityService : IActivityService
         if (sport == null && r.Steps == null)
             return (false, "Either sport or steps must be provided", string.Empty);
 
-        if (r.Steps.HasValue && sport == null)
-            return (false, "Daily steps must be logged via POST /api/users/{userId}/steps", string.Empty);
+        // sport == null && steps.HasValue (daily steps) is handled earlier in
+        // LogActivityAsync before this validator runs.
 
         if (DistanceSports.Contains(sport!))
         {

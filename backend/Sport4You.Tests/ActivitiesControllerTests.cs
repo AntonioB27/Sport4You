@@ -53,8 +53,10 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task LogActivity_Steps_IsRejected()
+    public async Task LogActivity_Steps_IsAccepted()
     {
+        // The assignment's ingestion schema lists `steps` as a field of this endpoint
+        // and Daily Steps as a required sport — it must be accepted here.
         var userId = await CreateUserAsync("Step", "Per");
         var response = await _client.PostAsJsonAsync("/api/activities", new
         {
@@ -63,9 +65,24 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
             steps = 1000
         });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
-        Assert.Contains("steps", body!["error"], StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, System.Text.Json.JsonElement>>();
+        Assert.Equal(10, body!["points"].GetInt32()); // floor(1000/100) * 1
+    }
+
+    [Fact]
+    public async Task LogActivity_StepsSameDay_AccumulatesLikeDedicatedEndpoint()
+    {
+        var userId = await CreateUserAsync("Step", "Accum");
+        await _client.PostAsJsonAsync("/api/activities", new
+        { userId, datetime = "2026-06-30T09:00:00Z", steps = 600 });
+        var second = await _client.PostAsJsonAsync("/api/activities", new
+        { userId, datetime = "2026-06-30T10:00:00Z", steps = 500 });
+
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var body = await second.Content.ReadFromJsonAsync<Dictionary<string, System.Text.Json.JsonElement>>();
+        // Incremental points for this call only (500 steps this call, 1100 total that day)
+        Assert.Equal(5, body!["points"].GetInt32());
     }
 
     [Fact]
