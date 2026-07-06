@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../shared/services/api.service';
 import { IconComponent } from '../shared/components/icon/icon.component';
 import { ShopCatalog, ShopAvatar } from '../shared/models/shop.model';
@@ -121,7 +122,10 @@ export class ShopComponent implements OnInit {
     this.loading = true;
     this.api.getShop(userId).subscribe({
       next: (catalog) => { this.catalog = catalog; this.loading = false; },
-      error: () => { this.loading = false; },
+      error: () => {
+        this.loading = false;
+        this.snackBar.open('Failed to load shop', '', { duration: 2500 });
+      },
     });
   }
 
@@ -139,7 +143,11 @@ export class ShopComponent implements OnInit {
           this.snackBar.open(result.error ?? 'Purchase failed', '', { duration: 2500 });
         }
       },
-      error: () => { this.buying = false; },
+      error: (err: HttpErrorResponse) => {
+        this.buying = false;
+        this.snackBar.open(err.error?.error ?? 'Purchase failed', '', { duration: 2500 });
+        this.load();
+      },
     });
   }
 
@@ -157,7 +165,11 @@ export class ShopComponent implements OnInit {
           this.snackBar.open(result.error ?? 'Purchase failed', '', { duration: 2500 });
         }
       },
-      error: () => { this.buying = false; },
+      error: (err: HttpErrorResponse) => {
+        this.buying = false;
+        this.snackBar.open(err.error?.error ?? 'Purchase failed', '', { duration: 2500 });
+        this.load();
+      },
     });
   }
 
@@ -175,7 +187,11 @@ export class ShopComponent implements OnInit {
           this.snackBar.open(result.error ?? 'Purchase failed', '', { duration: 2500 });
         }
       },
-      error: () => { this.buying = false; },
+      error: (err: HttpErrorResponse) => {
+        this.buying = false;
+        this.snackBar.open(err.error?.error ?? 'Purchase failed', '', { duration: 2500 });
+        this.load();
+      },
     });
   }
 }
