@@ -191,8 +191,8 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
               <div class="podium-slot" (click)="viewProfile(entries[1])">
                 <div class="champ-ring silver">
                   @if (entries[1].activeAvatarImagePath) {
-                    <img [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName">
-                  } @else { <span class="champ-initial">{{ entries[1].firstName[0] }}</span> }
+                    <img [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName" [style.border]="entries[1].activeBorderCss ?? null">
+                  } @else { <span class="champ-initial" [style.border]="entries[1].activeBorderCss ?? null">{{ entries[1].firstName[0] }}</span> }
                   <div class="medal m2">2</div>
                 </div>
                 <div class="champ-name side">{{ entries[1].firstName }}</div>
@@ -205,8 +205,8 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
                 <div class="champ-ring gold">
                   <div class="holo"></div>
                   @if (entries[0].activeAvatarImagePath) {
-                    <img [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName">
-                  } @else { <span class="champ-initial">{{ entries[0].firstName[0] }}</span> }
+                    <img [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName" [style.border]="entries[0].activeBorderCss ?? null">
+                  } @else { <span class="champ-initial" [style.border]="entries[0].activeBorderCss ?? null">{{ entries[0].firstName[0] }}</span> }
                   <div class="medal m1">1</div>
                 </div>
                 <div class="champ-title">★ CHAMPION</div>
@@ -218,8 +218,8 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
               <div class="podium-slot" (click)="viewProfile(entries[2])">
                 <div class="champ-ring bronze">
                   @if (entries[2].activeAvatarImagePath) {
-                    <img [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName">
-                  } @else { <span class="champ-initial">{{ entries[2].firstName[0] }}</span> }
+                    <img [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName" [style.border]="entries[2].activeBorderCss ?? null">
+                  } @else { <span class="champ-initial" [style.border]="entries[2].activeBorderCss ?? null">{{ entries[2].firstName[0] }}</span> }
                   <div class="medal m3">3</div>
                 </div>
                 <div class="champ-name side">{{ entries[2].firstName }}</div>
