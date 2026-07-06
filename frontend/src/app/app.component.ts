@@ -86,10 +86,10 @@ import { IconComponent } from './shared/components/icon/icon.component';
       </div>
       <nav class="nav-items">
         <a class="nav-item" routerLink="/dashboard" routerLinkActive="active">
-          <app-icon name="house" [size]="18" /> Home
+          <app-icon name="house" [size]="18" /> HOME
         </a>
         <a class="nav-item" routerLink="/leaderboard" routerLinkActive="active">
-          <app-icon name="trophy" [size]="18" /> Leaderboard
+          <app-icon name="trophy" [size]="18" /> LEADERBOARD
         </a>
         <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
           <app-icon name="medal" [size]="18" /> BADGES
