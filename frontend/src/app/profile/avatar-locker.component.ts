@@ -15,6 +15,7 @@ const GROUPS: LockerGroup[] = [
   { key: 'achievement_earned', label: 'BADGE EARNED' },
   { key: 'activities_logged',  label: 'ACTIVITIES LOGGED' },
   { key: 'loot_box',           label: 'LOOT BOX' },
+  { key: 'shop',               label: 'SHOP' },
 ];
 
 @Component({
