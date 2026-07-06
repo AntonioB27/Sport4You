@@ -1,0 +1,33 @@
+# Sport4You — full stack in two containers.
+#   Frontend (nginx) serves the built Angular app and reverse-proxies /api to the
+#   backend, so the whole thing is single-origin at http://localhost:8080.
+#
+#   docker compose up --build      # start (builds on first run)
+#   docker compose down            # stop
+#   docker compose down -v         # stop + wipe the seeded database
+
+services:
+  backend:
+    build: ./backend
+    # Published for direct API access / debugging; the frontend reaches it
+    # internally as http://backend:8080 and does not need this port.
+    ports:
+      - "5262:8080"
+    environment:
+      # SQLite file on the named volume below (persists across restarts).
+      ConnectionStrings__Default: "Data Source=/data/sport4you.db"
+      # Optional: enable the AI Coach's Claude-backed parser. Without it the
+      # backend falls back to the built-in regex parser.
+      # Anthropic__ApiKey: "${ANTHROPIC_API_KEY}"
+    volumes:
+      - fitness-data:/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  fitness-data:

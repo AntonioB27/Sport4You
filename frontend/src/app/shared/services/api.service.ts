@@ -14,7 +14,9 @@ import { ParseResult, AiStatus } from '../models/ai-coach.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly base = 'http://localhost:5262/api';
+  // Relative path: served single-origin behind nginx in Docker, and proxied to
+  // the backend by `proxy.conf.json` during `npm start` (ng serve).
+  private readonly base = '/api';
 
   constructor(private http: HttpClient) {}
 

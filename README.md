@@ -24,7 +24,39 @@ are kept exact and unauthenticated on `main` by design — see
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
 - [Node.js 20+](https://nodejs.org/) and npm
 
+## Run with Docker
+
+The fastest way to see the whole thing running — no .NET or Node install needed,
+just [Docker](https://docs.docker.com/get-docker/) with Compose:
+
+```bash
+docker compose up --build
+```
+
+Then open **http://localhost:8080**.
+
+Two containers come up: the ASP.NET Core API and an nginx image serving the
+built Angular app. nginx reverse-proxies `/api` to the backend, so the app is
+**single-origin** (no CORS in play) and the frontend talks to a relative `/api`
+path — the same URL whether it's running in Docker or behind the dev proxy. The
+API is also published on `http://localhost:5262` for direct poking.
+
+The SQLite database is seeded on first boot and persists on a named volume
+(`fitness-data`), so restarts keep your data:
+
+```bash
+docker compose down      # stop, keep the database
+docker compose down -v   # stop and wipe the database (fresh reseed next up)
+```
+
+> **AI Coach:** the natural-language activity parser falls back to a built-in
+> regex parser unless a Claude API key is provided. To enable the LLM-backed
+> parser, uncomment the `Anthropic__ApiKey` line in `docker-compose.yml` and set
+> `ANTHROPIC_API_KEY` in your environment.
+
 ## Running Locally
+
+Prefer running the two processes directly (for hot-reload during development)?
 
 ### 1. Start the backend
 
@@ -45,8 +77,12 @@ In a new terminal:
 ```bash
 cd frontend
 npm install
-ng serve
+npm start
 ```
+
+`npm start` runs `ng serve` with `proxy.conf.json`, which forwards `/api` to the
+backend on `:5262` — so the frontend uses the same relative `/api` path it does
+in Docker. (Running `ng serve` bare would skip the proxy; use `npm start`.)
 
 Open `http://localhost:4200` in your browser and register a new account (or
 use `POST /api/users/login` with one of the seeded names — see `DataSeeder.cs`

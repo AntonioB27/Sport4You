@@ -6,8 +6,12 @@ using Sport4You.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+// Connection string is configurable (e.g. ConnectionStrings__Default in Docker,
+// pointing at a mounted volume); falls back to a local file for `dotnet run`.
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? "Data Source=sport4you.db";
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=sport4you.db"));
+    options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
