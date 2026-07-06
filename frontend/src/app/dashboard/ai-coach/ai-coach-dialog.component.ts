@@ -1,10 +1,12 @@
 import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../shared/services/api.service';
 import { ParseResult } from '../../shared/models/ai-coach.model';
+import { UnlockedAchievement, UnlockedAvatar } from '../../shared/models/dashboard.model';
+import { UnlockSplashDialogComponent } from '../../shared/components/unlock-splash/unlock-splash-dialog.component';
 
 @Component({
   selector: 'app-ai-coach-dialog',
@@ -64,6 +66,7 @@ export class AiCoachDialogComponent {
   constructor(
     private api: ApiService,
     private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     private ref: MatDialogRef<AiCoachDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { userId: string; mode: 'ai' | 'basic' },
   ) { this.mode = data.mode; }
@@ -87,13 +90,22 @@ export class AiCoachDialogComponent {
 
   confirm(): void {
     const d = this.draft!;
+    const showUnlocks = (achievements: UnlockedAchievement[], avatars: UnlockedAvatar[]) => {
+      if (achievements.length > 0 || avatars.length > 0) {
+        this.dialog.open(UnlockSplashDialogComponent, {
+          data: { achievements, avatars },
+          panelClass: 's4y-watch-dialog',
+          width: '400px',
+        });
+      }
+    };
     const done = (pts: number) => {
       this.snackBar.open(`Logged! +${pts} pts`, '', { duration: 2500 });
       this.ref.close(true);
     };
     if (d.sport === 'daily_steps' && d.steps != null) {
       this.api.addSteps(this.data.userId, d.steps).subscribe({
-        next: () => done(d.pointsPreview),
+        next: res => { showUnlocks(res.achievementsUnlocked, res.avatarsUnlocked); done(d.pointsPreview); },
         error: () => { this.error = 'Failed to log. Try again.'; },
       });
     } else {
@@ -105,7 +117,7 @@ export class AiCoachDialogComponent {
         duration: d.durationSeconds != null ? mmss(d.durationSeconds) : undefined,
         steps: undefined,
       }).subscribe({
-        next: () => done(d.pointsPreview),
+        next: res => { showUnlocks(res.achievementsUnlocked, res.avatarsUnlocked); done(d.pointsPreview); },
         error: () => { this.error = 'Failed to log. Try again.'; },
       });
     }

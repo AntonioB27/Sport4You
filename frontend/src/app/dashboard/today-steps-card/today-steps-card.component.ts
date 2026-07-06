@@ -2,71 +2,67 @@ import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output } from '@
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../shared/services/api.service';
-import { UnlockSplashComponent } from '../../shared/components/unlock-splash/unlock-splash.component';
-import { UnlockedAchievement, UnlockedAvatar } from '../../shared/models/dashboard.model';
+import { UnlockSplashDialogComponent } from '../../shared/components/unlock-splash/unlock-splash-dialog.component';
 
 const STEP_GOAL = 10000;
 
 @Component({
   selector: 'app-today-steps-card',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSnackBarModule, UnlockSplashComponent],
+  imports: [CommonModule, FormsModule, MatSnackBarModule],
   styles: [`
-    :host { display:block; }
+    :host { display:block; height:100%; }
+    .fx { filter: drop-shadow(0 14px 24px rgba(16,32,62,.15)); height:100%; }
     .card {
-      position:relative; overflow:hidden;
-      background:linear-gradient(180deg,#12213f,#0e1a34);
-      border:1px solid rgba(122,150,210,.18); border-radius:20px;
+      position:relative; height:100%; background:#fff; box-shadow: inset 0 0 0 1px #E6ECF6;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
       padding:20px 22px;
     }
-    .title { font-family:'Chakra Petch',sans-serif; font-size:12px; font-weight:700; letter-spacing:.2em; color:#7fa8ff; margin-bottom:14px; }
-    .ring-row { display:flex; align-items:center; gap:18px; }
-    .ring { --p:0; width:104px; height:104px; border-radius:50%; flex-shrink:0;
-      background:conic-gradient(#C6E63B calc(var(--p)*1%), rgba(255,255,255,.08) 0);
+    .sec-title { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .sec-bar { width:3px; height:16px; background:#9ECF10; box-shadow:0 0 8px rgba(158,207,16,.7); flex-shrink:0; }
+    .title { font-family:'Chakra Petch',sans-serif; font-size:13px; font-weight:700; letter-spacing:.16em; color:#10203E; }
+    .ring-wrap { display:flex; justify-content:center; margin-bottom:14px; }
+    .ring { --p:0; width:120px; height:120px; border-radius:50%; flex-shrink:0;
+      background:conic-gradient(from -90deg, #8CE00E, #C6E63B calc(var(--p)*1%), #EAEEF6 0);
       display:flex; align-items:center; justify-content:center; }
-    .ring-inner { width:80px; height:80px; border-radius:50%; background:#0e1a34; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-    .ring-val { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:20px; color:#fff; line-height:1; }
-    .ring-goal { font-size:10px; color:#7fa8ff; margin-top:2px; }
-    .meta { flex:1; }
-    .pts { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px; color:#C6E63B; }
-    .pts-sub { font-size:12px; color:#9fb2d6; margin-top:2px; }
-    .add-row { display:flex; gap:8px; margin-top:16px; }
-    .add-input { flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(122,150,210,.2); border-radius:10px; padding:9px 12px; color:#fff; font-family:'Nunito',sans-serif; font-size:14px; }
-    .add-input::placeholder { color:#6f86b3; }
-    .add-btn { background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E; border:none; border-radius:10px; padding:9px 18px; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; letter-spacing:.05em; cursor:pointer; }
-    .add-btn:disabled { opacity:.5; cursor:default; }
-    .err { color:#ff8a80; font-size:12px; margin-top:8px; }
+    .ring-inner { width:98px; height:98px; border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .ring-val { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:22px; color:#10203E; line-height:1; }
+    .ring-goal { font-size:10px; color:#8592ad; margin-top:3px; }
+    .foot { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .pts { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; color:#5f7a00; white-space:nowrap; }
+    .add-row { display:flex; gap:6px; margin-top:12px; }
+    .add-input { flex:1; min-width:0; background:#F7FAFF; border:1px solid #E6ECF6; border-radius:8px; padding:8px 10px; color:#10203E; font-family:'Nunito',sans-serif; font-size:14px; }
+    .add-input::placeholder { color:#9aa6bd; }
+    .add-btn { background:linear-gradient(150deg,#C6E63B,#9ECF10); color:#10203E; border:none; padding:8px 16px; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; letter-spacing:.05em; cursor:pointer; box-shadow:0 3px 0 #7c9c00; flex-shrink:0;
+      clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
+    .add-btn:disabled { opacity:.5; cursor:default; box-shadow:none; }
+    .err { color:#e5484d; font-size:12px; margin-top:8px; }
   `],
   template: `
-    <div class="card">
-      <div class="title">TODAY'S STEPS</div>
-      <div class="ring-row">
+    <div class="fx"><div class="card">
+      <div class="sec-title"><span class="sec-bar"></span><span class="title">STEP CORE</span></div>
+      <div class="ring-wrap">
         <div class="ring" [style.--p]="progressPercent">
           <div class="ring-inner">
             <div class="ring-val">{{ displaySteps.toLocaleString('en-US') }}</div>
             <div class="ring-goal">/ {{ goal.toLocaleString('en-US') }}</div>
           </div>
         </div>
-        <div class="meta">
-          <div class="pts">+{{ pointsFromSteps }} PTS</div>
-          <div class="pts-sub">earned from steps today</div>
-        </div>
+      </div>
+      <div class="foot">
+        <span class="pts">+{{ pointsFromSteps }} PTS TODAY</span>
       </div>
       <div class="add-row">
         <input class="add-input" type="number" inputmode="numeric" min="1" max="100000"
                placeholder="Add steps…" [(ngModel)]="entry" [disabled]="loading"
                (keyup.enter)="add()">
-        <button class="add-btn" [disabled]="loading" (click)="add()">ADD</button>
+        <button class="add-btn" [disabled]="loading" (click)="add()">+ ADD</button>
       </div>
       <div class="err" *ngIf="errorMsg">{{ errorMsg }}</div>
-
-      <app-unlock-splash
-        [achievements]="unlockedAchievements"
-        [avatars]="unlockedAvatars"
-        (finished)="onUnlocksFinished()"></app-unlock-splash>
-    </div>
+    </div></div>
   `,
 })
 export class TodayStepsCardComponent implements OnChanges {
@@ -78,12 +74,11 @@ export class TodayStepsCardComponent implements OnChanges {
   entry: number | null = null;
   loading = false;
   errorMsg = '';
-  unlockedAchievements: UnlockedAchievement[] = [];
-  unlockedAvatars: UnlockedAvatar[] = [];
 
   constructor(
     private api: ApiService,
     private snackBar: MatSnackBar,
+    private dialog: MatDialog,
     private destroyRef: DestroyRef,
   ) {}
 
@@ -123,8 +118,13 @@ export class TodayStepsCardComponent implements OnChanges {
           }, i * 600);
         });
 
-        this.unlockedAchievements = res.achievementsUnlocked;
-        this.unlockedAvatars = res.avatarsUnlocked;
+        if (res.achievementsUnlocked.length > 0 || res.avatarsUnlocked.length > 0) {
+          this.dialog.open(UnlockSplashDialogComponent, {
+            data: { achievements: res.achievementsUnlocked, avatars: res.avatarsUnlocked },
+            panelClass: 's4y-watch-dialog',
+            width: '400px',
+          });
+        }
 
         this.stepsAdded.emit();
       },
@@ -133,10 +133,5 @@ export class TodayStepsCardComponent implements OnChanges {
         this.errorMsg = 'Failed to add steps. Please try again.';
       },
     });
-  }
-
-  onUnlocksFinished(): void {
-    this.unlockedAchievements = [];
-    this.unlockedAvatars = [];
   }
 }
