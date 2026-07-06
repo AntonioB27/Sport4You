@@ -94,8 +94,8 @@ const BOOSTER_META: CardMeta = {
     @keyframes holoSweepPage { 0% { background-position:-160% 0; } 100% { background-position:260% 0; } }
     .spotlight-art { position:relative; padding:22px; display:flex; align-items:center; justify-content:center; }
     .spotlight-art-img {
-      width:200px; height:200px; object-fit:contain;
-      filter:drop-shadow(0 14px 26px rgba(0,0,0,.4));
+      width:200px; height:200px; object-fit:cover; border-radius:16px;
+      box-shadow:0 14px 26px rgba(0,0,0,.35);
     }
     .spotlight-body { position:relative; padding:30px 34px; color:#fff; display:flex; flex-direction:column; justify-content:center; }
     .spotlight-chip {
