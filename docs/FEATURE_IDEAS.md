@@ -10,8 +10,8 @@ making sense.
 - [x] Rivals — shipped 2026-07-05
 - [x] Contribution heatmap — shipped 2026-07-05
 - [x] Prestige — shipped 2026-07-05
-- [ ] Loot box pity timer — **up next**
-- [ ] Personal records page
+- [x] Personal records page — shipped 2026-07-06
+- [ ] Loot box pity timer
 - [ ] Seasonal leaderboard resets
 - [ ] Limited-time events
 - [ ] Streak freeze item
