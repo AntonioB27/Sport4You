@@ -230,4 +230,92 @@ public class ShopServiceTests : IClassFixture<TestFactory>
         var resp = await _client.PostAsJsonAsync($"/api/users/{userIdStr}/shop/lootbox", new { tier = "normal" });
         Assert.Equal(System.Net.HttpStatusCode.OK, resp.StatusCode);
     }
+
+    [Fact]
+    public async Task PurchaseAvatar_NonShopAvatar_ReturnsError()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var nonShopAvatar = await db.Avatars.FirstAsync(a => a.UnlockType == "default");
+        var result = await shop.PurchaseAvatarAsync(userId, nonShopAvatar.Id);
+
+        Assert.False(result.Success);
+        Assert.Equal("Avatar is not available for purchase", result.Error);
+    }
+
+    [Fact]
+    public async Task PurchaseAvatar_InsufficientCoins_ReturnsError()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var shopAvatar = await db.Avatars.FirstAsync(a => a.Name == "Sleuth Sporty");
+        var result = await shop.PurchaseAvatarAsync(userId, shopAvatar.Id);
+
+        Assert.False(result.Success);
+        Assert.Equal("Insufficient coins", result.Error);
+    }
+
+    [Fact]
+    public async Task PurchaseAvatar_SufficientCoins_DeductsCorrectPriceAndUnlocks()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var shopAvatar = await db.Avatars.FirstAsync(a => a.Name == "Sleuth Sporty"); // common, 300
+        await shop.AddCoinsAsync(userId, 300);
+
+        var result = await shop.PurchaseAvatarAsync(userId, shopAvatar.Id);
+
+        Assert.True(result.Success);
+        Assert.Equal(0, result.Coins);
+
+        var owned = await db.UserAvatars.AnyAsync(ua => ua.UserId == userId && ua.AvatarId == shopAvatar.Id);
+        Assert.True(owned);
+    }
+
+    [Fact]
+    public async Task PurchaseAvatar_AlreadyOwned_ReturnsError()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var shopAvatar = await db.Avatars.FirstAsync(a => a.Name == "Sleuth Sporty");
+        await shop.AddCoinsAsync(userId, 600);
+        await shop.PurchaseAvatarAsync(userId, shopAvatar.Id);
+
+        var second = await shop.PurchaseAvatarAsync(userId, shopAvatar.Id);
+
+        Assert.False(second.Success);
+        Assert.Equal("Avatar already owned", second.Error);
+    }
+
+    [Fact]
+    public async Task PurchaseAvatarEndpoint_AlreadyOwned_ReturnsConflict()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+        Guid avatarId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+            var shopAvatar = await db.Avatars.FirstAsync(a => a.Name == "Sleuth Sporty");
+            avatarId = shopAvatar.Id;
+            await shop.AddCoinsAsync(userId, 600);
+            await shop.PurchaseAvatarAsync(userId, avatarId);
+        }
+
+        var resp = await _client.PostAsJsonAsync($"/api/users/{userIdStr}/shop/avatar", new { avatarId });
+        Assert.Equal(System.Net.HttpStatusCode.Conflict, resp.StatusCode);
+    }
 }

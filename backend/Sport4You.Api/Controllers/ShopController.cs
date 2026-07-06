@@ -24,4 +24,15 @@ public class ShopController : ControllerBase
         var result = await _shop.PurchaseLootBoxAsync(userId, request.Tier);
         return result.Success ? Ok(result) : BadRequest(new { error = result.Error });
     }
+
+    [HttpPost("shop/avatar")]
+    public async Task<IActionResult> PurchaseAvatar(Guid userId, [FromBody] PurchaseAvatarRequest request)
+    {
+        var result = await _shop.PurchaseAvatarAsync(userId, request.AvatarId);
+        if (!result.Success)
+            return result.Error == "Avatar already owned"
+                ? Conflict(new { error = result.Error })
+                : BadRequest(new { error = result.Error });
+        return Ok(result);
+    }
 }

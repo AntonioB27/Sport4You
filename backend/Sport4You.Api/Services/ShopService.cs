@@ -73,7 +73,27 @@ public class ShopService : IShopService
         return new LootBoxPurchaseResult(true, null, row.Coins, pendingCount);
     }
 
-    public Task<AvatarPurchaseResult> PurchaseAvatarAsync(Guid userId, Guid avatarId) => throw new NotImplementedException();
+    public async Task<AvatarPurchaseResult> PurchaseAvatarAsync(Guid userId, Guid avatarId)
+    {
+        var avatar = await _db.Avatars.FindAsync(avatarId);
+        if (avatar == null || avatar.UnlockType != "shop" || avatar.ShopPrice == null)
+            return new AvatarPurchaseResult(false, "Avatar is not available for purchase", 0);
+
+        var alreadyOwned = await _db.UserAvatars.AnyAsync(ua => ua.UserId == userId && ua.AvatarId == avatarId);
+        if (alreadyOwned)
+            return new AvatarPurchaseResult(false, "Avatar already owned", 0);
+
+        var row = await GetOrCreateUserXpAsync(userId);
+        if (row.Coins < avatar.ShopPrice.Value)
+            return new AvatarPurchaseResult(false, "Insufficient coins", row.Coins);
+
+        row.Coins -= avatar.ShopPrice.Value;
+        row.UpdatedAt = DateTime.UtcNow;
+        _db.UserAvatars.Add(new UserAvatar { UserId = userId, AvatarId = avatarId, UnlockedAt = DateTime.UtcNow });
+        await _db.SaveChangesAsync();
+
+        return new AvatarPurchaseResult(true, null, row.Coins);
+    }
 
     private async Task<UserXp> GetOrCreateUserXpAsync(Guid userId)
     {
