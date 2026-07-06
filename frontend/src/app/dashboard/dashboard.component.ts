@@ -74,6 +74,13 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
     .hud-tile.points { background: linear-gradient(150deg,#C6E63B,#9ECF10); box-shadow: 0 8px 16px -8px rgba(158,207,16,.7); color: #26340a; }
     .hud-tile.vault  { background: linear-gradient(150deg,#4B8DF0,#2E6BE6); box-shadow: 0 8px 16px -8px rgba(46,107,230,.7); }
     .hud-tile.vault.empty { background: #EEF2F8; color: #9aa6bd; box-shadow: none; }
+    .hud-tile.coins { background: linear-gradient(150deg,#FFD54A,#F5B300); box-shadow: 0 8px 16px -8px rgba(245,179,0,.7); color: #4a3400; }
+    .boost-chip {
+      position: absolute; top: -6px; right: 2px;
+      background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 999px;
+      box-shadow: 0 4px 8px -3px rgba(46,107,230,.6);
+    }
     .hud-meta { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
     .hud-value { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 22px; color: #10203E; }
     .hud-label { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: .16em; color: #8592ad; margin-top: 5px; }
@@ -308,6 +315,16 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
                 <span class="hud-value">{{ data.totalPoints | number }}</span>
                 <span class="hud-label">POINTS</span>
               </div>
+            </div>
+            <div class="hud-seg">
+              <div class="hud-tile coins"><app-icon name="coin" [size]="20" /></div>
+              <div class="hud-meta">
+                <span class="hud-value">{{ data.coins | number }}</span>
+                <span class="hud-label">COINS</span>
+              </div>
+              @if (data.boostedActivitiesRemaining > 0) {
+                <span class="boost-chip">⚡{{ data.boostedActivitiesRemaining }}</span>
+              }
             </div>
             <div class="hud-seg" [class.clickable]="pendingBoxes > 0"
                  (click)="pendingBoxes > 0 && openBoxModal()">
