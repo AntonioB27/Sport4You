@@ -69,14 +69,29 @@ public class UsersControllerTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task Login_MatchesWithRegisterComparisonSemantics()
+    public async Task Register_DuplicateNameDifferentCase_Returns409()
     {
         var suffix = Guid.NewGuid().ToString("N")[..6];
-        await _client.PostAsJsonAsync("/api/users", new { firstName = "Casey", lastName = suffix });
+        await _client.PostAsJsonAsync("/api/users", new { firstName = "Ivan", lastName = suffix });
 
-        // register comparison is case-sensitive (SQLite ==) — login must mirror it
+        // Names are unique case-insensitively (NOCASE collation) — different casing is a duplicate.
+        var response = await _client.PostAsJsonAsync("/api/users",
+            new { firstName = "ivan", lastName = suffix.ToUpperInvariant() });
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Login_IsCaseInsensitive_ReturnsSameUser()
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+        var reg = await _client.PostAsJsonAsync("/api/users", new { firstName = "Casey", lastName = suffix });
+        var regBody = await reg.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+
+        // Recovery must work regardless of casing, mirroring the case-insensitive uniqueness rule.
         var r = await _client.PostAsJsonAsync("/api/users/login", new { firstName = "casey", lastName = suffix });
-        Assert.Equal(System.Net.HttpStatusCode.NotFound, r.StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
+        var body = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal(regBody!["userId"], body.GetProperty("userId").GetString());
     }
 
     [Fact]

@@ -47,6 +47,11 @@ public class ActivityService : IActivityService
         if (!DateTime.TryParse(request.Datetime, out var dateTime))
             return ActivityResult.BadRequest("Invalid datetime format");
 
+        // A fitness log shouldn't accept activities that haven't happened yet.
+        // Small tolerance absorbs clock skew between client and server.
+        if (dateTime.ToUniversalTime() > DateTime.UtcNow.AddMinutes(5))
+            return ActivityResult.BadRequest("Activity datetime cannot be in the future");
+
         // Daily Steps is one of the required sports and the assignment's schema lists `steps`
         // as a field of this endpoint — accept it here too, delegating to the same accumulator
         // used by the dedicated POST /users/{userId}/steps endpoint so a day's total steps

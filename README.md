@@ -16,8 +16,9 @@ are kept exact and unauthenticated on `main` by design — see
 
 - **Backend:** C# / ASP.NET Core 8 Web API · Entity Framework Core · SQLite
 - **Frontend:** Angular 17 (standalone components) · Angular Material · Chart.js (ng2-charts)
-- **Tests:** xUnit, 171 tests — `dotnet test` (real SQLite-backed integration tests via
+- **Tests:** xUnit, 201 tests — `dotnet test` (real SQLite-backed integration tests via
   `WebApplicationFactory`, not mocks)
+- **API docs:** OpenAPI / Swagger UI at `/swagger`
 
 ## Prerequisites
 
@@ -39,7 +40,8 @@ Two containers come up: the ASP.NET Core API and an nginx image serving the
 built Angular app. nginx reverse-proxies `/api` to the backend, so the app is
 **single-origin** (no CORS in play) and the frontend talks to a relative `/api`
 path — the same URL whether it's running in Docker or behind the dev proxy. The
-API is also published on `http://localhost:5262` for direct poking.
+API is also published on `http://localhost:5262` for direct poking, with
+interactive Swagger UI at **http://localhost:5262/swagger**.
 
 The SQLite database is seeded on first boot and persists on a named volume
 (`fitness-data`), so restarts keep your data:
@@ -95,7 +97,7 @@ cd backend
 dotnet test
 ```
 
-171 tests, all passing. Coverage spans the assignment-required logic
+201 tests, all passing. Coverage spans the assignment-required logic
 (`ScoringServiceTests.cs` — pure unit tests of every sport's points formula,
 including floor/edge-case behavior) and every game-layer subsystem, all as
 real integration tests against an in-memory SQLite database through the
@@ -226,6 +228,7 @@ leave implicit:
 
 | Method | Endpoint | Description |
 |--------|----------|--------------|
+| GET | `/api/health` | Liveness/readiness probe (checks DB connectivity) |
 | POST | `/api/users` | Register a new user *(assignment contract)* |
 | POST | `/api/users/login` | Recover an account by name |
 | POST | `/api/activities` | Log a fitness activity *(assignment contract)* |

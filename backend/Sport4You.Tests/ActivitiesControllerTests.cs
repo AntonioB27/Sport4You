@@ -86,6 +86,23 @@ public class ActivitiesControllerTests : IClassFixture<TestFactory>
     }
 
     [Fact]
+    public async Task LogActivity_FutureDatetime_Returns400()
+    {
+        var userId = await CreateUserAsync("Future", "Runner");
+        var response = await _client.PostAsJsonAsync("/api/activities", new
+        {
+            userId,
+            datetime = DateTime.UtcNow.AddDays(1).ToString("yyyy-MM-ddTHH:mm:ssZ"),
+            sport = "running",
+            distance = 5.0
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+        Assert.Contains("future", body!["error"]);
+    }
+
+    [Fact]
     public async Task LogActivity_UnknownUserId_Returns404()
     {
         var response = await _client.PostAsJsonAsync("/api/activities", new

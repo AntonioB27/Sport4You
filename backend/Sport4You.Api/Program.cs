@@ -6,6 +6,9 @@ using Sport4You.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+    c.SwaggerDoc("v1", new() { Title = "Sport4You API", Version = "v1" }));
 // Connection string is configurable (e.g. ConnectionStrings__Default in Docker,
 // pointing at a mounted volume); falls back to a local file for `dotnet run`.
 var connectionString = builder.Configuration.GetConnectionString("Default")
@@ -50,9 +53,19 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod()));
 
 var app = builder.Build();
+// Enabled in every environment so the API is browsable at /swagger even in the
+// Docker container (published on :5262).
+app.UseSwagger();
+app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sport4You API v1"));
 app.UseCors();
 app.UseMiddleware<Sport4You.Api.Middleware.ExceptionMiddleware>();
 app.MapControllers();
+
+// Lightweight liveness/readiness probe (also handy for container orchestration).
+app.MapGet("/api/health", async (AppDbContext db) =>
+    await db.Database.CanConnectAsync()
+        ? Results.Ok(new { status = "healthy" })
+        : Results.StatusCode(StatusCodes.Status503ServiceUnavailable));
 
 using (var scope = app.Services.CreateScope())
 {
