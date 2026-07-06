@@ -21,23 +21,23 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task Seed_Creates34Avatars()
+    public async Task Seed_Creates40Avatars()
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        // 20 regular avatars + 15 loot-box avatars = 35 total
-        Assert.Equal(34, await db.Avatars.CountAsync());
+        // 21 regular avatars + 13 loot-box avatars + 6 shop avatars = 40 total
+        Assert.Equal(40, await db.Avatars.CountAsync());
     }
 
     [Fact]
-    public async Task GetUserAvatars_ReturnsAll34WithLockedState()
+    public async Task GetUserAvatars_ReturnsAll40WithLockedState()
     {
         var userId = Guid.Parse(await CreateUserAsync());
         using var scope = _factory.Services.CreateScope();
         var svc = scope.ServiceProvider.GetRequiredService<IAvatarService>();
         var list = await svc.GetUserAvatarsAsync(userId);
-        // 20 regular + 15 loot-box avatars; default is unlocked at registration, rest are locked
-        Assert.Equal(34, list.Count);
+        // 40 total avatars; default is unlocked at registration, rest are locked
+        Assert.Equal(40, list.Count);
         Assert.Equal(1, list.Count(a => a.Unlocked));
         Assert.True(list.Single(a => a.Unlocked).IsActive);
     }
@@ -238,7 +238,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
-    public async Task GetAvatarsEndpoint_Returns34Items()
+    public async Task GetAvatarsEndpoint_Returns40Items()
     {
         var suffix = Guid.NewGuid().ToString("N")[..6];
         var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "GetAv", lastName = suffix });
@@ -250,7 +250,7 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
 
         var body = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         Assert.Equal(System.Text.Json.JsonValueKind.Array, body.ValueKind);
-        Assert.Equal(34, body.GetArrayLength());
+        Assert.Equal(40, body.GetArrayLength());
     }
 
     [Fact]
@@ -278,5 +278,23 @@ public class AvatarServiceTests : IClassFixture<TestFactory>
         var r = await _client.PostAsJsonAsync("/api/users", new { firstName = "Av", lastName = suffix });
         var body = await r.Content.ReadFromJsonAsync<Dictionary<string, string>>();
         return body!["userId"];
+    }
+
+    [Fact]
+    public async Task Seed_ShopAvatars_HaveCorrectPricingByRarity()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var shopAvatars = await db.Avatars.Where(a => a.UnlockType == "shop").ToListAsync();
+        Assert.Equal(6, shopAvatars.Count);
+        Assert.All(shopAvatars, a => Assert.NotNull(a.ShopRarity));
+        Assert.All(shopAvatars, a => Assert.NotNull(a.ShopPrice));
+        Assert.Equal(2, shopAvatars.Count(a => a.ShopRarity == "common"));
+        Assert.Equal(2, shopAvatars.Count(a => a.ShopRarity == "rare"));
+        Assert.Equal(2, shopAvatars.Count(a => a.ShopRarity == "legendary"));
+        Assert.All(shopAvatars.Where(a => a.ShopRarity == "common"), a => Assert.Equal(300, a.ShopPrice));
+        Assert.All(shopAvatars.Where(a => a.ShopRarity == "rare"), a => Assert.Equal(800, a.ShopPrice));
+        Assert.All(shopAvatars.Where(a => a.ShopRarity == "legendary"), a => Assert.Equal(1500, a.ShopPrice));
     }
 }

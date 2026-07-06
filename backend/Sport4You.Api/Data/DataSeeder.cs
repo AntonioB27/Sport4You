@@ -13,6 +13,7 @@ public static class DataSeeder
         SeedAchievements(db);
         SeedAvatars(db);
         SeedLootBoxAvatars(db);
+        SeedShopAvatars(db);
         SeedLootBoxRewards(db);
     }
 
@@ -313,6 +314,35 @@ public static class DataSeeder
         => new() { Id = Guid.NewGuid(), Name = name, Description = desc,
                    UnlockType = "loot_box", UnlockValue = 0, UnlockAchievementId = null,
                    ImagePath = $"assets/avatars/loot-box/{slug}.png" };
+
+    private static void SeedShopAvatars(AppDbContext db)
+    {
+        if (db.Avatars.Any(a => a.UnlockType == "shop")) return;
+
+        db.Avatars.AddRange(
+            Shop("Sleuth Sporty",         "Elementary, my dear hydration.",              "common",    300,  "sleuth-sporty"),
+            Shop("Scavenger Sporty",      "Fortune and glory... and electrolytes.",      "common",    300,  "scavenger-sporty"),
+            Shop("Bladewalker Sporty",    "May the pace be with you.",                   "rare",      800,  "bladewalker-sporty"),
+            Shop("Ringbearer Sporty",     "One does not simply skip leg day.",           "rare",      800,  "ringbearer-sporty"),
+            Shop("Master Assassin Sporty","Nothing is true, everything is cardio.",      "legendary", 1500, "master-assassin-sporty"),
+            Shop("Dark Lord Sporty",      "I find your lack of hydration disturbing.",   "legendary", 1500, "dark-lord-sporty")
+        );
+
+        db.SaveChanges();
+    }
+
+    private static Avatar Shop(string name, string desc, string rarity, int price, string slug)
+        => new()
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            Description = desc,
+            UnlockType = "shop",
+            UnlockValue = 0,
+            ImagePath = $"assets/avatars/shop/{slug}.png",
+            ShopRarity = rarity,
+            ShopPrice = price,
+        };
 
     private static void SeedLootBoxRewards(AppDbContext db)
     {
