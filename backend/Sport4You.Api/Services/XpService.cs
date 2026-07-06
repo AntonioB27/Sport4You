@@ -266,6 +266,9 @@ public class XpService : IXpService
     public async Task<int> GetPrestigeLevelAsync(Guid userId)
         => (await _db.UserXp.FindAsync(userId))?.PrestigeLevel ?? 0;
 
+    public async Task<Dictionary<Guid, int>> GetPrestigeLevelMapAsync()
+        => await _db.UserXp.ToDictionaryAsync(x => x.UserId, x => x.PrestigeLevel);
+
     public async Task<PrestigeResult> PrestigeAsync(Guid userId)
     {
         var row = await _db.UserXp.FindAsync(userId);

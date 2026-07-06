@@ -10,4 +10,5 @@ public class LeaderboardEntryDto
     public int RankTrend { get; set; }
     public string? ActiveAvatarImagePath { get; set; }
     public string? ActiveBorderCss { get; set; }
+    public int PrestigeLevel { get; set; }
 }

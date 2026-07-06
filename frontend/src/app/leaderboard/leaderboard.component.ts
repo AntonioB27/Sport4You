@@ -99,6 +99,22 @@ import { IconComponent } from '../shared/components/icon/icon.component';
     .av-thumb.sm, .av-initial.sm { width:32px; height:32px; font-size:13px; }
     /* podium size */
     .av-thumb.lg, .av-initial.lg { width:48px; height:48px; font-size:20px; margin-bottom:6px; }
+
+    /* prestige badge overlay */
+    .av-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+    .prestige-badge {
+      position: absolute; top: -4px; right: -4px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 800; line-height: 1;
+      color: #fff; background: linear-gradient(150deg,#FFD24A,#F5A200);
+      border: 1.5px solid #fff; border-radius: 999px;
+      box-shadow: 0 2px 6px -1px rgba(180,120,0,.6);
+      white-space: nowrap;
+    }
+    /* list-row (sm) size */
+    .av-wrap.sm .prestige-badge { font-size: 9px; padding: 1px 4px; min-width: 15px; height: 15px; }
+    /* podium (lg) size */
+    .av-wrap.lg .prestige-badge { font-size: 11px; padding: 1px 5px; min-width: 18px; height: 18px; top: -5px; right: -5px; }
   `],
   template: `
     <div class="page">
@@ -114,12 +130,17 @@ import { IconComponent } from '../shared/components/icon/icon.component';
           <!-- 2nd place (left) -->
           <div class="podium-slot" (click)="viewProfile(entries[1])">
             <div class="podium-card" [style.background]="'#F7F7F7'">
-              @if (entries[1].activeAvatarImagePath) {
-                <img class="av-thumb lg" [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName"
-                     [style.border]="entries[1].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
-              } @else {
-                <span class="av-initial lg" [style.border]="entries[1].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[1].firstName[0] }}</span>
-              }
+              <span class="av-wrap lg">
+                @if (entries[1].activeAvatarImagePath) {
+                  <img class="av-thumb lg" [src]="entries[1].activeAvatarImagePath" [alt]="entries[1].firstName"
+                       [style.border]="entries[1].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
+                } @else {
+                  <span class="av-initial lg" [style.border]="entries[1].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[1].firstName[0] }}</span>
+                }
+                @if (entries[1].prestigeLevel > 0) {
+                  <span class="prestige-badge">★{{ entries[1].prestigeLevel }}</span>
+                }
+              </span>
               <div class="podium-name">{{ entries[1].firstName }} {{ entries[1].lastName }}</div>
               <div class="podium-pts">{{ entries[1].totalPoints | number }}</div>
             </div>
@@ -129,12 +150,17 @@ import { IconComponent } from '../shared/components/icon/icon.component';
           <div class="podium-slot" (click)="viewProfile(entries[0])">
             <div class="podium-card" style="background: linear-gradient(150deg,#FFE27A,#FFC200); box-shadow: 0 0 28px rgba(255,194,0,.5);">
               <app-icon name="crown" [size]="34" style="color:#fff;" />
-              @if (entries[0].activeAvatarImagePath) {
-                <img class="av-thumb lg" [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName"
-                     [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
-              } @else {
-                <span class="av-initial lg" [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[0].firstName[0] }}</span>
-              }
+              <span class="av-wrap lg">
+                @if (entries[0].activeAvatarImagePath) {
+                  <img class="av-thumb lg" [src]="entries[0].activeAvatarImagePath" [alt]="entries[0].firstName"
+                       [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
+                } @else {
+                  <span class="av-initial lg" [style.border]="entries[0].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[0].firstName[0] }}</span>
+                }
+                @if (entries[0].prestigeLevel > 0) {
+                  <span class="prestige-badge">★{{ entries[0].prestigeLevel }}</span>
+                }
+              </span>
               <div class="podium-name">{{ entries[0].firstName }} {{ entries[0].lastName }}</div>
               <div class="podium-pts">{{ entries[0].totalPoints | number }}</div>
             </div>
@@ -143,12 +169,17 @@ import { IconComponent } from '../shared/components/icon/icon.component';
           <!-- 3rd place (right) -->
           <div class="podium-slot" (click)="viewProfile(entries[2])">
             <div class="podium-card" [style.background]="'#FDF0E6'">
-              @if (entries[2].activeAvatarImagePath) {
-                <img class="av-thumb lg" [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName"
-                     [style.border]="entries[2].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
-              } @else {
-                <span class="av-initial lg" [style.border]="entries[2].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[2].firstName[0] }}</span>
-              }
+              <span class="av-wrap lg">
+                @if (entries[2].activeAvatarImagePath) {
+                  <img class="av-thumb lg" [src]="entries[2].activeAvatarImagePath" [alt]="entries[2].firstName"
+                       [style.border]="entries[2].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
+                } @else {
+                  <span class="av-initial lg" [style.border]="entries[2].activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ entries[2].firstName[0] }}</span>
+                }
+                @if (entries[2].prestigeLevel > 0) {
+                  <span class="prestige-badge">★{{ entries[2].prestigeLevel }}</span>
+                }
+              </span>
               <div class="podium-name">{{ entries[2].firstName }} {{ entries[2].lastName }}</div>
               <div class="podium-pts">{{ entries[2].totalPoints | number }}</div>
             </div>
@@ -174,12 +205,17 @@ import { IconComponent } from '../shared/components/icon/icon.component';
               <span class="rank-chip" [class]="rankChipClass(i, e)">{{ e.rank }}</span>
             </div>
             <div class="athlete-name">
-              @if (e.activeAvatarImagePath) {
-                <img class="av-thumb sm" [src]="e.activeAvatarImagePath" [alt]="e.firstName"
-                     [style.border]="e.activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
-              } @else {
-                <span class="av-initial sm" [style.border]="e.activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ e.firstName[0] }}</span>
-              }
+              <span class="av-wrap sm">
+                @if (e.activeAvatarImagePath) {
+                  <img class="av-thumb sm" [src]="e.activeAvatarImagePath" [alt]="e.firstName"
+                       [style.border]="e.activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">
+                } @else {
+                  <span class="av-initial sm" [style.border]="e.activeBorderCss ?? '2px solid rgba(255,255,255,.35)'">{{ e.firstName[0] }}</span>
+                }
+                @if (e.prestigeLevel > 0) {
+                  <span class="prestige-badge">★{{ e.prestigeLevel }}</span>
+                }
+              </span>
               {{ e.firstName }} {{ e.lastName }}
               <span class="you-badge" *ngIf="isMe(e)">YOU</span>
             </div>

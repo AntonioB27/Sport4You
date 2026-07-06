@@ -7,4 +7,5 @@ export interface LeaderboardEntry {
   rankTrend: number;
   activeAvatarImagePath?: string;
   activeBorderCss?: string;
+  prestigeLevel: number;
 }
