@@ -93,9 +93,9 @@ const BOOSTER_META: CardMeta = {
     }
     @keyframes holoSweepPage { 0% { background-position:-160% 0; } 100% { background-position:260% 0; } }
     .spotlight-art { position:relative; padding:22px; display:flex; align-items:center; justify-content:center; }
-    .spotlight-art-circle {
-      width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,.12);
-      display:flex; align-items:center; justify-content:center; color:#fff;
+    .spotlight-art-img {
+      width:200px; height:200px; object-fit:contain;
+      filter:drop-shadow(0 14px 26px rgba(0,0,0,.4));
     }
     .spotlight-body { position:relative; padding:30px 34px; color:#fff; display:flex; flex-direction:column; justify-content:center; }
     .spotlight-chip {
@@ -164,7 +164,7 @@ const BOOSTER_META: CardMeta = {
               <div class="spotlight">
                 <div class="spotlight-sweep"></div>
                 <div class="spotlight-art">
-                  <div class="spotlight-art-circle"><app-icon name="package" [size]="72" /></div>
+                  <img class="spotlight-art-img" src="assets/shop/lootbox-special.png" alt="Special Loot Box">
                 </div>
                 <div class="spotlight-body">
                   <div class="spotlight-chip">✦ FEATURED</div>
@@ -192,8 +192,8 @@ const BOOSTER_META: CardMeta = {
                 <app-shop-item-card
                   [name]="boosterName(catalog)"
                   description="Boosts your next {{ catalog.booster.boostedActivities }} logged activities."
-                  [imagePath]="null"
-                  iconName="lightning"
+                  imagePath="assets/shop/xp-booster.png"
+                  [iconName]="null"
                   [frameGradient]="boosterMeta.frame"
                   [frameShadow]="boosterMeta.frameShadow"
                   [badgeLabel]="boosterMeta.badgeLabel"
@@ -221,8 +221,8 @@ const BOOSTER_META: CardMeta = {
                   <app-shop-item-card
                     [name]="box.tier === 'special' ? 'Special Loot Box' : 'Normal Loot Box'"
                     description="{{ box.commonPct }}% common · {{ box.rarePct }}% rare · {{ box.legendaryPct }}% legendary"
-                    [imagePath]="null"
-                    iconName="package"
+                    [imagePath]="lootBoxImage(box)"
+                    [iconName]="null"
                     [frameGradient]="lootBoxMeta(box).frame"
                     [frameShadow]="lootBoxMeta(box).frameShadow"
                     [badgeLabel]="lootBoxMeta(box).badgeLabel"
@@ -293,6 +293,10 @@ export class ShopComponent implements OnInit {
 
   lootBoxMeta(box: ShopLootBox): CardMeta {
     return RARITY_META[box.tier === 'special' ? 'legendary' : 'common'];
+  }
+
+  lootBoxImage(box: ShopLootBox): string {
+    return box.tier === 'special' ? 'assets/shop/lootbox-special.png' : 'assets/shop/lootbox-normal.png';
   }
 
   boosterName(catalog: ShopCatalog): string {
