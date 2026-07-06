@@ -9,9 +9,9 @@ public static class DataSeeder
     {
         SeedUsers(db, scoring);
         SeedMissions(db);
+        SeedBorders(db);
         SeedAchievements(db);
         SeedAvatars(db);
-        SeedBorders(db);
         SeedLootBoxAvatars(db);
         SeedLootBoxRewards(db);
     }
@@ -151,6 +151,8 @@ public static class DataSeeder
     {
         if (db.Achievements.Any()) return;
 
+        var borderByName = db.Borders.ToDictionary(b => b.Name, b => b.Id);
+
         db.Achievements.AddRange(
             // Sport Distance — Running
             A("bronze", "First Strides",   "Run 10 km total",    "total_km", 10,  "running", 50),
@@ -194,16 +196,19 @@ public static class DataSeeder
             A("silver", "Triple Crown",     "Complete a daily sweep (all 3 missions in one day)","first_sweep",    1,    null, 150),
             A("silver", "All-Rounder",      "Log all 6 sport types at least once",               "all_sports",     6,    null, 150),
             A("bronze", "Century",          "Earn 1,000 points in a single day",                 "points_in_day",  1000, null, 50),
-            A("gold",   "Centurion",        "Earn 10,000 points in a single day",                "points_in_day",  10000, null, 300)
+            A("gold",   "Centurion",        "Earn 10,000 points in a single day",                "points_in_day",  10000, null, 300),
+            // Meta
+            A("platinum", "Platinum Completionist", "Unlock all 33 achievements.", "achievements_unlocked", 33, null, 1000, borderByName.GetValueOrDefault("Platinum"))
         );
 
         db.SaveChanges();
     }
 
     private static Achievement A(string tier, string name, string desc,
-        string reqType, double reqVal, string? sport, int xp)
+        string reqType, double reqVal, string? sport, int xp, Guid? grantsBorderId = null)
         => new() { Id = Guid.NewGuid(), Tier = tier, Name = name, Description = desc,
-                   RequirementType = reqType, RequirementValue = reqVal, Sport = sport, XpReward = xp };
+                   RequirementType = reqType, RequirementValue = reqVal, Sport = sport, XpReward = xp,
+                   GrantsBorderId = grantsBorderId };
 
     private static void SeedAvatars(AppDbContext db)
     {
@@ -237,7 +242,9 @@ public static class DataSeeder
             // Activities logged
             V("Active Sporty",       "Log 10 activities",                                  "activities_logged",  10,  null),
             V("Committed Sporty",    "Log 50 activities",                                  "activities_logged",  50,  null),
-            V("Veteran Sporty",      "Log 100 activities",                                 "activities_logged",  100, null)
+            V("Veteran Sporty",      "Log 100 activities",                                 "activities_logged",  100, null),
+            // Meta
+            V("Platinum Sporty",     "Earn the Platinum Completionist achievement",        "achievement_earned", 0,   achByName.GetValueOrDefault("Platinum Completionist"))
         );
 
         db.SaveChanges();
@@ -265,7 +272,8 @@ public static class DataSeeder
             B("Sapphire Band","rare",      "3px double #2196F3",                                                                    "sapphire-band"),
             B("Aurora Band",  "rare",      "3px solid #9C27B0",                                                                     "aurora-band"),
             B("Gold Crown Ring","legendary","3px solid #FFD700",                                                                    "gold-crown-ring"),
-            B("Inferno Halo", "legendary", "3px solid #FF6F00",                                                                     "inferno-halo")
+            B("Inferno Halo", "legendary", "3px solid #FF6F00",                                                                     "inferno-halo"),
+            B("Platinum",     "platinum",  "3px solid transparent; background: linear-gradient(#fff,#fff) padding-box, conic-gradient(from 0deg, #e8e8e8, #ffffff, #cfd9ff, #ffe8f7, #e8e8e8) border-box", "platinum-ring")
         );
 
         db.SaveChanges();

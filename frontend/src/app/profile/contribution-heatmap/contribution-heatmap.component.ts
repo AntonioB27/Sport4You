@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 interface HeatmapDay {
@@ -70,7 +70,7 @@ function dateKey(d: Date): string {
     @if (weeks.length === 0) {
       <div class="empty">No activity yet.</div>
     } @else {
-      <div class="wrap">
+      <div class="wrap" #wrap>
         <div class="grid">
           @for (week of weeks; track $index) {
             <div class="week-col">
@@ -99,14 +99,29 @@ function dateKey(d: Date): string {
     }
   `,
 })
-export class ContributionHeatmapComponent implements OnChanges {
+export class ContributionHeatmapComponent implements OnChanges, AfterViewChecked {
   @Input() pointsOverTime: { date: string; points: number }[] = [];
+  @ViewChild('wrap') wrapRef?: ElementRef<HTMLElement>;
 
   readonly levelColors = LEVEL_COLORS;
   weeks: HeatmapWeek[] = [];
 
+  // When the grid overflows its container, today sits at the right edge and
+  // would be hidden off-screen. Scroll to the end once after the grid renders
+  // so the most recent days are what you see first.
+  private pendingScrollToEnd = false;
+
   ngOnChanges(): void {
     this.weeks = this.buildGrid();
+    this.pendingScrollToEnd = true;
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.pendingScrollToEnd && this.wrapRef) {
+      const el = this.wrapRef.nativeElement;
+      el.scrollLeft = el.scrollWidth;
+      this.pendingScrollToEnd = false;
+    }
   }
 
   private buildGrid(): HeatmapWeek[] {

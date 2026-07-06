@@ -100,6 +100,7 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
     .rarity-pill.common { background: #9E9E9E; }
     .rarity-pill.rare { background: #2196F3; }
     .rarity-pill.legendary { background: #FFD700; color: #333; }
+    .rarity-pill.platinum { background: linear-gradient(135deg,#e8e8e8,#ffffff 50%,#cfd9ff); color: #3a4a9e; }
     .equip-btn {
       border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer;
       background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif;
@@ -349,7 +350,7 @@ export class ProfileComponent implements OnInit {
   }
 
   get sortedBorders(): BorderStatus[] {
-    const RARITY_RANK: Record<string, number> = { legendary: 0, rare: 1, common: 2 };
+    const RARITY_RANK: Record<string, number> = { platinum: -1, legendary: 0, rare: 1, common: 2 };
     return [...this.borders].sort((a, b) => {
       if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
       return (RARITY_RANK[a.rarity] ?? 3) - (RARITY_RANK[b.rarity] ?? 3);

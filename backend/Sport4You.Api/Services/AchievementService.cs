@@ -62,16 +62,31 @@ public class AchievementService : IAchievementService
 
         var agg = await ComputeAggregatesAsync(userId);
 
-        // Evaluate + batch-save
+        // Evaluate + batch-save. "achievements_unlocked" (Platinum) is
+        // intentionally skipped here — its requirement depends on how many
+        // OTHER achievements unlock in this same pass, which isn't known
+        // until after this loop completes (see the second phase below).
         var toUnlock = new List<Achievement>();
         foreach (var a in unearned)
         {
+            if (a.RequirementType == "achievements_unlocked") continue;
             if (!KnownRequirementTypes.Contains(a.RequirementType)) continue;
             var progress = ComputeProgress(a, agg);
             var meets = a.RequirementType == "leaderboard_rank"
                 ? progress <= a.RequirementValue
                 : progress >= a.RequirementValue;
             if (meets) toUnlock.Add(a);
+        }
+
+        // Second phase: check Platinum against (already-earned count) +
+        // (newly-unlocked-this-batch count), so a user whose 33rd real
+        // achievement unlocks in this exact call also cascades Platinum
+        // in the same batch, not on a subsequent activity log.
+        var platinum = unearned.FirstOrDefault(a => a.RequirementType == "achievements_unlocked");
+        if (platinum != null)
+        {
+            var willHaveCount = earnedIds.Count + toUnlock.Count;
+            if (willHaveCount >= platinum.RequirementValue) toUnlock.Add(platinum);
         }
 
         if (toUnlock.Count == 0) return [];
@@ -95,6 +110,14 @@ public class AchievementService : IAchievementService
             });
             totalXpToAward += a.XpReward;
             result.Add(new UnlockedAchievementDto(a.Id, a.Tier, a.Name, a.Description, a.XpReward));
+
+            if (a.GrantsBorderId.HasValue)
+            {
+                _db.UserBorders.Add(new UserBorder
+                {
+                    UserId = userId, BorderId = a.GrantsBorderId.Value, UnlockedAt = now, IsActive = false,
+                });
+            }
         }
 
         // Update UserXp in one shot
@@ -124,13 +147,15 @@ public class AchievementService : IAchievementService
         int Rank,
         bool HasMission,
         bool HasSweep,
-        int ActivityCount);
+        int ActivityCount,
+        int AchievementsUnlockedCount);
 
     private static readonly HashSet<string> KnownRequirementTypes =
     [
         "total_km", "total_minutes", "total_steps", "streak_days",
         "level_reached", "leaderboard_rank", "first_activity",
         "first_mission", "first_sweep", "all_sports", "points_in_day",
+        "achievements_unlocked",
     ];
 
     private async Task<UserAggregates> ComputeAggregatesAsync(Guid userId)
@@ -174,10 +199,17 @@ public class AchievementService : IAchievementService
         var hasSweep = await _db.XpTransactions
             .AnyAsync(t => t.UserId == userId && t.Source == "mission_sweep");
 
+        var nonPlatinumAchievementIds = await _db.Achievements
+            .Where(a => a.Tier != "platinum")
+            .Select(a => a.Id)
+            .ToListAsync();
+        var achievementsUnlockedCount = await _db.UserAchievements
+            .CountAsync(ua => ua.UserId == userId && nonPlatinumAchievementIds.Contains(ua.AchievementId));
+
         return new UserAggregates(
             totalKmBySport, totalMinBySport, totalSteps, distinctSports,
             maxPointsInDay, streak, level, rank, hasMission, hasSweep,
-            allActivities.Count);
+            allActivities.Count, achievementsUnlockedCount);
     }
 
     // For leaderboard_rank, progress is the user's current rank (lower is better);
@@ -198,6 +230,7 @@ public class AchievementService : IAchievementService
             "first_sweep"      => agg.HasSweep ? 1 : 0,
             "all_sports"       => agg.DistinctSports,
             "points_in_day"    => agg.MaxPointsInDay,
+            "achievements_unlocked" => agg.AchievementsUnlockedCount,
             _                  => 0,
         };
     }

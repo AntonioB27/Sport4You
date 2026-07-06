@@ -62,7 +62,7 @@ const SECTIONS: SectionDef[] = [
   },
 ];
 
-const ONE_TIME_TYPES = ['first_activity', 'first_mission', 'first_sweep', 'all_sports', 'points_in_day'];
+const ONE_TIME_TYPES = ['first_activity', 'first_mission', 'first_sweep', 'all_sports', 'points_in_day', 'achievements_unlocked'];
 const TIER_ORDER = ['bronze', 'silver', 'gold'];
 
 interface TierMeta {
@@ -92,6 +92,12 @@ const TIER_META: Record<string, TierMeta> = {
     frameShadow: '0 18px 30px -18px rgba(245,179,0,.5)',
     labelColor: '#C58A00', rarity: 'LEGENDARY',
     badgeColor: '#7a5200', badgeBg: 'rgba(255,255,255,.85)',
+  },
+  platinum: {
+    frame: 'linear-gradient(160deg,#ffffff,#cfd9ff 45%,#e8e8e8 70%,#b8c4ff)',
+    frameShadow: '0 18px 30px -18px rgba(150,170,255,.6)',
+    labelColor: '#5b6fd6', rarity: 'MYTHIC',
+    badgeColor: '#3a4a9e', badgeBg: 'rgba(255,255,255,.9)',
   },
 };
 
