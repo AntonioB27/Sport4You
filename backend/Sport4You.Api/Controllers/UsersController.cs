@@ -12,13 +12,15 @@ public class UsersController : ControllerBase
     private readonly IDashboardService _dashboard;
     private readonly IActivityService _activities;
     private readonly IXpService _xp;
+    private readonly IWeightService _weight;
 
-    public UsersController(IUserService users, IDashboardService dashboard, IActivityService activities, IXpService xp)
+    public UsersController(IUserService users, IDashboardService dashboard, IActivityService activities, IXpService xp, IWeightService weight)
     {
         _users = users;
         _dashboard = dashboard;
         _activities = activities;
         _xp = xp;
+        _weight = weight;
     }
 
     [HttpPost]
@@ -83,5 +85,35 @@ public class UsersController : ControllerBase
             xpPercent = s.LevelInfo.XpPercent,
             prestigeLevel = await _xp.GetPrestigeLevelAsync(userId),
         });
+    }
+
+    [HttpGet("{userId}/weight")]
+    public async Task<IActionResult> GetWeight(Guid userId)
+    {
+        var history = await _weight.GetHistoryAsync(userId);
+        if (history == null) return NotFound(new { error = "User not found" });
+        return Ok(history);
+    }
+
+    [HttpPost("{userId}/weight")]
+    public async Task<IActionResult> LogWeight(Guid userId, [FromBody] LogWeightRequest request)
+    {
+        if (request.WeightKg <= 0 || request.WeightKg >= 1000)
+            return BadRequest(new { error = "Weight must be between 0 and 1000 kg." });
+
+        var entry = await _weight.UpsertTodayAsync(userId, request.WeightKg);
+        if (entry == null) return NotFound(new { error = "User not found" });
+        return Ok(entry);
+    }
+
+    [HttpPut("{userId}/weight/goal")]
+    public async Task<IActionResult> SetWeightGoal(Guid userId, [FromBody] SetWeightGoalRequest request)
+    {
+        if (request.GoalKg <= 0 || request.GoalKg >= 1000)
+            return BadRequest(new { error = "Goal must be between 0 and 1000 kg." });
+
+        var ok = await _weight.SetGoalAsync(userId, request.GoalKg);
+        if (!ok) return NotFound(new { error = "User not found" });
+        return Ok(new { goalKg = request.GoalKg });
     }
 }

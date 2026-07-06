@@ -16,11 +16,12 @@ import { RegisterDialogComponent } from '../shared/components/register-dialog/re
 import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
 import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.component';
 import { RivalCardComponent } from './rival-card/rival-card.component';
+import { WeightCardComponent } from './weight-card/weight-card.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent, RivalCardComponent],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent, RivalCardComponent, WeightCardComponent],
   styles: [`
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
@@ -479,6 +480,9 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
               [myAvatarImagePath]="data.activeAvatar?.imagePath ?? null"
               [myBorderCss]="data.activeBorderCss"></app-rival-card>
 
+            <!-- Weight tracking -->
+            <app-weight-card [userId]="currentUserId"></app-weight-card>
+
             <!-- Recent activity -->
             <div class="card">
               <div class="card-title">RECENT ACTIVITY</div>
@@ -555,6 +559,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get isMaxLevel(): boolean { return this.level >= 10; }
 
   get missionsDone(): number { return this.data?.dailyMissions?.filter(m => m.completed).length ?? 0; }
+
+  get currentUserId(): string { return localStorage.getItem('userId') ?? ''; }
 
 
   constructor(

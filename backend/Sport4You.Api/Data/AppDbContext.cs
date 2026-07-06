@@ -21,6 +21,8 @@ public class AppDbContext : DbContext
     public DbSet<LootBoxReward> LootBoxRewards => Set<LootBoxReward>();
     public DbSet<Border> Borders => Set<Border>();
     public DbSet<UserBorder> UserBorders => Set<UserBorder>();
+    public DbSet<WeightEntry> WeightEntries => Set<WeightEntry>();
+    public DbSet<WeightGoal> WeightGoals => Set<WeightGoal>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,5 +72,12 @@ public class AppDbContext : DbContext
             .HasForeignKey(lb => lb.RewardId)
             .IsRequired(false)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<WeightEntry>()
+            .HasIndex(w => new { w.UserId, w.Date })
+            .IsUnique();
+
+        modelBuilder.Entity<WeightGoal>()
+            .HasKey(g => g.UserId);
     }
 }

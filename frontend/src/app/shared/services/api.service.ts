@@ -9,6 +9,7 @@ import {
 } from '../models/dashboard.model';
 import { BorderStatus, BoxInfo, OpenBoxResult } from '../models/border.model';
 import { ShopCatalog, BoosterPurchaseResult, LootBoxPurchaseResult, AvatarPurchaseResult } from '../models/shop.model';
+import { WeightHistory } from '../models/weight.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -102,5 +103,17 @@ export class ApiService {
 
   purchaseShopAvatar(userId: string, avatarId: string): Observable<AvatarPurchaseResult> {
     return this.http.post<AvatarPurchaseResult>(`${this.base}/users/${userId}/shop/avatar`, { avatarId });
+  }
+
+  getWeight(userId: string): Observable<WeightHistory> {
+    return this.http.get<WeightHistory>(`${this.base}/users/${userId}/weight`);
+  }
+
+  logWeight(userId: string, weightKg: number): Observable<{ date: string; weightKg: number }> {
+    return this.http.post<{ date: string; weightKg: number }>(`${this.base}/users/${userId}/weight`, { weightKg });
+  }
+
+  setWeightGoal(userId: string, goalKg: number): Observable<{ goalKg: number }> {
+    return this.http.put<{ goalKg: number }>(`${this.base}/users/${userId}/weight/goal`, { goalKg });
   }
 }

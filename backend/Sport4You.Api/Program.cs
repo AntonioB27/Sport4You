@@ -24,6 +24,7 @@ builder.Services.AddScoped<ILootBoxService, LootBoxService>();
 builder.Services.AddScoped<IRivalService, RivalService>();
 builder.Services.AddScoped<IPersonalRecordsService, PersonalRecordsService>();
 builder.Services.AddScoped<IShopService, ShopService>();
+builder.Services.AddScoped<IWeightService, WeightService>();
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
