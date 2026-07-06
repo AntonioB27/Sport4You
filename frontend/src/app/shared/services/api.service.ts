@@ -28,8 +28,8 @@ export class ApiService {
     return this.http.post<{ userId: string }>(`${this.base}/users/login`, { firstName, lastName });
   }
 
-  getLeaderboard(): Observable<LeaderboardEntry[]> {
-    return this.http.get<LeaderboardEntry[]>(`${this.base}/leaderboard`);
+  getLeaderboard(period: 'all' | '7d' | '30d' = 'all', sport: string = 'all'): Observable<LeaderboardEntry[]> {
+    return this.http.get<LeaderboardEntry[]>(`${this.base}/leaderboard`, { params: { period, sport } });
   }
 
   getDashboard(userId: string): Observable<DashboardData> {

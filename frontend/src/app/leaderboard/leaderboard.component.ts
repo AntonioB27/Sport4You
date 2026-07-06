@@ -6,6 +6,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { LeaderboardEntry } from '../shared/models/leaderboard.model';
 import { IconComponent } from '../shared/components/icon/icon.component';
+import { SPORT_ICON_NAMES, SPORT_COLORS } from '../shared/constants/sport.constants';
 
 const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
 
@@ -22,14 +23,35 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
     @keyframes glowPulse { 0%,100%{box-shadow:0 0 0 0 rgba(255,206,40,.55)} 50%{box-shadow:0 0 0 12px rgba(255,206,40,0)} }
     @keyframes holoSweep { 0%{background-position:-160% 0} 100%{background-position:260% 0} }
 
+    /* Filter-change reveal: opacity-only (not a slide/rise) because filtered views have
+       different row counts — animating position too would fight the layout resize. */
+    @keyframes lb-fade-in { from { opacity: 0; } to { opacity: 1; } }
+    .podium-fx, .lower-grid { animation: lb-fade-in .32s ease-out both; }
+    @media (prefers-reduced-motion: reduce) {
+      .podium-fx, .lower-grid { animation: none; }
+    }
+
     /* ── Header ── */
     .lb-header { display:flex; align-items:center; gap:10px; font-family: 'Chakra Petch', sans-serif; font-size: 30px; font-weight: 700; color: #10203E; letter-spacing:.02em; margin-bottom: 24px; }
+    .filter-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .sport-row { margin-bottom:22px; }
+    .pill {
+      border:1px solid #d6e0ee; background:#fff; color:#5c6881; cursor:pointer;
+      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; letter-spacing:.05em;
+      padding:8px 14px; display:inline-flex; align-items:center; gap:6px;
+      clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
+      transition: background .12s, color .12s;
+    }
+    .pill:hover { background:#F4F6FB; }
+    .pill.active { background:linear-gradient(150deg,#2E6BE6,#1B47AE); color:#fff; border-color:transparent; }
+    .sport-pill.active { background: var(--sport-color); color:#fff; border-color:transparent; }
 
     /* ── Podium ── */
+    .podium-fx { filter: drop-shadow(0 26px 42px rgba(15,30,59,.55)); margin-bottom: 22px; }
     .podium {
-      position: relative; border-radius: 24px; overflow: hidden; padding: 30px 30px 0; margin-bottom: 22px;
+      position: relative; overflow: hidden; padding: 30px 30px 0;
       background: radial-gradient(120% 130% at 50% -10%, #23407e, #0f1e3b 72%);
-      box-shadow: 0 28px 55px -28px rgba(15,30,59,.6);
+      clip-path: polygon(22px 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%, 0 22px);
     }
     .podium-glow { position:absolute; inset:0; background: radial-gradient(closest-side at 50% 20%, rgba(255,206,40,.16), transparent 60%); pointer-events:none; }
     .podium-row { position:relative; display:grid; grid-template-columns:1fr 1fr 1fr; align-items:end; gap:20px; max-width:820px; margin:0 auto; }
@@ -68,7 +90,11 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
     .lower-grid { display:grid; grid-template-columns:1.75fr 1fr; gap:22px; align-items:start; }
 
     /* standings list */
-    .list-card { background:#fff; border-radius:20px; box-shadow:0 12px 28px -18px rgba(16,32,62,.35); overflow:hidden; }
+    .list-fx { filter: drop-shadow(0 14px 26px rgba(16,32,62,.16)); }
+    .list-card {
+      position:relative; background:#fff; box-shadow: inset 0 0 0 1px #E6ECF6; overflow:hidden;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
     .list-header { display:grid; grid-template-columns:60px 1fr 150px 70px; padding:14px 22px 12px; border-bottom:1px solid #EAEEF6; }
     .list-header span { font-family:'Chakra Petch',sans-serif; font-size:11px; font-weight:700; letter-spacing:.14em; color:#8592ad; }
     .list-header .r { text-align:right; }
@@ -125,9 +151,11 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
 
     /* right rail */
     .rail { display:flex; flex-direction:column; gap:18px; }
+    .standing-fx { filter: drop-shadow(0 20px 36px rgba(30,79,184,.55)); }
     .standing {
-      position:relative; border-radius:20px; overflow:hidden; padding:22px;
-      background:linear-gradient(150deg,#2E6BE6,#173B92); box-shadow:0 20px 40px -20px rgba(30,79,184,.7);
+      position:relative; overflow:hidden; padding:22px;
+      background:linear-gradient(150deg,#2E6BE6,#173B92);
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
     }
     .standing-mascot { position:absolute; right:-10px; bottom:-16px; width:120px; height:140px; opacity:.9; }
     .standing-mascot img { width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 8px 12px rgba(0,0,0,.3)); animation:floaty 4s ease-in-out infinite; }
@@ -143,7 +171,11 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
     .standing-gap .track { height:9px; border-radius:999px; background:rgba(0,0,0,.24); overflow:hidden; }
     .standing-gap .fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow:0 0 12px rgba(198,230,59,.9); }
 
-    .climbers { background:#fff; border-radius:20px; box-shadow:0 12px 28px -18px rgba(16,32,62,.35); padding:18px 20px; }
+    .climbers-fx { filter: drop-shadow(0 14px 26px rgba(16,32,62,.16)); }
+    .climbers {
+      position:relative; background:#fff; box-shadow: inset 0 0 0 1px #E6ECF6; padding:18px 20px;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
     .climbers-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
     .climbers-head .t { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; color:#10203E; letter-spacing:.02em; }
     .climbers-head .s { font-family:'Chakra Petch',sans-serif; font-size:11px; font-weight:700; color:#8592ad; }
@@ -175,7 +207,31 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
   `],
   template: `
     <div class="page">
-      <div class="lb-header"><app-icon name="trophy" [size]="26" /> Leaderboard</div>
+      <div class="s4y-cbar-fx" style="margin-bottom:22px;">
+        <div class="s4y-cbar">
+          <div>
+            <div class="s4y-cbar-eyebrow">GLOBAL RANKINGS</div>
+            <div class="s4y-cbar-title">LEADER<span class="accent">BOARD</span></div>
+          </div>
+          <span style="color:#C6E63B; display:flex;"><app-icon name="trophy" [size]="30" /></span>
+        </div>
+      </div>
+
+      <div class="filter-row">
+        @for (opt of periodOptions; track opt.value) {
+          <button class="pill" [class.active]="selectedPeriod === opt.value" (click)="selectPeriod(opt.value)">{{ opt.label }}</button>
+        }
+      </div>
+      <div class="filter-row sport-row">
+        @for (opt of sportOptions; track opt.value) {
+          <button class="pill sport-pill" [class.active]="selectedSport === opt.value"
+                  [style.--sport-color]="sportColor(opt.value)"
+                  (click)="selectSport(opt.value)">
+            @if (opt.value !== 'all') { <app-icon [name]="sportIcon(opt.value)" [size]="14" /> }
+            {{ opt.label }}
+          </button>
+        }
+      </div>
 
       <div class="spinner-wrap" *ngIf="loading">
         <mat-spinner diameter="48"></mat-spinner>
@@ -184,6 +240,7 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
       <ng-container *ngIf="!loading">
         <!-- ===== Champions podium ===== -->
         @if (entries.length >= 3) {
+          <div class="podium-fx">
           <div class="podium">
             <div class="podium-glow"></div>
             <div class="podium-row">
@@ -228,11 +285,13 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
               </div>
             </div>
           </div>
+          </div>
         }
 
         <!-- ===== Lower grid ===== -->
         <div class="lower-grid">
           <!-- standings list -->
+          <div class="list-fx">
           <div class="list-card">
             <div class="list-header">
               <span>RANK</span><span>ATHLETE</span><span>POINTS</span><span class="r">7-DAY</span>
@@ -274,11 +333,13 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
               </div>
             }
           </div>
+          </div>
 
           <!-- right rail -->
           <div class="rail">
             <!-- Your standing -->
             @if (me) {
+              <div class="standing-fx">
               <div class="standing">
                 <div class="standing-mascot"><img src="assets/sporty_wave.png" alt=""></div>
                 <div class="standing-label">YOUR STANDING</div>
@@ -292,9 +353,11 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
                   <div class="track"><div class="fill" [style.width.%]="toFirstPct"></div></div>
                 </div>
               </div>
+              </div>
             }
 
             <!-- Top climbers -->
+            <div class="climbers-fx">
             <div class="climbers">
               <div class="climbers-head">
                 <span class="t">📈 TOP CLIMBERS</span><span class="s">7 DAYS</span>
@@ -321,6 +384,7 @@ const DEFAULT_BORDER = '2px solid rgba(46,107,230,.16)';
                 <div class="climbers-empty">No climbers in the last 7 days yet — log activities to move up.</div>
               }
             </div>
+            </div>
           </div>
         </div>
       </ng-container>
@@ -334,22 +398,66 @@ export class LeaderboardComponent implements OnInit {
   private myId = localStorage.getItem('userId') ?? '';
   myRivalUserId: string | null = null;
 
+  selectedPeriod: 'all' | '7d' | '30d' = 'all';
+  selectedSport = 'all';
+
+  readonly periodOptions: { value: 'all' | '7d' | '30d'; label: string }[] = [
+    { value: '7d', label: 'THIS WEEK' },
+    { value: '30d', label: 'THIS MONTH' },
+    { value: 'all', label: 'ALL-TIME' },
+  ];
+
+  readonly sportOptions: { value: string; label: string }[] = [
+    { value: 'all', label: 'ALL SPORTS' },
+    { value: 'running', label: 'RUNNING' },
+    { value: 'walking', label: 'WALKING' },
+    { value: 'cycling', label: 'CYCLING' },
+    { value: 'swimming', label: 'SWIMMING' },
+    { value: 'gym', label: 'GYM' },
+    { value: 'daily_steps', label: 'STEPS' },
+  ];
+
   constructor(private api: ApiService, private router: Router, private snackBar: MatSnackBar) {}
 
   ngOnInit() {
-    this.api.getLeaderboard().subscribe({
-      next: data => { this.entries = data; this.loading = false; },
-      error: () => {
-        this.loading = false;
-        this.snackBar.open('Failed to load leaderboard. Please try again.', 'OK', { duration: 4000 });
-      },
-    });
+    this.loadLeaderboard();
     if (this.myId) {
       this.api.getRival(this.myId).subscribe({
         next: r => { this.myRivalUserId = r.rivalUserId; },
         error: () => {},
       });
     }
+  }
+
+  loadLeaderboard(): void {
+    this.loading = true;
+    this.api.getLeaderboard(this.selectedPeriod, this.selectedSport).subscribe({
+      next: data => { this.entries = data; this.loading = false; },
+      error: () => {
+        this.loading = false;
+        this.snackBar.open('Failed to load leaderboard. Please try again.', 'OK', { duration: 4000 });
+      },
+    });
+  }
+
+  selectPeriod(period: 'all' | '7d' | '30d'): void {
+    if (this.selectedPeriod === period) return;
+    this.selectedPeriod = period;
+    this.loadLeaderboard();
+  }
+
+  selectSport(sport: string): void {
+    if (this.selectedSport === sport) return;
+    this.selectedSport = sport;
+    this.loadLeaderboard();
+  }
+
+  sportIcon(sport: string): string {
+    return SPORT_ICON_NAMES[sport] ?? 'trophy';
+  }
+
+  sportColor(sport: string): string {
+    return SPORT_COLORS[sport] ?? '#2E6BE6';
   }
 
   isMe(e: LeaderboardEntry) { return e.userId === this.myId; }
