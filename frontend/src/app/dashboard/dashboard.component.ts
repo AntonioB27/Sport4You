@@ -28,6 +28,8 @@ import { WeightCardComponent } from './weight-card/weight-card.component';
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
     @keyframes holoSweep { 0% { background-position: -160% 0; } 100% { background-position: 260% 0; } }
     @keyframes vaultBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    /* lime glow pulse (on .vault-fx — .vault's clip-path would clip its own box-shadow) */
+    @keyframes vaultPulse { 0%,100% { filter: drop-shadow(0 16px 28px rgba(30,79,184,.32)); } 50% { filter: drop-shadow(0 16px 28px rgba(30,79,184,.32)) drop-shadow(0 0 20px rgba(198,230,59,.8)); } }
     @keyframes hudPulse {
       0% { box-shadow: 0 0 0 0 rgba(255,59,87,.55); }
       70% { box-shadow: 0 0 0 8px rgba(255,59,87,0); }
@@ -210,14 +212,14 @@ import { WeightCardComponent } from './weight-card/weight-card.component';
     /* ═══════════ Step core + Signal vault row ═══════════ */
     .sv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-    .vault-fx { filter: drop-shadow(0 16px 28px rgba(30,79,184,.32)); }
+    .vault-fx { filter: drop-shadow(0 16px 28px rgba(30,79,184,.32)); animation: vaultPulse 2.2s ease-in-out infinite; }
     .vault {
       position: relative; overflow: hidden; padding: 20px 22px; height: 100%;
       background: linear-gradient(160deg,#2E6BE6,#173B92);
       clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
     }
     .vault-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 82% -10%, rgba(198,230,59,.32), transparent 60%); }
-    .vault-in { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+    .vault-in { position: relative; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
     .vault-ic { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.16); color: #fff; animation: vaultBob 3.6s ease-in-out infinite; }
     .vault-txt { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 700; color: #dbe8ff; line-height: 1.4; }
     .vault-btn { width: 100%; background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E; border: none; padding: 11px; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em; cursor: pointer; box-shadow: 0 4px 0 #7c9c00; clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px); transition: transform .1s, box-shadow .1s; }
@@ -456,7 +458,7 @@ import { WeightCardComponent } from './weight-card/weight-card.component';
                     <div class="sec-title" style="align-self:flex-start;"><span class="sec-bar lime"></span><span class="sec-name" style="color:#fff;">SIGNAL VAULT</span></div>
                     <div class="vault-ic"><app-icon name="package" [size]="30" /></div>
                     <div class="vault-txt">{{ pendingBoxes }} {{ pendingBoxes === 1 ? 'loot box' : 'loot boxes' }} ready</div>
-                    <button class="vault-btn" (click)="openBoxModal()">OPEN VAULT</button>
+                    <button class="vault-btn" (click)="openBoxModal()">OPEN VAULT →</button>
                   </div>
                 </div></div>
               } @else {

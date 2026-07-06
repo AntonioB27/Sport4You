@@ -24,9 +24,10 @@ const GROUPS: LockerGroup[] = [
   imports: [CommonModule],
   styles: [`
     :host { display: block; }
+    .panel-fx { filter: drop-shadow(0 34px 70px rgba(16,30,60,.4)); }
     .panel {
-      border-radius: 26px; overflow: hidden; background: #EEF3FB;
-      border: 1px solid #dbe4f2; box-shadow: 0 40px 90px -46px rgba(16,30,60,.55);
+      position: relative; overflow: hidden; background: #EEF3FB; box-shadow: inset 0 0 0 1px #dbe4f2;
+      clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
     }
 
     /* ── HUD bar ── */
@@ -58,10 +59,10 @@ const GROUPS: LockerGroup[] = [
 
     /* ── Portrait pane ── */
     .portrait {
-      position: relative; border-radius: 20px; overflow: hidden; align-self: start;
-      background: linear-gradient(180deg,#EAF1FF,#DCE8FF); border: 2px solid #C7D8F5;
-      box-shadow: 0 24px 50px -28px rgba(30,79,184,.4); padding: 24px 20px;
+      position: relative; overflow: hidden; align-self: start;
+      background: linear-gradient(180deg,#EAF1FF,#DCE8FF); box-shadow: inset 0 0 0 2px #C7D8F5; padding: 24px 20px;
       display: flex; flex-direction: column; align-items: center;
+      clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
       animation: popIn .5s ease;
     }
     @keyframes popIn { 0% { transform: scale(.85); opacity: 0; } 60% { transform: scale(1.03); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
@@ -97,6 +98,10 @@ const GROUPS: LockerGroup[] = [
     .row { margin-bottom: 22px; }
     .row:last-child { margin-bottom: 0; }
     .row-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .row-header::before {
+      content: ''; display: block; flex: 0 0 auto; width: 3px; height: 16px;
+      background: #9ECF10; box-shadow: 0 0 8px rgba(158,207,16,.7);
+    }
     .row-label { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .18em; color: #10203E; }
     .row-rule { flex: 1; height: 2px; background: linear-gradient(90deg,#d7e0f0,transparent); border-radius: 2px; }
     .row-items { display: flex; flex-wrap: wrap; gap: 18px; }
@@ -142,6 +147,7 @@ const GROUPS: LockerGroup[] = [
     .locker-unlock { font-size: 9px; color: #8592ad; line-height: 1.25; }
   `],
   template: `
+    <div class="panel-fx">
     <div class="panel">
       <div class="hud">
         <div class="hud-left">
@@ -224,6 +230,7 @@ const GROUPS: LockerGroup[] = [
           }
         </div>
       </div>
+    </div>
     </div>
   `,
 })

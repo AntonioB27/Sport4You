@@ -3,17 +3,20 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule, AsyncPipe } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { RegisterDialogComponent } from './shared/components/register-dialog/register-dialog.component';
+import { WelcomeDialogComponent } from './shared/components/welcome-dialog/welcome-dialog.component';
 import { LogActivityDialogComponent } from './shared/components/log-activity-dialog/log-activity-dialog.component';
 import { UserStateService } from './shared/services/user-state.service';
 import { IconComponent } from './shared/components/icon/icon.component';
+import { TourOverlayComponent } from './shared/tour/tour-overlay.component';
+import { TourService } from './shared/tour/tour.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, AsyncPipe, IconComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, AsyncPipe, IconComponent, TourOverlayComponent],
   // Frost + freeze the whole shell while logged out. The registration modal
   // lives in Material's CDK overlay (outside app-root), so it stays sharp.
-  host: { '[class.app-locked]': '!isLoggedIn' },
+  host: { '[class.app-locked]': '!isLoggedIn || welcomeOpen' },
   styles: [`
     :host { display: flex; min-height: 100vh; background: #EEF3FB; font-family: 'Nunito', system-ui, sans-serif; }
     :host(.app-locked) { filter: blur(7px); pointer-events: none; user-select: none; }
@@ -73,6 +76,15 @@ import { IconComponent } from './shared/components/icon/icon.component';
       font-size: 11px; letter-spacing: .08em; transition: color .15s;
     }
     .signout-btn:hover { color: #e5484d; }
+
+    .help-btn {
+      margin-top: 12px; width: 100%; background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;
+      color: #8592ad; border: 1px solid #E3EAF5; font-family: 'Chakra Petch', sans-serif;
+      font-weight: 700; font-size: 11px; letter-spacing: .08em; transition: color .15s, border-color .15s;
+      clip-path: polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px);
+    }
+    .help-btn:hover { color: #2E6BE6; border-color: #2E6BE6; }
 
     .sidebar-gap { width: 230px; flex-shrink: 0; }
     .main-content { flex: 1; min-height: 100vh; min-width: 0; overflow-x: hidden; }
@@ -151,6 +163,7 @@ import { IconComponent } from './shared/components/icon/icon.component';
         </div>
       }
       <button class="log-btn" (click)="openLogActivity()">+ LOG ACTIVITY</button>
+      <button class="help-btn" (click)="startTour()">? TUTORIAL</button>
       <button class="signout-btn" (click)="signOut()">⏻ SIGN OUT / RESET</button>
     </aside>
 
@@ -184,16 +197,21 @@ import { IconComponent } from './shared/components/icon/icon.component';
         </a>
       </div>
     </nav>
+
+    <app-tour-overlay />
   `,
 })
 export class AppComponent implements OnInit {
   // Set before first paint so the shell renders locked/blurred until an
   // identity exists. Login/register reloads the page, so this re-evaluates.
   isLoggedIn = !!localStorage.getItem('userId');
+  // Blurs the shell (same treatment as the logged-out gate) while the welcome splash is up.
+  welcomeOpen = false;
 
   constructor(
     private dialog: MatDialog,
     public userState: UserStateService,
+    private tour: TourService,
   ) {}
 
   ngOnInit() {
@@ -203,7 +221,23 @@ export class AppComponent implements OnInit {
           // reload so every view picks up the new/recovered account
           if (userId) window.location.reload();
         });
+      return;
     }
+    if (this.tour.consumePending()) {
+      // First-run sequence: welcome splash (over a blurred shell), then the spotlight tour.
+      this.welcomeOpen = true;
+      this.dialog.open(WelcomeDialogComponent, {
+        width: 'min(960px, 94vw)', maxWidth: '94vw', disableClose: true, panelClass: 's4y-welcome-splash',
+      }).afterClosed().subscribe(() => {
+        this.welcomeOpen = false;
+        this.startTour();
+      });
+    }
+  }
+
+  // Replay entry point (the "? TUTORIAL" button) — the tour only, without the intro splash.
+  startTour() {
+    this.tour.start(() => this.openLogActivity());
   }
 
   get profileRoute(): string[] {

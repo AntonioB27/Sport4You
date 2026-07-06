@@ -247,9 +247,10 @@ export class AchievementCardComponent {
     .page { padding:26px 30px 60px; font-family:'Nunito',system-ui,sans-serif; max-width:1240px; }
     .spinner-wrap { display:flex; justify-content:center; padding:80px; }
 
+    .panel-fx { filter: drop-shadow(0 34px 70px rgba(16,30,60,.4)); }
     .panel {
-      border-radius:26px; overflow:hidden; background:#EEF3FB;
-      border:1px solid #dbe4f2; box-shadow:0 40px 90px -46px rgba(16,30,60,.55);
+      position:relative; overflow:hidden; background:#EEF3FB; box-shadow: inset 0 0 0 1px #dbe4f2;
+      clip-path: polygon(24px 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%, 0 24px);
     }
 
     /* ── HUD bar ── */
@@ -282,10 +283,11 @@ export class AchievementCardComponent {
     .content { padding:26px 30px 34px; }
 
     /* ── Spotlight ── */
+    .spotlight-fx { filter: drop-shadow(0 26px 46px rgba(30,79,184,.55)); margin-bottom:30px; }
     .spotlight {
-      display:grid; grid-template-columns:300px 1fr; border-radius:20px; overflow:hidden;
-      margin-bottom:30px; background:linear-gradient(135deg,#2E6BE6,#173B92);
-      box-shadow:0 26px 50px -24px rgba(30,79,184,.7); position:relative;
+      display:grid; grid-template-columns:300px 1fr; overflow:hidden;
+      background:linear-gradient(135deg,#2E6BE6,#173B92); position:relative;
+      clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
     }
     .spotlight-sweep {
       position:absolute; inset:0; pointer-events:none;
@@ -320,6 +322,10 @@ export class AchievementCardComponent {
     .section { margin-bottom:34px; }
     .section-header { display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:20px; }
     .section-title-wrap { display:flex; align-items:center; gap:12px; }
+    .section-title-wrap::before {
+      content:''; display:block; flex:0 0 auto; width:3px; height:18px;
+      background:#9ECF10; box-shadow:0 0 8px rgba(158,207,16,.7);
+    }
     .section-title { font-family:'Chakra Petch',sans-serif; font-size:15px; font-weight:700; letter-spacing:.18em; color:#10203E; }
     .section-count {
       font-family:'Chakra Petch',sans-serif; font-size:12px; font-weight:700; color:#8592ad;
@@ -364,6 +370,7 @@ export class AchievementCardComponent {
       @if (loading) {
         <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
       } @else {
+        <div class="panel-fx">
         <div class="panel">
           <!-- HUD -->
           <div class="hud">
@@ -393,6 +400,7 @@ export class AchievementCardComponent {
           <div class="content">
             <!-- Latest unlock spotlight -->
             @if (latestUnlock; as latest) {
+              <div class="spotlight-fx">
               <div class="spotlight">
                 <div class="spotlight-sweep"></div>
                 <div class="spotlight-art">
@@ -410,6 +418,7 @@ export class AchievementCardComponent {
                     </div>
                   </div>
                 </div>
+              </div>
               </div>
             }
 
@@ -480,6 +489,7 @@ export class AchievementCardComponent {
               </div>
             }
           </div>
+        </div>
         </div>
       }
     </div>

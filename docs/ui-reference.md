@@ -2,21 +2,24 @@
 
 ## Design Identity
 
-**Theme:** "Playful Pro" — gamified fitness tracker with a dark-navy + neon-green palette and a playful mascot (Spotry).
+**Theme:** "Light Arcade" — a gamified fitness tracker styled as a light-mode **arcade command deck**.
+Angular, beveled "HUD" panels (clip-path corners rather than rounded radii), a recurring dark-navy
+command bar, glowing lime accents, and the playful Spotry mascot. Every routed page shares one
+visual language so navigating between them feels like moving through one console.
 
 ### Colours
 | Token | Value | Usage |
 |-------|-------|-------|
 | Navy Dark | `#10203E` | Page text, headings |
-| Navy Card | `#12213f → #0e1a34` | Watch dialog background |
+| Command Navy | `#0f1e3b` | Dark command bar / HUD panels |
 | Blue Primary | `#2E6BE6` | Active nav, CTA buttons, stat values |
-| Blue Deep | `#173B92` | Hero card gradient end |
-| Neon Green | `#C6E63B` | Accent — XP bar, active dots, LOG button, quest rewards |
-| Neon Green Dark | `#9ECF10` | LOG button gradient end |
-| Neon Shadow | `#7c9c00` | LOG button 3D press shadow |
+| Blue Deep | `#173B92` | Hero / blue-panel gradient end |
+| Neon Green | `#C6E63B` | Accent — XP bar, section bars, LOG button, rewards |
+| Neon Green Dark | `#9ECF10` | Lime button gradient end, section accent bars |
+| Neon Shadow | `#7c9c00` | Lime button 3D press shadow |
 | Page BG | `#EEF3FB` | App background |
-| Card BG | `#fff` | Dashboard cards, sidebar |
-| Border | `#E3EAF5` | Sidebar border, card dividers |
+| Card BG | `#fff` | Beveled cards, sidebar |
+| Card Border | `#E6ECF6` | Hairline inset border on bevels |
 | Muted Text | `#8592ad` | Labels, secondary info |
 
 ### Fonts
@@ -26,6 +29,54 @@
 | **Nunito** | 400 / 600 / 700 / 800 / 900 | Body copy, descriptions |
 
 Both loaded from Google Fonts in `index.html`.
+
+---
+
+## Light Arcade Design System
+
+The shared primitives live as **global (unscoped) classes in `src/styles.scss`** so any component
+template can drop them in — Angular's emulated encapsulation scopes component styles but lets global
+rules through. Prefer these over re-inventing card CSS per component.
+
+### The bevel recipe (angular cards)
+`clip-path` cuts the arcade corners but also clips away `box-shadow`, so cards are built as two nodes:
+
+```html
+<div class="s4y-fx">            <!-- outer: carries the drop-shadow via filter -->
+  <div class="s4y-bevel"> … </div>  <!-- inner: surface + hairline border (INSET shadow) -->
+</div>
+```
+
+- `.s4y-fx` / `.s4y-fx--blue` / `.s4y-fx--soft` — `filter: drop-shadow(…)` wrappers.
+- `.s4y-bevel` — white surface, `clip-path` bevel (16 px), `inset 0 0 0 1px #E6ECF6` hairline border.
+  Variants: `.s4y-bevel--sm` (12 px), `.s4y-bevel--dark` (navy HUD), `.s4y-bevel--blue` (blue hero).
+- `.s4y-clip-8 / -12 / -16` — standalone corner clips for buttons, chips, media.
+
+> **Why inset borders?** An inset shadow is painted inside the box and survives `clip-path`; a normal
+> border/outer shadow would be sliced off at the beveled corners. Active/selected rings therefore use
+> `box-shadow: inset 0 0 0 2px <color>` too.
+
+### Dark command bar (page headers)
+`.s4y-cbar-fx` > `.s4y-cbar` — the navy, beveled banner at the top of pages (Leaderboard, Avatars) and
+the dashboard's player HUD. Inside: `.s4y-cbar-eyebrow` (lime-blue tracked label) + `.s4y-cbar-title`
+(white, with a lime `.accent` span). On the dashboard it also holds the avatar conic-ring and the
+angular stat chips (STREAK / POINTS / COINS / BOXES).
+
+### Section-header accent
+`.s4y-sec-head` > `.s4y-sec-title` ( `.s4y-sec-bar` glowing bar + `.s4y-sec-name` tracked label ) +
+optional `.s4y-sec-sub` / `.s4y-sec-link`. Bar colour variants: default lime, `--gold`, `--orange`,
+`--blue`. Where a full header markup is overkill, components add the same 3 px glowing bar as a
+`::before` on the existing title row.
+
+### Buttons
+`.s4y-btn` — lime CTA with `clip-path` corners and a 3D press shadow (`0 4px 0 #7c9c00`, collapsing on
+`:active`). Variants: `.s4y-btn--blue`, `.s4y-btn--ghost`. Disabled drops the shadow.
+
+### What stays rounded (deliberate set-pieces)
+Collectible/ceremony surfaces keep their crafted circular/rounded treatments so they read as "loot,"
+not chrome: the **loot-box "Signal Vault" modal**, the **Log Activity watch dialog**, the
+**achievement & shop rarity badge cards** (bronze/silver/gold frames + holo sweep), avatar
+**portholes/medallions**, and the GitHub-style **contribution heatmap** squares.
 
 ### Mascot — Spotry
 A blue water-bottle robot character. File: `frontend/src/assets/sporty_wave.png`.
@@ -76,43 +127,40 @@ Sport-specific mascot poses exist for the Log Activity confirmation overlay:
 
 ## Pages
 
-### `/dashboard` — Home
+### `/dashboard` — Home ("Light Arcade" command deck)
 
-Two-column grid (`1.55fr 1fr`), collapses to single column at 900 px.
+A dark **command bar** spans the top, then a two-column grid (`1.5fr 1fr`) collapses to one column at
+900 px. Level-up/prestige animations (hero glow, LV badge pop, XP flash, expanding ring) are preserved.
+
+**Command bar (dark HUD):** avatar in a lime conic-ring, `PLAYER ONLINE` + `{firstName} // LVL N TITLE`,
+and four angular stat chips — STREAK, POINTS, COINS (with a `⚡N` boost tag), and BOXES (pulsing red dot
++ clickable when boxes are pending, opening the Signal Vault modal).
 
 **Left column:**
 
 | Section | Description |
 |---------|-------------|
-| **Top bar** | "WELCOME BACK" + "Hi, {firstName} 👋". Right side shows 🔥 streak badge (hidden when streak = 0) and 🪙 total points badge. |
-| **Hero card** | Blue gradient card. Level badge (`⚡ LEVEL N · TITLE`), total points (large), "TOTAL POINTS" label, XP progress bar (`0 XP → next level`). Spotry mascot floats in the top-right corner. |
-| **Stat tiles** | Three tiles: **Global Rank** (blue `#N`), **This Week** (weekly point sum), **Activities** (total activity count). |
-| **Today's Quests** | Three quests with progress bars. Quest 1: logged activity today. Quest 2: streak alive. Quest 3: 5,000 steps today. Completed quests show a green checkmark icon and "COMPLETE" label. |
+| **Hero — Pilot Deck** | Blue beveled panel with a holo sweep. Avatar sits in a lime conic XP-ring; `{TITLE} CLASS` chip, large total points, segmented XP bar with tick overlay, LV badge, and a PRESTIGE button at max level. |
+| **Core stats** | Three beveled tiles: **Global Rank** (blue `#N`), **This Week** (weekly point sum), **Activities** (count). |
+| **Daily Missions** | Lime section accent + `N / 3 CLEARED`. Rows carry a left colour stripe by tier (easy lime / medium blue / hard orange); completed rows go lime with a check + "MISSION CLEARED". |
+| **Step Core + Signal Vault** | Half-width pair. **Step Core** = white bevel with a lime conic step donut + `+ ADD`. **Signal Vault** = blue bevel with `OPEN VAULT` when boxes are ready, else a muted empty state. |
 
-**Right column:**
+**Right column:** **Rankings** (top-4, own row lime-highlighted), **Duel** (rival VS card, orange accent),
+**Vitals** (weight card — Chakra Petch header, KG/LB toggle, Chart.js line), **Combat Log** (last 6
+activities), **Trophies** (recent achievements with tier strips + SEE ALL), and the **LOG ACTIVITY** CTA.
 
-| Section | Description |
-|---------|-------------|
-| **Leaderboard preview** | Top 4 global users. User's own row has a green `#F4FBE3` highlight and a "YOU" badge. |
-| **Recent Activity** | Last 6 activities. Each row: sport emoji + coloured icon, sport name + metric, date, `+N` points in blue. Empty state: "No activities yet — start logging!" |
-| **LOG ACTIVITY** | Neon green button at bottom; opens Log Activity dialog. On confirm, dashboard refreshes automatically. |
+**Level system, streak, XP** are owned by the backend `XpService` and delivered on the dashboard DTO
+(`xp.level`, `levelTitle`, `xpPercent`, `prestigeLevel`, …) — the UI never derives them from points.
 
-**Level system** (derived from `totalPoints`):
-
-| Level | Title | Points required |
-|-------|-------|----------------|
-| 1 | ROOKIE | 0 |
-| 2 | JOGGER | 500 |
-| 3 | ATHLETE | 1 500 |
-| 4 | ELITE | 3 500 |
-| 5 | CHAMPION | 7 500 |
-| 6 | LEGEND | 15 000 |
-
-**Streak** — counted by checking consecutive calendar days with at least one activity (today counts if there's an activity today, yesterday continues the chain).
+The **rival/weight/steps cards are the `Duel`/`Vitals`/`Step Core` child components**
+(`rival-card`, `weight-card`, `today-steps-card`), all restyled into the bevel language.
 
 ---
 
 ### `/leaderboard` — Leaderboard
+
+Opens with the dark **command bar** header (`GLOBAL RANKINGS` / `LEADER·BOARD`). Podium, standings
+list, "Your Standing" blue card, and Top Climbers are all beveled `s4y-fx` + `clip-path` panels.
 
 **Podium (top 3):**
 - Three cards arranged low-high-low (2nd left, 1st centre, 3rd right).
@@ -131,6 +179,37 @@ Two-column grid (`1.55fr 1fr`), collapses to single column at 900 px.
 
 **Viewing another user's dashboard:**
 Clicking a leaderboard row sets `localStorage.viewingUserId`, redirects to `/dashboard`, which loads that user's data instead of the logged-in user's. `viewingUserId` is cleared immediately after reading.
+
+---
+
+### `/achievements` — Trophy Track
+
+One large beveled **`.panel`** (angular clip-path, inset border) wrapping a dark HUD row (star tile,
+`ACHIEVEMENTS` title, level + `N / total unlocked` count), a blue **spotlight** for the latest unlock,
+and progression **rails** grouped into sections. Section titles carry the glowing lime accent bar
+(added as a `::before`). The bronze/silver/gold **badge cards keep their crafted rarity frames + holo
+sweep** — deliberately not beveled, so collectibles read differently from chrome.
+
+### `/shop` — Shop
+
+Same beveled `.panel` + dark HUD (coin balance) + blue featured **spotlight** as Trophy Track, with
+lime section accents. Item tiles (`shop-item-card`) reuse the rarity-frame treatment and stay rounded;
+the purchase-confirmation modal (`s4y-purchase-dialog`) is a ceremony set-piece and keeps its navy
+radial card.
+
+### `/avatars` — Avatars & Borders
+
+Dark **command bar** header (`CUSTOMIZE` / `AVATARS · BORDERS`). Hosts the shared **`avatar-locker`**
+(beveled panel, angular equipped-portrait, lime-accented locker rows; avatar portholes/medallions stay
+circular) and a **Borders** grid of angular border cards — active = `inset 0 0 0 2px #2E6BE6` ring,
+angular blue EQUIP buttons.
+
+### `/profile/:userId` — Public profile
+
+Beveled hero card (avatar, level badge, angular RANK/POINTS/STREAK stat chips, XP bar) plus beveled
+sections (each wrapped in `.card-fx`): **Activity** (contribution heatmap), **Achievements** (chips),
+and — own profile only — **Records** (`personal-records`, angular record tiles). Section titles use the
+lime accent bar; the rival button is an angular blue button.
 
 ---
 

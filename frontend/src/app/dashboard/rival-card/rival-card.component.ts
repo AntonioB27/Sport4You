@@ -9,8 +9,14 @@ import { RivalStatus } from '../../shared/models/dashboard.model';
   imports: [CommonModule, RouterLink],
   styles: [`
     :host { display: block; }
-    .card { background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 12px 26px -16px rgba(16,32,62,.35); }
-    .title { font-family: 'Chakra Petch', sans-serif; font-size: 16px; font-weight: 700; color: #10203E; letter-spacing: .04em; margin-bottom: 14px; }
+    .fx { filter: drop-shadow(0 14px 26px rgba(16,32,62,.16)); }
+    .card {
+      position: relative; background: #fff; box-shadow: inset 0 0 0 1px #E6ECF6; padding: 20px 22px;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
+    .sec-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .sec-bar { width: 3px; height: 16px; background: #FF6A00; box-shadow: 0 0 8px rgba(255,106,0,.6); flex-shrink: 0; }
+    .title { font-family: 'Chakra Petch', sans-serif; font-size: 14px; font-weight: 700; color: #10203E; letter-spacing: .16em; }
 
     .empty { text-align: center; padding: 14px 0; }
     .empty-text { font-size: 13px; color: #8592ad; margin-bottom: 10px; }
@@ -22,18 +28,19 @@ import { RivalStatus } from '../../shared/models/dashboard.model';
     .vs-row { display: flex; align-items: center; justify-content: center; gap: 16px; }
     .side { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 84px; }
     .side-av, .side-initial {
-      width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+      width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
       display: flex; align-items: center; justify-content: center;
       font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 20px; color: #fff; background: #2E6BE6;
+      border: 2px solid #E3EAF5;
     }
+    .side.me .side-av, .side.me .side-initial { border-color: #C6E63B; }
     .side-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 12px; color: #10203E; text-align: center; }
     .vs-chip {
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: .06em;
-      color: #8592ad; background: #F4F6FB; border-radius: 999px; padding: 4px 10px;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 16px; letter-spacing: .08em; color: #FF6A00;
     }
 
     .gap-row { text-align: center; margin-top: 14px; }
-    .gap-val { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 18px; }
+    .gap-val { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 17px; }
     .gap-val.ahead { color: #4CAF50; }
     .gap-val.behind { color: #f44336; }
     .gap-sub { font-size: 11px; color: #8592ad; margin-top: 2px; }
@@ -43,8 +50,8 @@ import { RivalStatus } from '../../shared/models/dashboard.model';
     .bar-rival { background: #d0d7e6; }
   `],
   template: `
-    <div class="card">
-      <div class="title">RIVAL</div>
+    <div class="fx"><div class="card">
+      <div class="sec-title"><span class="sec-bar"></span><span class="title">DUEL</span></div>
       @if (!rivalStatus) {
         <div class="empty">
           <div class="empty-text">Pick a rival to track head-to-head.</div>
@@ -52,7 +59,7 @@ import { RivalStatus } from '../../shared/models/dashboard.model';
         </div>
       } @else {
         <div class="vs-row">
-          <div class="side">
+          <div class="side me">
             @if (myAvatarImagePath) {
               <img class="side-av" [style.border]="myBorderCss ?? 'none'" [src]="myAvatarImagePath" alt="">
             } @else {
@@ -85,7 +92,7 @@ import { RivalStatus } from '../../shared/models/dashboard.model';
           <div class="bar-rival" [style.width.%]="100 - mySharePercent"></div>
         </div>
       }
-    </div>
+    </div></div>
   `,
 })
 export class RivalCardComponent {

@@ -3,6 +3,7 @@ import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
+import { TOUR_PENDING_KEY } from '../../tour/tour.service';
 
 @Component({
   selector: 'app-register-dialog',
@@ -13,34 +14,53 @@ import { ApiService } from '../../services/api.service';
 
     :host { display: block; font-family: 'Nunito', system-ui, sans-serif; }
 
+    /* Outer wrapper carries the drop-shadow (clip-path clips box-shadow away) */
+    .card-fx { filter: drop-shadow(0 40px 70px rgba(10,20,44,.55)); }
     .card {
-      width: 380px; max-width: 90vw; background: #fff; border-radius: 24px;
-      overflow: hidden; box-shadow: 0 40px 80px -24px rgba(10,20,44,.5);
+      width: 380px; max-width: 90vw; background: #fff; overflow: hidden;
+      clip-path: polygon(22px 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%, 0 22px);
     }
 
-    /* ── Hero band ── */
+    /* ── Hero band (dark command deck) ── */
     .hero-band {
-      position: relative; padding: 26px 24px 20px; text-align: center;
-      background: linear-gradient(150deg, #2E6BE6, #173B92);
+      position: relative; overflow: hidden; padding: 26px 24px 22px; text-align: center;
+      background: radial-gradient(120% 160% at 100% 0%, rgba(46,107,230,.55), transparent), #0f1e3b;
     }
-    .mascot { width: 76px; height: 76px; object-fit: contain; animation: floaty 4s ease-in-out infinite; filter: drop-shadow(0 10px 14px rgba(0,0,0,.3)); }
-    .brand { margin-top: 6px; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .12em; color: #fff; }
+    /* faint tactical grid, matching the app shell */
+    .hero-band::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(122,150,210,.10) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(122,150,210,.10) 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
+    .hero-glow {
+      position: absolute; left: 50%; top: 8px; width: 150px; height: 90px; transform: translateX(-50%);
+      background: radial-gradient(closest-side, rgba(198,230,59,.4), transparent 70%);
+      pointer-events: none;
+    }
+    .mascot { position: relative; width: 76px; height: 76px; object-fit: contain; animation: floaty 4s ease-in-out infinite; filter: drop-shadow(0 10px 14px rgba(0,0,0,.4)); }
+    .brand { position: relative; margin-top: 6px; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .14em; color: #fff; }
     .brand span { color: #C6E63B; }
 
     /* ── Body ── */
-    .body { padding: 24px 24px 26px; }
+    .body { padding: 22px 24px 26px; }
+    .eyebrow {
+      font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700;
+      letter-spacing: .22em; color: #2E6BE6; text-align: center; margin-bottom: 6px;
+    }
     .title { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 21px; color: #10203E; margin: 0 0 6px; text-align: center; }
     .subtitle { font-size: 13px; color: #8592ad; text-align: center; margin: 0 0 20px; line-height: 1.5; }
 
     .field { margin-bottom: 12px; }
     .field label {
       display: block; font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700;
-      letter-spacing: .12em; color: #8592ad; margin-bottom: 6px;
+      letter-spacing: .14em; color: #8592ad; margin-bottom: 6px;
     }
     .field input {
-      width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px;
+      width: 100%; box-sizing: border-box; padding: 12px 14px;
       border: 1px solid #E3EAF5; background: #F9FBFF; font-family: 'Nunito', sans-serif; font-size: 14px;
       color: #10203E; outline: none; transition: border-color .15s, background .15s;
+      clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
     }
     .field input:focus { border-color: #2E6BE6; background: #fff; }
     .field input::placeholder { color: #b0bcd4; }
@@ -48,13 +68,14 @@ import { ApiService } from '../../services/api.service';
     .cta {
       width: 100%; margin-top: 8px; border: none; cursor: pointer;
       background: linear-gradient(150deg, #C6E63B, #9ECF10); color: #10203E;
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .04em;
-      padding: 13px; border-radius: 13px; box-shadow: 0 5px 0 #7c9c00, 0 10px 20px -10px rgba(158,207,16,.7);
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .05em;
+      padding: 14px; box-shadow: 0 5px 0 #7c9c00;
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
       transition: transform .1s, box-shadow .1s;
     }
-    .cta:hover:not(:disabled) { transform: translateY(-1px); }
+    .cta:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 0 #7c9c00; }
     .cta:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 3px 0 #7c9c00; }
-    .cta:disabled { opacity: .5; cursor: not-allowed; }
+    .cta:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
 
     .toggle-link {
       display: block; text-align: center; margin-top: 16px;
@@ -62,12 +83,15 @@ import { ApiService } from '../../services/api.service';
     }
   `],
   template: `
+    <div class="card-fx">
     <div class="card">
       <div class="hero-band">
+        <div class="hero-glow"></div>
         <img class="mascot" src="assets/sporty_wave.png" alt="Spotry">
         <div class="brand">SPORT<span>4</span>YOU</div>
       </div>
       <div class="body">
+        <div class="eyebrow">{{ mode === 'register' ? 'NEW CHALLENGER' : 'PLAYER RETURNING' }}</div>
         <h2 class="title">{{ mode === 'register' ? 'Welcome!' : 'Welcome back' }}</h2>
         <p class="subtitle">
           {{ mode === 'register'
@@ -91,6 +115,7 @@ import { ApiService } from '../../services/api.service';
           {{ mode === 'register' ? 'Already have an account? Log back in' : 'New here? Create an account' }}
         </a>
       </div>
+    </div>
     </div>
   `,
 })
@@ -149,6 +174,7 @@ export class RegisterDialogComponent {
 
   private finish(userId: string) {
     localStorage.setItem('userId', userId);
+    if (this.mode === 'register') localStorage.setItem(TOUR_PENDING_KEY, '1');
     this.dialogRef.close(userId);
   }
 }

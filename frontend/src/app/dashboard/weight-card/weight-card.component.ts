@@ -15,9 +15,15 @@ const LB_PER_KG = 2.20462;
   imports: [CommonModule, FormsModule, MatSnackBarModule, BaseChartDirective],
   styles: [`
     :host { display:block; }
-    .card { background:#fff; border-radius:20px; box-shadow:0 12px 28px -18px rgba(16,32,62,.35); padding:18px 20px; }
+    .fx { filter: drop-shadow(0 14px 26px rgba(16,32,62,.16)); }
+    .card {
+      position:relative; background:#fff; box-shadow: inset 0 0 0 1px #E6ECF6; padding:20px 22px;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
     .head { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-    .title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; letter-spacing:.06em; color:#10203E; }
+    .sec-title { display:flex; align-items:center; gap:10px; }
+    .sec-bar { width:3px; height:16px; background:#2E6BE6; box-shadow:0 0 8px rgba(46,107,230,.6); flex-shrink:0; }
+    .title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; letter-spacing:.16em; color:#10203E; }
     .unit-toggle { display:flex; gap:4px; background:#EEF2F8; border-radius:9px; padding:3px; }
     .unit-toggle button { border:none; cursor:pointer; background:transparent; color:#8592ad; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:11px; padding:4px 10px; border-radius:7px; }
     .unit-toggle button.active { background:#fff; color:#10203E; box-shadow:0 1px 3px rgba(0,0,0,.12); }
@@ -38,12 +44,16 @@ const LB_PER_KG = 2.20462;
     .locked-msg { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; color:#5f7a00; }
     .goal-row { display:flex; align-items:center; gap:8px; margin-top:8px; font-family:'Chakra Petch',sans-serif; font-size:12px; color:#5c6881; }
     .goal-row .link { color:#2E6BE6; cursor:pointer; font-weight:700; }
+    /* prominent call-to-action shown when no goal is set yet */
+    .goal-cta { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px 12px; margin-top:10px; padding:12px 14px; background:#F5FBE8; border:1px solid #dcefb0; border-radius:12px; }
+    .goal-cta-txt { flex:1 1 160px; font-family:'Nunito',sans-serif; font-size:12.5px; font-weight:700; color:#5f7a00; line-height:1.4; }
+    .goal-cta-btns { display:flex; gap:8px; flex-shrink:0; }
     .err { color:#e5484d; font-size:12px; margin-top:8px; }
   `],
   template: `
-    <div class="card">
+    <div class="fx"><div class="card">
       <div class="head">
-        <span class="title">⚖️ WEIGHT</span>
+        <span class="sec-title"><span class="sec-bar"></span><span class="title">VITALS</span></span>
         <div class="unit-toggle">
           <button [class.active]="unit==='kg'" (click)="setUnit('kg')">KG</button>
           <button [class.active]="unit==='lb'" (click)="setUnit('lb')">LB</button>
@@ -75,19 +85,33 @@ const LB_PER_KG = 2.20462;
         </div>
       }
 
-      <div class="goal-row">
-        @if (editingGoal) {
+      @if (editingGoal) {
+        <div class="goal-row">
           <input class="inp" type="number" step="0.1" min="1" [placeholder]="'Goal (' + unit + ')'" [(ngModel)]="goalInput">
           <button class="btn primary" (click)="saveGoal()">Save</button>
           <button class="btn ghost" (click)="editingGoal=false">Cancel</button>
-        } @else {
-          <span>Goal: <b>{{ goalKg != null ? (display(goalKg) | number:'1.1-1') + ' ' + unit : '—' }}</b></span>
-          <span class="link" (click)="startEditGoal()">{{ goalKg != null ? 'Change' : 'Set goal' }}</span>
-        }
-      </div>
+        </div>
+      } @else if (goalKg != null) {
+        <div class="goal-row">
+          <span>Goal: <b>{{ (display(goalKg) | number:'1.1-1') + ' ' + unit }}</b></span>
+          <span class="link" (click)="startEditGoal()">Change</span>
+        </div>
+      } @else if (!goalDismissed) {
+        <div class="goal-cta">
+          <div class="goal-cta-txt">🎯 Set a target weight to track your progress toward it.</div>
+          <div class="goal-cta-btns">
+            <button class="btn primary" (click)="startEditGoal()">Set a goal</button>
+            <button class="btn ghost" (click)="dismissGoal()">No goal</button>
+          </div>
+        </div>
+      } @else {
+        <div class="goal-row">
+          <span class="link" (click)="startEditGoal()">+ Set a weight goal</span>
+        </div>
+      }
 
       @if (error) { <div class="err">{{ error }}</div> }
-    </div>
+    </div></div>
   `,
 })
 export class WeightCardComponent implements OnInit {
@@ -99,8 +123,11 @@ export class WeightCardComponent implements OnInit {
   input: number | null = null;
   goalInput: number | null = null;
   editingGoal = false;
+  goalDismissed = false;
   loading = false;
   error = '';
+
+  private get dismissKey(): string { return 's4y.noWeightGoal.' + this.userId; }
 
   chartData: ChartData<'line'> = { labels: [], datasets: [] };
   chartOptions: ChartOptions<'line'> = {
@@ -112,7 +139,15 @@ export class WeightCardComponent implements OnInit {
 
   constructor(private api: ApiService, private snackBar: MatSnackBar) {}
 
-  ngOnInit(): void { this.load(); }
+  ngOnInit(): void {
+    this.goalDismissed = localStorage.getItem(this.dismissKey) === '1';
+    this.load();
+  }
+
+  dismissGoal(): void {
+    this.goalDismissed = true;
+    localStorage.setItem(this.dismissKey, '1');
+  }
 
   private load(): void {
     if (!this.userId) return;
@@ -207,7 +242,13 @@ export class WeightCardComponent implements OnInit {
   saveGoal(): void {
     if (!this.goalInput || this.goalInput <= 0) { this.error = 'Enter a valid goal.'; return; }
     this.api.setWeightGoal(this.userId, round1(this.toKg(this.goalInput))).subscribe({
-      next: () => { this.editingGoal = false; this.load(); },
+      next: () => {
+        this.editingGoal = false;
+        // a real goal supersedes any earlier "no goal" choice
+        this.goalDismissed = false;
+        localStorage.removeItem(this.dismissKey);
+        this.load();
+      },
       error: () => { this.error = 'Failed to save goal. Try again.'; },
     });
   }

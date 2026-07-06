@@ -20,8 +20,9 @@ const SPORT_LABELS: Record<string, string> = {
     .empty-state { font-size: 13px; color: #b0bcd4; }
     .records-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
     .record-card {
-      background: #F4F6FB; border-radius: 14px; padding: 14px 16px;
+      background: #F4F6FB; padding: 14px 16px;
       display: flex; flex-direction: column; gap: 4px;
+      clip-path: polygon(11px 0, 100% 0, 100% calc(100% - 11px), calc(100% - 11px) 100%, 0 100%, 0 11px);
     }
     .record-card.standout { background: linear-gradient(135deg, #2E6BE6, #1a4fc4); }
     .record-label {

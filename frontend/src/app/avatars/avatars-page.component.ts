@@ -13,23 +13,26 @@ import { AvatarLockerComponent } from '../profile/avatar-locker.component';
   standalone: true,
   imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent],
   styles: [`
-    .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 1100px; }
+    .page { padding: 24px 30px 60px; font-family: 'Nunito', system-ui, sans-serif; max-width: 1100px; margin: 0 auto; }
     .spinner-wrap { display: flex; justify-content: center; padding: 60px; }
-    .header { font-family: 'Chakra Petch', sans-serif; font-size: 27px; font-weight: 700; color: #10203E; margin-bottom: 4px; }
-    .subhead { font-size: 14px; color: #5c6881; margin-bottom: 22px; }
-    .signed-out { background: #fff; border: 1px solid #E3EAF5; border-radius: 20px; padding: 40px; text-align: center; color: #5c6881; font-family: 'Chakra Petch', sans-serif; }
+    .subhead { font-size: 14px; color: #5c6881; margin: 0 0 22px; }
+    .signed-out {
+      position: relative; background: #fff; box-shadow: inset 0 0 0 1px #E6ECF6;
+      padding: 40px; text-align: center; color: #5c6881; font-family: 'Chakra Petch', sans-serif;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
     .signed-out a { color: #2E6BE6; font-weight: 700; text-decoration: none; }
 
     /* Borders section (moved from the profile AVATARS tab) */
-    .section-title { font-family: 'Chakra Petch', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .06em; color: #10203E; margin-bottom: 12px; }
     .borders-section { margin-top: 24px; }
     .border-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
     .border-card {
-      background: #fff; border-radius: 16px; border: 1px solid #E3EAF5;
+      position: relative; background: #fff; box-shadow: inset 0 0 0 1px #E6ECF6;
       padding: 16px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
     }
     .border-card.locked { opacity: .45; filter: grayscale(.7); }
-    .border-card.active { border-color: #2E6BE6; box-shadow: 0 0 0 2px #2E6BE6; }
+    .border-card.active { box-shadow: inset 0 0 0 2px #2E6BE6; }
     .border-swatch { width: 48px; height: 48px; border-radius: 50%; background: #F4F6FB; }
     .border-name { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #10203E; }
     .rarity-pill { font-family: 'Chakra Petch', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .1em; border-radius: 999px; padding: 2px 8px; color: #fff; }
@@ -38,16 +41,24 @@ import { AvatarLockerComponent } from '../profile/avatar-locker.component';
     .rarity-pill.legendary { background: #FFD700; color: #333; }
     .rarity-pill.platinum { background: linear-gradient(135deg,#e8e8e8,#ffffff 50%,#cfd9ff); color: #3a4a9e; }
     .equip-btn {
-      border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer;
-      background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif;
-      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      border: none; padding: 6px 14px; cursor: pointer;
+      background: linear-gradient(150deg,#4B8DF0,#2E6BE6); color: #fff; font-family: 'Chakra Petch', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em; box-shadow: 0 3px 0 #1c47a0;
+      clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px);
     }
-    .equip-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .equip-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
     .active-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #2E6BE6; }
   `],
   template: `
     <div class="page">
-      <div class="header">🎭 Avatars &amp; Borders</div>
+      <div class="s4y-cbar-fx" style="margin-bottom:16px;">
+        <div class="s4y-cbar">
+          <div>
+            <div class="s4y-cbar-eyebrow">CUSTOMIZE</div>
+            <div class="s4y-cbar-title">AVATARS &amp; <span class="accent">BORDERS</span></div>
+          </div>
+        </div>
+      </div>
       <div class="subhead">Equip a Spotry skin and a border ring — they show on your hero, the leaderboard, and your profile.</div>
 
       @if (!userId) {
@@ -63,7 +74,7 @@ import { AvatarLockerComponent } from '../profile/avatar-locker.component';
 
         @if (!bordersLoading && borders.length > 0) {
           <div class="borders-section">
-            <div class="section-title">BORDERS</div>
+            <div class="s4y-sec-head"><div class="s4y-sec-title"><span class="s4y-sec-bar s4y-sec-bar--blue"></span><span class="s4y-sec-name">BORDERS</span></div></div>
             <div class="border-grid">
               @for (b of sortedBorders; track b.id) {
                 <div class="border-card" [class.locked]="!b.unlocked" [class.active]="b.isActive">

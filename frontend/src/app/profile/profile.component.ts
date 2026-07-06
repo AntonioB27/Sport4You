@@ -20,10 +20,14 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
     .error-msg { font-family: 'Chakra Petch', sans-serif; font-size: 20px; color: #10203E; margin-bottom: 16px; }
     .back-link { font-family: 'Chakra Petch', sans-serif; font-size: 13px; color: #2E6BE6; text-decoration: none; }
 
+    /* Beveled card wrapper (drop-shadow lives here; clip-path clips box-shadow) */
+    .card-fx { filter: drop-shadow(0 14px 26px rgba(16,32,62,.16)); margin-bottom: 18px; }
+
     /* Hero card */
     .hero-card {
-      background: #fff; border-radius: 24px; border: 1px solid #E3EAF5;
-      padding: 32px 24px 24px; text-align: center; margin-bottom: 18px;
+      position: relative; background: #fff; box-shadow: inset 0 0 0 1px #E6ECF6;
+      padding: 32px 24px 24px; text-align: center;
+      clip-path: polygon(22px 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%, 0 22px);
     }
     .hero-av {
       width: 120px; height: 120px; border-radius: 50%; object-fit: cover;
@@ -47,7 +51,8 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
     .stats-row { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
     .stat-chip {
       display: flex; flex-direction: column; align-items: center;
-      background: #F4F6FB; border-radius: 12px; padding: 10px 20px; min-width: 80px;
+      background: #F4F6FB; padding: 10px 20px; min-width: 80px;
+      clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
     }
     .stat-label { font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .15em; color: #8592ad; margin-bottom: 3px; }
     .stat-val { font-family: 'Chakra Petch', sans-serif; font-size: 20px; font-weight: 700; color: #10203E; }
@@ -59,8 +64,12 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
     .xp-label { font-size: 11px; color: #9aa6bd; text-align: right; }
 
     /* Sections */
-    .section { background: #fff; border-radius: 20px; border: 1px solid #E3EAF5; padding: 20px; margin-bottom: 18px; }
-    .section-title { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .15em; color: #8592ad; margin-bottom: 14px; }
+    .section {
+      position: relative; background: #fff; box-shadow: inset 0 0 0 1px #E6ECF6; padding: 20px 22px;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+    }
+    .section-title { display: flex; align-items: center; gap: 10px; font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .16em; color: #10203E; margin-bottom: 14px; }
+    .section-title::before { content: ''; display: block; flex: 0 0 auto; width: 3px; height: 15px; background: #9ECF10; box-shadow: 0 0 8px rgba(158,207,16,.7); }
     .empty-state { font-size: 13px; color: #b0bcd4; }
 
     /* Achievement chips */
@@ -75,11 +84,12 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
 
     /* Rival button */
     .equip-btn {
-      border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer;
-      background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif;
-      font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      border: none; padding: 6px 14px; cursor: pointer;
+      background: linear-gradient(150deg,#4B8DF0,#2E6BE6); color: #fff; font-family: 'Chakra Petch', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: .06em; box-shadow: 0 3px 0 #1c47a0;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
     }
-    .equip-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .equip-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
   `],
   template: `
     <div class="page">
@@ -91,6 +101,7 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
           <a class="back-link" routerLink="/leaderboard">← Back to Leaderboard</a>
         </div>
       } @else if (data) {
+        <div class="card-fx">
         <div class="hero-card">
           @if (data.activeAvatar) {
             <img class="hero-av" [style.border]="data.activeBorderCss ?? '3px solid #2E6BE6'" [src]="data.activeAvatar.imagePath" [alt]="data.activeAvatar.name">
@@ -131,12 +142,16 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
             <div class="xp-label">{{ data.xp.xpInLevel }} / {{ data.xp.xpForNextLevel }} XP</div>
           </div>
         </div>
+        </div>
 
+        <div class="card-fx">
         <div class="section">
           <div class="section-title">ACTIVITY</div>
           <app-contribution-heatmap [pointsOverTime]="data.pointsOverTime"></app-contribution-heatmap>
         </div>
+        </div>
 
+        <div class="card-fx">
         <div class="section">
           <div class="section-title">ACHIEVEMENTS</div>
           @if (earnedAchievements.length === 0) {
@@ -152,15 +167,19 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
             </div>
           }
         </div>
+        </div>
 
         @if (isOwnProfile) {
+          <div class="card-fx">
           <div class="section">
             <div class="section-title">RECORDS</div>
             <app-personal-records [userId]="userId"></app-personal-records>
           </div>
+          </div>
         }
 
         @if (!isOwnProfile && earnedAvatars.length > 0) {
+          <div class="card-fx">
           <div class="section">
             <div class="section-title">AVATARS</div>
             <div class="av-showcase-row">
@@ -168,6 +187,7 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
                 <img class="av-showcase-thumb" [src]="a.imagePath" [alt]="a.name" [title]="a.name">
               }
             </div>
+          </div>
           </div>
         }
       }
