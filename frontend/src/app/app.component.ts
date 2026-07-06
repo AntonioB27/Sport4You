@@ -94,6 +94,9 @@ import { IconComponent } from './shared/components/icon/icon.component';
         <a routerLink="/achievements" routerLinkActive="active" class="nav-item">
           <app-icon name="medal" [size]="18" /> BADGES
         </a>
+        <a class="nav-item" routerLink="/shop" routerLinkActive="active">
+          <app-icon name="coin" [size]="18" /> SHOP
+        </a>
         <a class="nav-item" [routerLink]="profileRoute" routerLinkActive="active">
           <app-icon name="user" [size]="18" /> PROFILE
         </a>
@@ -128,6 +131,7 @@ import { IconComponent } from './shared/components/icon/icon.component';
       </a>
       <button class="bottom-fab" (click)="openLogActivity()">+</button>
       <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active"><app-icon name="medal" [size]="20" /> BADGES</a>
+      <a class="bottom-nav-item" routerLink="/shop" routerLinkActive="active"><app-icon name="coin" [size]="20" /> SHOP</a>
       <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
         <app-icon name="user" [size]="20" /> PROFILE
       </a>
