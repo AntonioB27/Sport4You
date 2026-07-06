@@ -21,17 +21,17 @@ const RARITY_META: Record<'common' | 'rare' | 'legendary', CardMeta> = {
   common: {
     frame: 'linear-gradient(160deg,#F5D3A3,#CD7F32 55%,#8A4F16)',
     frameShadow: '0 18px 30px -20px rgba(205,127,50,.6)',
-    badgeLabel: 'COMMON', badgeColor: '#fff', badgeBg: 'rgba(138,79,22,.9)',
+    badgeLabel: 'COMMON', badgeColor: '#5c6881', badgeBg: 'rgba(255,255,255,.92)',
   },
   rare: {
     frame: 'linear-gradient(160deg,#F2F5FA,#C6CFDE 55%,#93A1B7)',
     frameShadow: '0 18px 30px -20px rgba(120,140,170,.55)',
-    badgeLabel: 'RARE', badgeColor: '#fff', badgeBg: 'rgba(90,105,130,.9)',
+    badgeLabel: 'RARE', badgeColor: '#fff', badgeBg: 'rgba(46,107,230,.92)',
   },
   legendary: {
     frame: 'linear-gradient(160deg,#FDE9A7,#F5B300 50%,#B57C00)',
     frameShadow: '0 18px 30px -18px rgba(245,179,0,.5)',
-    badgeLabel: 'LEGENDARY', badgeColor: '#7a5200', badgeBg: 'rgba(255,255,255,.85)',
+    badgeLabel: 'LEGENDARY', badgeColor: '#4a3400', badgeBg: 'rgba(245,179,0,.92)',
   },
 };
 
