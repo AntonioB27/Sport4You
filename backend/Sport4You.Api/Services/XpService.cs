@@ -64,7 +64,7 @@ public class XpService : IXpService
         return new LevelInfo(level, title, xpInLevel, xpForNextLevel, xpPercent);
     }
 
-    public async Task<int> AwardActivityXpAsync(
+    public async Task<XpAwardResult> AwardActivityXpAsync(
         Guid userId, Guid activityId, string sport,
         decimal? distance, string? duration, int? steps)
     {
@@ -75,14 +75,23 @@ public class XpService : IXpService
         var previousXp = row?.TotalXp ?? 0;
         var prestigeLevel = row?.PrestigeLevel ?? 0;
         var xpEarned = (int)(baseXp * (1 + 0.05 * prestigeLevel));
+
+        var boostApplied = (row?.BoostedActivitiesRemaining ?? 0) > 0;
+        if (boostApplied)
+            xpEarned = (int)(xpEarned * 1.5);
+
         var levelBefore = GetLevelInfo(previousXp).Level;
 
         if (row == null)
+        {
             _db.UserXp.Add(new UserXp { UserId = userId, TotalXp = xpEarned, UpdatedAt = now });
+        }
         else
         {
             row.TotalXp += xpEarned;
             row.UpdatedAt = now;
+            if (boostApplied)
+                row.BoostedActivitiesRemaining--;
         }
 
         _db.XpTransactions.Add(new XpTransaction
@@ -96,7 +105,7 @@ public class XpService : IXpService
         var levelAfter = GetLevelInfo(previousXp + xpEarned).Level;
         await AwardLevelUpBoxesAsync(userId, levelBefore, levelAfter);
 
-        return xpEarned;
+        return new XpAwardResult(xpEarned, boostApplied);
     }
 
     public async Task<MissionEvaluationResult> EvaluateDailyMissionsAsync(Guid userId, DateOnly date)

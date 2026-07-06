@@ -126,4 +126,70 @@ public class XpServiceIntegrationTests : IClassFixture<TestFactory>
         Assert.NotNull(tx);
         Assert.Equal("achievement", tx!.Source);
     }
+
+    [Fact]
+    public async Task AwardActivityXp_NoBoost_ReturnsBoostAppliedFalse()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+
+        using var scope = _factory.Services.CreateScope();
+        var xpSvc = scope.ServiceProvider.GetRequiredService<IXpService>();
+
+        var result = await xpSvc.AwardActivityXpAsync(userId, Guid.NewGuid(), "running", 5.0m, null, null);
+
+        Assert.Equal(100, result.XpEarned); // floor(5 * 20) = 100, no boost
+        Assert.False(result.BoostApplied);
+    }
+
+    [Fact]
+    public async Task AwardActivityXp_WithBoost_AppliesMultiplierAndDecrementsCounter()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Data.AppDbContext>();
+        db.UserXp.Add(new Sport4You.Api.Models.UserXp
+        {
+            UserId = userId, TotalXp = 0, PrestigeLevel = 0,
+            Coins = 0, BoostedActivitiesRemaining = 3, UpdatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var xpSvc = scope.ServiceProvider.GetRequiredService<IXpService>();
+        var result = await xpSvc.AwardActivityXpAsync(userId, Guid.NewGuid(), "running", 5.0m, null, null);
+
+        Assert.Equal(150, result.XpEarned); // floor(100 * 1.5) = 150
+        Assert.True(result.BoostApplied);
+
+        var row = await db.UserXp.FindAsync(userId);
+        Assert.Equal(2, row!.BoostedActivitiesRemaining);
+    }
+
+    [Fact]
+    public async Task AwardActivityXp_BoostExhausted_StopsApplyingAfterThirdActivity()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Data.AppDbContext>();
+        db.UserXp.Add(new Sport4You.Api.Models.UserXp
+        {
+            UserId = userId, TotalXp = 0, PrestigeLevel = 0,
+            Coins = 0, BoostedActivitiesRemaining = 1, UpdatedAt = DateTime.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var xpSvc = scope.ServiceProvider.GetRequiredService<IXpService>();
+
+        var first = await xpSvc.AwardActivityXpAsync(userId, Guid.NewGuid(), "running", 5.0m, null, null);
+        Assert.True(first.BoostApplied);
+        Assert.Equal(150, first.XpEarned);
+
+        var second = await xpSvc.AwardActivityXpAsync(userId, Guid.NewGuid(), "running", 5.0m, null, null);
+        Assert.False(second.BoostApplied);
+        Assert.Equal(100, second.XpEarned);
+    }
 }

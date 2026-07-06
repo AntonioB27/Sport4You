@@ -85,8 +85,9 @@ public class ActivityService : IActivityService
 
         await _activities.CreateAsync(activity);
 
-        var xpEarned = await _xp.AwardActivityXpAsync(
+        var xpAward = await _xp.AwardActivityXpAsync(
             userId, activity.Id, sport, request.Distance, request.Duration, request.Steps);
+        var xpEarned = xpAward.XpEarned;
 
         var missionResult = await _xp.EvaluateDailyMissionsAsync(
             userId, DateOnly.FromDateTime(dateTime.ToUniversalTime()));
