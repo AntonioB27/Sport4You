@@ -7,4 +7,5 @@ public record OpenBoxResultDto(
     string ImagePath,
     bool WasDuplicate,
     int DuplicateXpAwarded,
-    int RemainingBoxes);
+    int RemainingBoxes,
+    Guid? ItemId = null);

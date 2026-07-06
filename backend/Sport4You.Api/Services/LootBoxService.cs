@@ -97,7 +97,8 @@ public class LootBoxService : ILootBoxService
 
         return new OpenBoxResultDto(
             reward.Type, reward.Rarity, reward.Name, reward.ImagePath,
-            isDuplicate, duplicateXp, remaining);
+            isDuplicate, duplicateXp, remaining,
+            reward.AvatarId ?? reward.BorderId);
     }
 
     public Task<int> GetPendingCountAsync(Guid userId)

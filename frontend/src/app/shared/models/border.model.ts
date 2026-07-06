@@ -21,4 +21,5 @@ export interface OpenBoxResult {
   wasDuplicate: boolean;
   duplicateXpAwarded: number;
   remainingBoxes: number;
+  itemId: string | null;
 }

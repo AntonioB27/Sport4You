@@ -3,10 +3,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../shared/services/api.service';
 import { IconComponent } from '../shared/components/icon/icon.component';
 import { ShopItemCardComponent } from './shop-item-card.component';
+import { PurchaseConfirmModalComponent } from './purchase-confirm-modal.component';
+import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
 import { ShopCatalog, ShopAvatar, ShopLootBox } from '../shared/models/shop.model';
 
 interface CardMeta {
@@ -281,7 +284,7 @@ export class ShopComponent implements OnInit {
   readonly RARITY_META = RARITY_META;
   readonly boosterMeta = BOOSTER_META;
 
-  constructor(private api: ApiService, private snackBar: MatSnackBar) {}
+  constructor(private api: ApiService, private snackBar: MatSnackBar, private dialog: MatDialog) {}
 
   ngOnInit() {
     this.load();
@@ -335,8 +338,16 @@ export class ShopComponent implements OnInit {
       next: (result) => {
         this.buying = false;
         if (result.success) {
-          this.snackBar.open('XP Booster purchased!', '', { duration: 2500, panelClass: 's4y-toast' });
           this.load();
+          const mult = this.catalog ? this.catalog.booster.multiplier : 2;
+          this.dialog.open(PurchaseConfirmModalComponent, {
+            data: {
+              kind: 'booster', userId,
+              title: 'XP Booster',
+              subtitle: `Your next ${result.boostedActivitiesRemaining} logged activities earn ${mult}× XP.`,
+            },
+            panelClass: 's4y-purchase-dialog',
+          });
         } else {
           this.snackBar.open(result.error ?? 'Purchase failed', '', { duration: 2500 });
         }
@@ -357,8 +368,24 @@ export class ShopComponent implements OnInit {
       next: (result) => {
         this.buying = false;
         if (result.success) {
-          this.snackBar.open('Loot box purchased! Open it from your dashboard.', '', { duration: 3000, panelClass: 's4y-toast' });
           this.load();
+          const ref = this.dialog.open(PurchaseConfirmModalComponent, {
+            data: {
+              kind: 'lootbox', userId,
+              title: tier === 'special' ? 'Special Loot Box' : 'Loot Box',
+              subtitle: `Added to your vault — ${result.pendingBoxes} ready to open.`,
+            },
+            panelClass: 's4y-purchase-dialog',
+          });
+          ref.afterClosed().subscribe(res => {
+            if (res === 'open') {
+              this.dialog.open(LootBoxModalComponent, {
+                data: { userId, pending: result.pendingBoxes },
+                width: '400px',
+              });
+              this.load();
+            }
+          });
         } else {
           this.snackBar.open(result.error ?? 'Purchase failed', '', { duration: 2500 });
         }
@@ -379,8 +406,11 @@ export class ShopComponent implements OnInit {
       next: (result) => {
         this.buying = false;
         if (result.success) {
-          this.snackBar.open(`${avatar.name} unlocked!`, '', { duration: 2500, panelClass: 's4y-toast' });
           this.load();
+          this.dialog.open(PurchaseConfirmModalComponent, {
+            data: { kind: 'avatar', userId, title: avatar.name, subtitle: avatar.description, avatar },
+            panelClass: 's4y-purchase-dialog',
+          });
         } else {
           this.snackBar.open(result.error ?? 'Purchase failed', '', { duration: 2500 });
         }

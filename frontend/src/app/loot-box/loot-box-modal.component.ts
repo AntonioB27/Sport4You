@@ -174,7 +174,7 @@ const THEMES: Record<string, RarityTheme> = {
     .xp-copy { text-align: left; }
     .xp-copy-title { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #2E6BE6; letter-spacing: .04em; }
     .xp-copy-sub { font-size: 11.5px; color: #5c7099; }
-    .reveal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .reveal-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
     .another-btn {
       flex: 1; border: none; cursor: pointer;
       font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: .05em;
@@ -292,10 +292,13 @@ const THEMES: Record<string, RarityTheme> = {
               </div>
             }
             <div class="reveal-btns">
+              @if (result.itemId && !equipped) {
+                <button class="another-btn" (click)="equip()" [disabled]="equipping">{{ equipping ? 'EQUIPPING…' : ('EQUIP ' + (result.type === 'border' ? 'BORDER' : 'AVATAR')) }}</button>
+              }
               @if (result.remainingBoxes > 0) {
                 <button class="another-btn" (click)="reset()">OPEN ANOTHER · {{ result.remainingBoxes }}</button>
               }
-              <button class="done-btn" [class.wide]="result.remainingBoxes === 0" (click)="close()">DONE</button>
+              <button class="done-btn" [class.wide]="result.remainingBoxes === 0 && (equipped || !result.itemId)" (click)="close()">{{ equipped ? '✓ EQUIPPED' : 'DONE' }}</button>
             </div>
           </div>
         }
@@ -311,6 +314,8 @@ export class LootBoxModalComponent {
   burstSrc = '';
   displayedXp = 0;
   lastRemaining: number | undefined = undefined;
+  equipping = false;
+  equipped = false;
 
   private pendingResult: OpenBoxResult | null = null;
   private skipRequested = false;
@@ -415,7 +420,29 @@ export class LootBoxModalComponent {
     this.burstSrc = '';
     this.displayedXp = 0;
     this.skipRequested = false;
+    this.equipping = false;
+    this.equipped = false;
     this.state = 'idle';
+  }
+
+  /** Equip the just-pulled avatar/border immediately from the reveal. */
+  equip(): void {
+    const r = this.result;
+    if (!r?.itemId || this.equipping || this.equipped) return;
+    this.equipping = true;
+    const done = () => {
+      this.equipping = false;
+      this.equipped = true;
+      this.snackBar.open(`${r.name} equipped!`, '', { duration: 2500, panelClass: 's4y-toast' });
+    };
+    const fail = () => {
+      this.equipping = false;
+      this.snackBar.open('Failed to equip. Please try again.', '', { duration: 2500 });
+    };
+    const req = r.type === 'avatar'
+      ? this.api.setActiveAvatar(this.data.userId, r.itemId)
+      : this.api.equipBorder(this.data.userId, r.itemId);
+    req.subscribe({ next: done, error: fail });
   }
 
   close(): void {

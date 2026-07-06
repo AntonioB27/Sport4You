@@ -51,6 +51,16 @@ router-outlet + * {
   overflow: visible !important;
 }
 
+/* Shop purchase-confirmation dialog — transparent container for the branded card */
+.s4y-purchase-dialog .mat-mdc-dialog-container,
+.s4y-purchase-dialog .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 22px !important;
+  overflow: visible !important;
+}
+
 /* Game toast — branded snackbar for level-ups, prestige, rival alerts.
    Matches the dashboard hero surface: navy gradient, glowing lime accent,
    Chakra Petch, pill action button. */
