@@ -5,6 +5,32 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+/* Always reserve the vertical scrollbar's space so it appearing (once a page's
+   content fills in) never reflows the layout narrower — that width change read
+   as the page "resizing" at the end of the load animation. */
+html { scrollbar-gutter: stable; }
+
+/* Page load animation — every routed page fades in on load.
+   Targets the component the router renders (the sibling right after
+   <router-outlet>), so it covers all current and future pages and
+   re-fires on each navigation.
+   Opacity-only (no translate) on purpose: pages load their data async and
+   reflow the content in a few hundred ms later; a transform "rise" settles
+   the shell first and then the late content pops/reflows, which reads as the
+   page resizing after the animation. A pure fade has no settle to fight, so
+   the async content filling in looks smooth. */
+@keyframes s4y-page-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+router-outlet + * {
+  display: block;
+  animation: s4y-page-enter 320ms ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  router-outlet + * { animation: none; }
+}
+
 /* Watch dialog — transparent container so the dark card shows through */
 .s4y-watch-dialog .mat-mdc-dialog-container,
 .s4y-watch-dialog .mdc-dialog__surface {

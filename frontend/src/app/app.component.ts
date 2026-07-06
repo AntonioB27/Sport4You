@@ -56,12 +56,13 @@ import { IconComponent } from './shared/components/icon/icon.component';
     .bottom-nav {
       display: none; position: fixed; bottom: 0; left: 0; right: 0;
       background: #fff; border-top: 1px solid #E3EAF5;
-      padding: 10px 14px 20px; justify-content: space-around; align-items: center; z-index: 100;
+      padding: 10px 8px 20px; justify-content: space-between; align-items: center; gap: 8px; z-index: 100;
     }
+    .nav-side { flex: 1 1 0; min-width: 0; display: flex; justify-content: space-around; align-items: center; gap: 4px; }
     .bottom-nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1 1 0; min-width: 0;
       color: #9aa6bd; font-family: 'Chakra Petch', sans-serif; font-weight: 700;
-      font-size: 10px; letter-spacing: .06em; text-decoration: none; transition: color .15s;
+      font-size: 10px; letter-spacing: .05em; text-decoration: none; transition: color .15s; white-space: nowrap;
     }
     .bottom-nav-item.active { color: #2E6BE6; }
     .bottom-fab {
@@ -123,18 +124,26 @@ import { IconComponent } from './shared/components/icon/icon.component';
     </div>
 
     <nav class="bottom-nav">
-      <a class="bottom-nav-item" routerLink="/dashboard" routerLinkActive="active">
-        <app-icon name="house" [size]="20" /> HOME
-      </a>
-      <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
-        <app-icon name="trophy" [size]="20" /> RANK
-      </a>
+      <div class="nav-side">
+        <a class="bottom-nav-item" routerLink="/dashboard" routerLinkActive="active">
+          <app-icon name="house" [size]="20" /> HOME
+        </a>
+        <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
+          <app-icon name="trophy" [size]="20" /> RANK
+        </a>
+      </div>
       <button class="bottom-fab" (click)="openLogActivity()">+</button>
-      <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active"><app-icon name="medal" [size]="20" /> BADGES</a>
-      <a class="bottom-nav-item" routerLink="/shop" routerLinkActive="active"><app-icon name="coin" [size]="20" /> SHOP</a>
-      <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
-        <app-icon name="user" [size]="20" /> PROFILE
-      </a>
+      <div class="nav-side">
+        <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active">
+          <app-icon name="medal" [size]="20" /> BADGES
+        </a>
+        <a class="bottom-nav-item" routerLink="/shop" routerLinkActive="active">
+          <app-icon name="coin" [size]="20" /> SHOP
+        </a>
+        <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
+          <app-icon name="user" [size]="20" /> PROFILE
+        </a>
+      </div>
     </nav>
   `,
 })

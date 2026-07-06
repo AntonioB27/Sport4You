@@ -93,9 +93,11 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
       70% { box-shadow: 0 0 0 8px rgba(255,59,87,0); }
       100% { box-shadow: 0 0 0 0 rgba(255,59,87,0); }
     }
-    @media (max-width: 560px) {
-      .hud { width: 100%; }
-      .hud-seg { flex: 1; justify-content: center; padding: 9px 8px; gap: 9px; }
+    @media (max-width: 680px) {
+      /* 4 segments won't fit one row on a phone — lay them out 2×2 */
+      .hud { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+      .hud-seg { padding: 10px 12px; gap: 10px; justify-content: flex-start; }
+      .hud-seg + .hud-seg::before { display: none; }
       .hud-tile { width: 36px; height: 36px; }
       .hud-value { font-size: 18px; }
     }
