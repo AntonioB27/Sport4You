@@ -17,12 +17,13 @@ public class ActivityService : IActivityService
     private readonly IAchievementService _achievements;
     private readonly IAvatarService _avatars;
     private readonly ILootBoxService _lootBox;
+    private readonly IShopService _shop;
 
     public ActivityService(
         IUserRepository users, IActivityRepository activities,
         IScoringService scoring, IXpService xp,
         IAchievementService achievements, IAvatarService avatars,
-        ILootBoxService lootBox)
+        ILootBoxService lootBox, IShopService shop)
     {
         _users = users;
         _activities = activities;
@@ -31,6 +32,7 @@ public class ActivityService : IActivityService
         _achievements = achievements;
         _avatars = avatars;
         _lootBox = lootBox;
+        _shop = shop;
     }
 
     public async Task<ActivityResult> LogActivityAsync(LogActivityRequest request)
@@ -88,6 +90,10 @@ public class ActivityService : IActivityService
         var xpAward = await _xp.AwardActivityXpAsync(
             userId, activity.Id, sport, request.Distance, request.Duration, request.Steps);
         var xpEarned = xpAward.XpEarned;
+
+        var coinsEarned = points / 10;
+        if (coinsEarned > 0)
+            await _shop.AddCoinsAsync(userId, coinsEarned);
 
         var missionResult = await _xp.EvaluateDailyMissionsAsync(
             userId, DateOnly.FromDateTime(dateTime.ToUniversalTime()));
@@ -161,6 +167,10 @@ public class ActivityService : IActivityService
 
         if (xpEarned > 0)
             await _xp.AwardGenericXpAsync(userId, xpEarned, "activity", row.Id);
+
+        var stepsCoinsEarned = pointsEarned / 10;
+        if (stepsCoinsEarned > 0)
+            await _shop.AddCoinsAsync(userId, stepsCoinsEarned);
 
         var missionResult = await _xp.EvaluateDailyMissionsAsync(
             userId, DateOnly.FromDateTime(now));
