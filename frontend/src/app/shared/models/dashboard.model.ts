@@ -18,6 +18,8 @@ export interface DashboardData {
   rank: number;
   currentStreak: number;
   todaySteps: number;
+  coins: number;
+  boostedActivitiesRemaining: number;
   activities: ActivityItem[];
   pointsOverTime: { date: string; points: number }[];
   sportBreakdown: { sport: string; points: number }[];
@@ -115,6 +117,7 @@ export interface LogActivityResponse {
   activityId: string;
   points: number;
   xpEarned: number;
+  boostApplied: boolean;
   missionsCompleted: CompletedMission[];
   achievementsUnlocked: UnlockedAchievement[];
   avatarsUnlocked: UnlockedAvatar[];

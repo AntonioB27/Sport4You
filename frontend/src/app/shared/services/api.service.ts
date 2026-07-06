@@ -8,6 +8,7 @@ import {
   LogActivityRequest, LogActivityResponse, PersonalRecords,
 } from '../models/dashboard.model';
 import { BorderStatus, BoxInfo, OpenBoxResult } from '../models/border.model';
+import { ShopCatalog, BoosterPurchaseResult, LootBoxPurchaseResult, AvatarPurchaseResult } from '../models/shop.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -85,5 +86,21 @@ export class ApiService {
 
   getPersonalRecords(userId: string): Observable<PersonalRecords> {
     return this.http.get<PersonalRecords>(`${this.base}/users/${userId}/personal-records`);
+  }
+
+  getShop(userId: string): Observable<ShopCatalog> {
+    return this.http.get<ShopCatalog>(`${this.base}/users/${userId}/shop`);
+  }
+
+  purchaseBooster(userId: string): Observable<BoosterPurchaseResult> {
+    return this.http.post<BoosterPurchaseResult>(`${this.base}/users/${userId}/shop/booster`, {});
+  }
+
+  purchaseLootBox(userId: string, tier: 'normal' | 'special'): Observable<LootBoxPurchaseResult> {
+    return this.http.post<LootBoxPurchaseResult>(`${this.base}/users/${userId}/shop/lootbox`, { tier });
+  }
+
+  purchaseShopAvatar(userId: string, avatarId: string): Observable<AvatarPurchaseResult> {
+    return this.http.post<AvatarPurchaseResult>(`${this.base}/users/${userId}/shop/avatar`, { avatarId });
   }
 }
