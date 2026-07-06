@@ -247,6 +247,21 @@ public class ShopServiceTests : IClassFixture<TestFactory>
     }
 
     [Fact]
+    public async Task PurchaseAvatar_LootBoxExclusiveAvatar_ReturnsError()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var lootBoxAvatar = await db.Avatars.FirstAsync(a => a.UnlockType == "loot_box");
+        var result = await shop.PurchaseAvatarAsync(userId, lootBoxAvatar.Id);
+
+        Assert.False(result.Success);
+        Assert.Equal("Avatar is not available for purchase", result.Error);
+    }
+
+    [Fact]
     public async Task PurchaseAvatar_InsufficientCoins_ReturnsError()
     {
         var userId = Guid.Parse(await CreateUserAsync());
