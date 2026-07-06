@@ -167,7 +167,7 @@ const GROUPS: LockerGroup[] = [
             <div class="portrait-stage">
               <div class="portrait-ring"></div>
               <div class="medallion">
-                <div class="medallion-inner">
+                <div class="medallion-inner" [style.border]="activeBorderCss">
                   <img [src]="eq.imagePath" [alt]="eq.name">
                 </div>
               </div>
@@ -230,6 +230,8 @@ const GROUPS: LockerGroup[] = [
 export class AvatarLockerComponent {
   @Input({ required: true }) avatars: AvatarStatus[] = [];
   @Input() equipping = false;
+  /** Equipped border CSS, shown as a ring around the preview avatar. */
+  @Input() activeBorderCss: string | null = null;
   @Output() equip = new EventEmitter<AvatarStatus>();
 
   get unlockedCount(): number {

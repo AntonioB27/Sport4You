@@ -5,32 +5,20 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ApiService } from '../shared/services/api.service';
 import { DashboardData, AchievementStatus, AvatarStatus } from '../shared/models/dashboard.model';
-import { BorderStatus } from '../shared/models/border.model';
 import { achievementIconPath } from '../shared/utils/achievement-icon';
-import { AvatarLockerComponent } from './avatar-locker.component';
 import { ContributionHeatmapComponent } from './contribution-heatmap/contribution-heatmap.component';
 import { PersonalRecordsComponent } from './personal-records/personal-records.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent, ContributionHeatmapComponent, PersonalRecordsComponent],
+  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, ContributionHeatmapComponent, PersonalRecordsComponent],
   styles: [`
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 680px; margin: 0 auto; }
-    .page.wide { max-width: 1160px; }
     .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
     .error-state { text-align: center; padding: 80px 0; }
     .error-msg { font-family: 'Chakra Petch', sans-serif; font-size: 20px; color: #10203E; margin-bottom: 16px; }
     .back-link { font-family: 'Chakra Petch', sans-serif; font-size: 13px; color: #2E6BE6; text-decoration: none; }
-
-    /* Tab bar */
-    .tab-bar { display: flex; gap: 4px; background: #F4F6FB; border-radius: 14px; padding: 4px; margin-bottom: 20px; }
-    .tab {
-      flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer;
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em;
-      color: #8592ad; background: transparent; transition: background .15s, color .15s;
-    }
-    .tab.active { background: #fff; color: #10203E; box-shadow: 0 2px 8px -4px rgba(46,107,230,.2); }
 
     /* Hero card */
     .hero-card {
@@ -85,33 +73,16 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
     .av-showcase-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .av-showcase-thumb { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #E3EAF5; }
 
-    /* Borders section */
-    .borders-section { margin-top: 24px; }
-    .border-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
-    .border-card {
-      background: #fff; border-radius: 16px; border: 1px solid #E3EAF5;
-      padding: 16px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px;
-    }
-    .border-card.locked { opacity: .45; filter: grayscale(.7); }
-    .border-card.active { border-color: #2E6BE6; box-shadow: 0 0 0 2px #2E6BE6; }
-    .border-swatch { width: 48px; height: 48px; border-radius: 50%; background: #F4F6FB; }
-    .border-name { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #10203E; }
-    .rarity-pill { font-family: 'Chakra Petch', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .1em; border-radius: 999px; padding: 2px 8px; color: #fff; }
-    .rarity-pill.common { background: #9E9E9E; }
-    .rarity-pill.rare { background: #2196F3; }
-    .rarity-pill.legendary { background: #FFD700; color: #333; }
-    .rarity-pill.platinum { background: linear-gradient(135deg,#e8e8e8,#ffffff 50%,#cfd9ff); color: #3a4a9e; }
+    /* Rival button */
     .equip-btn {
       border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer;
       background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif;
       font-size: 11px; font-weight: 700; letter-spacing: .06em;
     }
     .equip-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .active-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #2E6BE6; }
-
   `],
   template: `
-    <div class="page" [class.wide]="activeTab === 'avatars' && isOwnProfile">
+    <div class="page">
       @if (loading) {
         <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
       } @else if (error) {
@@ -120,124 +91,84 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
           <a class="back-link" routerLink="/leaderboard">← Back to Leaderboard</a>
         </div>
       } @else if (data) {
+        <div class="hero-card">
+          @if (data.activeAvatar) {
+            <img class="hero-av" [style.border]="data.activeBorderCss ?? '3px solid #2E6BE6'" [src]="data.activeAvatar.imagePath" [alt]="data.activeAvatar.name">
+          } @else {
+            <span class="hero-initial">{{ data.user.firstName[0] }}</span>
+          }
+          <div class="hero-name">{{ data.user.firstName }} {{ data.user.lastName }}</div>
+          <div class="level-badge">
+            @if (data.xp.prestigeLevel > 0) {
+              <span style="font-weight:800; margin-right:4px;">★{{ data.xp.prestigeLevel }}</span>
+            }
+            Lv. {{ data.xp.level }} · {{ data.xp.levelTitle }}
+          </div>
+          @if (!isOwnProfile) {
+            <button class="equip-btn" style="width:auto; padding:8px 18px; margin-bottom:16px;"
+                    (click)="toggleRival()">
+              {{ userId === myRivalUserId ? '✓ YOUR RIVAL' : 'SET AS RIVAL' }}
+            </button>
+          }
+          <div class="stats-row">
+            <div class="stat-chip">
+              <span class="stat-label">RANK</span>
+              <span class="stat-val">{{ data.rank > 0 ? '#' + data.rank : '—' }}</span>
+            </div>
+            <div class="stat-chip">
+              <span class="stat-label">POINTS</span>
+              <span class="stat-val">{{ data.totalPoints | number }}</span>
+            </div>
+            <div class="stat-chip">
+              <span class="stat-label">STREAK</span>
+              <span class="stat-val">{{ data.currentStreak }}d</span>
+            </div>
+          </div>
+          <div class="xp-bar-wrap">
+            <div class="xp-bar-track">
+              <div class="xp-bar-fill" [style.width.%]="data.xp.xpPercent"></div>
+            </div>
+            <div class="xp-label">{{ data.xp.xpInLevel }} / {{ data.xp.xpForNextLevel }} XP</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">ACTIVITY</div>
+          <app-contribution-heatmap [pointsOverTime]="data.pointsOverTime"></app-contribution-heatmap>
+        </div>
+
+        <div class="section">
+          <div class="section-title">ACHIEVEMENTS</div>
+          @if (earnedAchievements.length === 0) {
+            <div class="empty-state">No achievements yet.</div>
+          } @else {
+            <div class="ach-row">
+              @for (a of earnedAchievements; track a.id) {
+                <div class="ach-chip">
+                  <img class="ach-icon" [src]="iconPath(a)" [alt]="a.name">
+                  <span class="ach-name">{{ a.name }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
 
         @if (isOwnProfile) {
-          <div class="tab-bar">
-            <button class="tab" [class.active]="activeTab === 'overview'" (click)="selectTab('overview')">OVERVIEW</button>
-            <button class="tab" [class.active]="activeTab === 'avatars'" (click)="selectTab('avatars')">
-              AVATARS ({{ avatarsLoaded ? unlockedCount + '/' + avatars.length : '…' }})
-            </button>
+          <div class="section">
+            <div class="section-title">RECORDS</div>
+            <app-personal-records [userId]="userId"></app-personal-records>
           </div>
         }
 
-        @if (activeTab === 'overview') {
-          <div class="hero-card">
-            @if (data.activeAvatar) {
-              <img class="hero-av" [style.border]="data.activeBorderCss ?? '3px solid #2E6BE6'" [src]="data.activeAvatar.imagePath" [alt]="data.activeAvatar.name">
-            } @else {
-              <span class="hero-initial">{{ data.user.firstName[0] }}</span>
-            }
-            <div class="hero-name">{{ data.user.firstName }} {{ data.user.lastName }}</div>
-            <div class="level-badge">
-              @if (data.xp.prestigeLevel > 0) {
-                <span style="font-weight:800; margin-right:4px;">★{{ data.xp.prestigeLevel }}</span>
+        @if (!isOwnProfile && earnedAvatars.length > 0) {
+          <div class="section">
+            <div class="section-title">AVATARS</div>
+            <div class="av-showcase-row">
+              @for (a of earnedAvatars; track a.id) {
+                <img class="av-showcase-thumb" [src]="a.imagePath" [alt]="a.name" [title]="a.name">
               }
-              Lv. {{ data.xp.level }} · {{ data.xp.levelTitle }}
-            </div>
-            @if (!isOwnProfile) {
-              <button class="equip-btn" style="width:auto; padding:8px 18px; margin-bottom:16px;"
-                      (click)="toggleRival()">
-                {{ userId === myRivalUserId ? '✓ YOUR RIVAL' : 'SET AS RIVAL' }}
-              </button>
-            }
-            <div class="stats-row">
-              <div class="stat-chip">
-                <span class="stat-label">RANK</span>
-                <span class="stat-val">{{ data.rank > 0 ? '#' + data.rank : '—' }}</span>
-              </div>
-              <div class="stat-chip">
-                <span class="stat-label">POINTS</span>
-                <span class="stat-val">{{ data.totalPoints | number }}</span>
-              </div>
-              <div class="stat-chip">
-                <span class="stat-label">STREAK</span>
-                <span class="stat-val">{{ data.currentStreak }}d</span>
-              </div>
-            </div>
-            <div class="xp-bar-wrap">
-              <div class="xp-bar-track">
-                <div class="xp-bar-fill" [style.width.%]="data.xp.xpPercent"></div>
-              </div>
-              <div class="xp-label">{{ data.xp.xpInLevel }} / {{ data.xp.xpForNextLevel }} XP</div>
             </div>
           </div>
-
-          <div class="section">
-            <div class="section-title">ACTIVITY</div>
-            <app-contribution-heatmap [pointsOverTime]="data.pointsOverTime"></app-contribution-heatmap>
-          </div>
-
-          <div class="section">
-            <div class="section-title">ACHIEVEMENTS</div>
-            @if (earnedAchievements.length === 0) {
-              <div class="empty-state">No achievements yet.</div>
-            } @else {
-              <div class="ach-row">
-                @for (a of earnedAchievements; track a.id) {
-                  <div class="ach-chip">
-                    <img class="ach-icon" [src]="iconPath(a)" [alt]="a.name">
-                    <span class="ach-name">{{ a.name }}</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          @if (isOwnProfile) {
-            <div class="section">
-              <div class="section-title">RECORDS</div>
-              <app-personal-records [userId]="userId"></app-personal-records>
-            </div>
-          }
-
-          @if (!isOwnProfile && earnedAvatars.length > 0) {
-            <div class="section">
-              <div class="section-title">AVATARS</div>
-              <div class="av-showcase-row">
-                @for (a of earnedAvatars; track a.id) {
-                  <img class="av-showcase-thumb" [src]="a.imagePath" [alt]="a.name" [title]="a.name">
-                }
-              </div>
-            </div>
-          }
-        }
-
-        @if (activeTab === 'avatars' && isOwnProfile) {
-          @if (avatarsLoading) {
-            <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
-          } @else {
-            <app-avatar-locker [avatars]="avatars" [equipping]="equipping" (equip)="equip($event)"></app-avatar-locker>
-          }
-          @if (!bordersLoading && borders.length > 0) {
-            <div class="borders-section">
-              <div class="section-title">BORDERS</div>
-              <div class="border-grid">
-                @for (b of sortedBorders; track b.id) {
-                  <div class="border-card" [class.locked]="!b.unlocked" [class.active]="b.isActive">
-                    <div class="border-swatch" [style.border]="b.borderCss"></div>
-                    <div class="border-name">{{ b.name }}</div>
-                    <span class="rarity-pill" [class]="b.rarity">{{ b.rarity.toUpperCase() }}</span>
-                    @if (b.unlocked && !b.isActive) {
-                      <button class="equip-btn" (click)="equipBorder(b)" [disabled]="equippingBorder">EQUIP</button>
-                    }
-                    @if (b.isActive) {
-                      <div class="active-label">✓ EQUIPPED</div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          }
         }
       }
     </div>
@@ -249,19 +180,11 @@ export class ProfileComponent implements OnInit {
   loading = true;
   error = false;
 
-  activeTab: 'overview' | 'avatars' = 'overview';
   myRivalUserId: string | null = null;
   private myId = localStorage.getItem('userId') ?? '';
 
+  /** Only loaded for other users' profiles, to show their earned-avatar showcase. */
   avatars: AvatarStatus[] = [];
-  avatarsLoading = false;
-  avatarsLoaded = false;
-  equipping = false;
-
-  borders: BorderStatus[] = [];
-  bordersLoaded = false;
-  bordersLoading = false;
-  equippingBorder = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -303,70 +226,14 @@ export class ProfileComponent implements OnInit {
     return this.avatars.filter(a => a.unlocked);
   }
 
-  get unlockedCount(): number {
-    return this.avatars.filter(a => a.unlocked).length;
-  }
-
   iconPath(a: AchievementStatus): string {
     return achievementIconPath(a);
   }
 
-  selectTab(tab: 'overview' | 'avatars'): void {
-    this.activeTab = tab;
-    if (tab === 'avatars' && !this.avatarsLoaded) this.loadAvatars();
-    if (tab === 'avatars' && !this.bordersLoaded) this.loadBorders();
-  }
-
   private loadAvatars(): void {
-    this.avatarsLoading = true;
     this.api.getAvatars(this.userId).subscribe({
-      next: list => { this.avatars = list; this.avatarsLoading = false; this.avatarsLoaded = true; },
-      error: () => { this.avatarsLoading = false; },
-    });
-  }
-
-  private loadBorders(): void {
-    this.bordersLoading = true;
-    this.api.getBorders(this.userId).subscribe({
-      next: list => { this.borders = list; this.bordersLoading = false; this.bordersLoaded = true; },
-      error: () => { this.bordersLoading = false; },
-    });
-  }
-
-  equipBorder(border: BorderStatus): void {
-    if (border.isActive || !border.unlocked) return;
-    this.equippingBorder = true;
-    this.api.equipBorder(this.userId, border.id).subscribe({
-      next: () => {
-        this.borders = this.borders.map(b => ({ ...b, isActive: b.id === border.id }));
-        this.equippingBorder = false;
-        this.snackBar.open(`${border.name} equipped!`, '', { duration: 2500 });
-      },
-      error: () => {
-        this.equippingBorder = false;
-        this.snackBar.open('Failed to equip border. Please try again.', 'OK', { duration: 4000 });
-      },
-    });
-  }
-
-  get sortedBorders(): BorderStatus[] {
-    const RARITY_RANK: Record<string, number> = { platinum: -1, legendary: 0, rare: 1, common: 2 };
-    return [...this.borders].sort((a, b) => {
-      if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
-      return (RARITY_RANK[a.rarity] ?? 3) - (RARITY_RANK[b.rarity] ?? 3);
-    });
-  }
-
-  equip(avatar: AvatarStatus): void {
-    if (avatar.isActive) return;
-    this.equipping = true;
-    this.api.setActiveAvatar(this.userId, avatar.id).subscribe({
-      next: () => {
-        this.avatars = this.avatars.map(a => ({ ...a, isActive: a.id === avatar.id }));
-        this.equipping = false;
-        this.snackBar.open(`${avatar.name} equipped!`, '', { duration: 2500 });
-      },
-      error: () => { this.equipping = false; this.snackBar.open('Failed to equip avatar. Please try again.', 'OK', { duration: 4000 }); },
+      next: list => { this.avatars = list; },
+      error: () => {},
     });
   }
 

@@ -24,6 +24,11 @@ export const routes: Routes = [
       import('./shop/shop.component').then(m => m.ShopComponent),
   },
   {
+    path: 'avatars',
+    loadComponent: () =>
+      import('./avatars/avatars-page.component').then(m => m.AvatarsPageComponent),
+  },
+  {
     path: 'profile/:userId',
     loadComponent: () =>
       import('./profile/profile.component').then(m => m.ProfileComponent),

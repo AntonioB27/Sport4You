@@ -98,6 +98,9 @@ import { IconComponent } from './shared/components/icon/icon.component';
         <a class="nav-item" routerLink="/shop" routerLinkActive="active">
           <app-icon name="coin" [size]="18" /> SHOP
         </a>
+        <a class="nav-item" routerLink="/avatars" routerLinkActive="active">
+          <app-icon name="crown" [size]="18" /> AVATARS
+        </a>
         <a class="nav-item" [routerLink]="profileRoute" routerLinkActive="active">
           <app-icon name="user" [size]="18" /> PROFILE
         </a>
@@ -131,14 +134,17 @@ import { IconComponent } from './shared/components/icon/icon.component';
         <a class="bottom-nav-item" routerLink="/leaderboard" routerLinkActive="active">
           <app-icon name="trophy" [size]="20" /> RANK
         </a>
-      </div>
-      <button class="bottom-fab" (click)="openLogActivity()">+</button>
-      <div class="nav-side">
         <a class="bottom-nav-item" routerLink="/achievements" routerLinkActive="active">
           <app-icon name="medal" [size]="20" /> BADGES
         </a>
+      </div>
+      <button class="bottom-fab" (click)="openLogActivity()">+</button>
+      <div class="nav-side">
         <a class="bottom-nav-item" routerLink="/shop" routerLinkActive="active">
           <app-icon name="coin" [size]="20" /> SHOP
+        </a>
+        <a class="bottom-nav-item" routerLink="/avatars" routerLinkActive="active">
+          <app-icon name="crown" [size]="20" /> AVATARS
         </a>
         <a class="bottom-nav-item" [routerLink]="profileRoute" routerLinkActive="active">
           <app-icon name="user" [size]="20" /> PROFILE
