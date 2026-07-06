@@ -46,4 +46,25 @@ public class DashboardControllerTests : IClassFixture<TestFactory>
         Assert.True(body.GetProperty("rank").GetInt32() >= 1);
         Assert.Equal(0, body.GetProperty("currentStreak").GetInt32());
     }
+
+    [Fact]
+    public async Task Dashboard_ContainsCoinsAndBoostFields()
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..6];
+        var regR = await _client.PostAsJsonAsync("/api/users", new { firstName = "DashCoin", lastName = suffix });
+        var regBody = await regR.Content.ReadFromJsonAsync<Dictionary<string, string>>();
+        var userId = regBody!["userId"];
+
+        await _client.PostAsJsonAsync("/api/activities", new
+        {
+            userId, datetime = "2026-07-01T10:00:00Z", sport = "running", distance = 5.0,
+        });
+
+        var r = await _client.GetAsync($"/api/users/{userId}/dashboard");
+        Assert.Equal(System.Net.HttpStatusCode.OK, r.StatusCode);
+
+        var body = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal(50, body.GetProperty("coins").GetInt32()); // floor(500/10) = 50
+        Assert.Equal(0, body.GetProperty("boostedActivitiesRemaining").GetInt32());
+    }
 }

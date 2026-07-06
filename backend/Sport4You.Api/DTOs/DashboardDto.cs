@@ -7,6 +7,8 @@ public class DashboardDto
     public int Rank { get; set; }
     public int CurrentStreak { get; set; }
     public int TodaySteps { get; set; }
+    public int Coins { get; set; }
+    public int BoostedActivitiesRemaining { get; set; }
     public List<ActivityDto> Activities { get; set; } = [];
     public List<PointsOverTimeDto> PointsOverTime { get; set; } = [];
     public List<SportBreakdownDto> SportBreakdown { get; set; } = [];

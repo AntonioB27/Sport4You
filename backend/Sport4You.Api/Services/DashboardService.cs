@@ -14,12 +14,13 @@ public class DashboardService : IDashboardService
     private readonly ILeaderboardService _leaderboard;
     private readonly IBorderService _borders;
     private readonly IRivalService _rivals;
+    private readonly IShopService _shop;
 
     public DashboardService(
         IUserRepository users, IActivityRepository activities,
         IXpService xp, IAchievementService achievements,
         IAvatarService avatars, ILeaderboardService leaderboard,
-        IBorderService borders, IRivalService rivals)
+        IBorderService borders, IRivalService rivals, IShopService shop)
     {
         _users = users;
         _activities = activities;
@@ -29,6 +30,7 @@ public class DashboardService : IDashboardService
         _leaderboard = leaderboard;
         _borders = borders;
         _rivals = rivals;
+        _shop = shop;
     }
 
     public async Task<DashboardDto?> GetDashboardAsync(Guid userId)
@@ -51,6 +53,7 @@ public class DashboardService : IDashboardService
         var leaderboard = await _leaderboard.GetLeaderboardAsync();
         var leaderboardEntry = leaderboard.FirstOrDefault(e => e.UserId == userId);
         var rivalStatus = await _rivals.GetRivalStatusAsync(userId, leaderboard);
+        var (coins, boostedActivitiesRemaining) = await _shop.GetBalanceAsync(userId);
 
         var todayStart = DateTime.UtcNow.Date;
         var todayEnd = todayStart.AddDays(1);
@@ -97,6 +100,8 @@ public class DashboardService : IDashboardService
             Rank = leaderboardEntry?.Rank ?? 0,
             CurrentStreak = ActivityStreakHelper.ComputeCurrentStreak(activities.Select(a => a.DateTime)),
             TodaySteps = todaySteps,
+            Coins = coins,
+            BoostedActivitiesRemaining = boostedActivitiesRemaining,
             Activities = activities.Select(a => new ActivityDto
             {
                 Id = a.Id,
