@@ -59,7 +59,7 @@ public class ActivityService : IActivityService
                     ? ActivityResult.NotFound(stepsResult.Error!)
                     : ActivityResult.BadRequest(stepsResult.Error!))
                 : ActivityResult.Success(
-                    Guid.Empty, stepsResult.PointsEarned, stepsResult.XpEarned,
+                    Guid.Empty, stepsResult.PointsEarned, stepsResult.XpEarned, false,
                     stepsResult.MissionsCompleted, stepsResult.AchievementsUnlocked, stepsResult.AvatarsUnlocked);
         }
 
@@ -89,7 +89,6 @@ public class ActivityService : IActivityService
 
         var xpAward = await _xp.AwardActivityXpAsync(
             userId, activity.Id, sport, request.Distance, request.Duration, request.Steps);
-        var xpEarned = xpAward.XpEarned;
 
         var coinsEarned = points / 10;
         if (coinsEarned > 0)
@@ -108,7 +107,7 @@ public class ActivityService : IActivityService
             await _lootBox.EarnBoxAsync(userId, "streak");
 
         return ActivityResult.Success(
-            activity.Id, points, xpEarned,
+            activity.Id, points, xpAward.XpEarned, xpAward.BoostApplied,
             missionResult.NewlyCompleted, newAchievements, newAvatars);
     }
 

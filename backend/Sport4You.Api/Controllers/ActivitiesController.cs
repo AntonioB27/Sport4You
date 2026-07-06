@@ -24,6 +24,7 @@ public class ActivitiesController : ControllerBase
             activityId = result.ActivityId,
             points = result.Points,
             xpEarned = result.XpEarned,
+            boostApplied = result.BoostApplied,
             missionsCompleted = result.MissionsCompleted,
             achievementsUnlocked = result.AchievementsUnlocked,
             avatarsUnlocked = result.AvatarsUnlocked,

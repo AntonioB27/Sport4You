@@ -124,4 +124,38 @@ public class ShopServiceTests : IClassFixture<TestFactory>
         var (coins, _) = await shop.GetBalanceAsync(userId);
         Assert.Equal(0, coins);
     }
+
+    [Fact]
+    public async Task PurchaseBoosterEndpoint_ThenLogActivity_ReturnsBoostAppliedTrue()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+            await shop.AddCoinsAsync(userId, 400);
+        }
+
+        var boosterResp = await _client.PostAsync($"/api/users/{userIdStr}/shop/booster", null);
+        Assert.Equal(System.Net.HttpStatusCode.OK, boosterResp.StatusCode);
+
+        var activityResp = await _client.PostAsJsonAsync("/api/activities", new
+        {
+            userId = userIdStr, datetime = "2026-07-01T10:00:00Z", sport = "running", distance = 5.0,
+        });
+        Assert.Equal(System.Net.HttpStatusCode.OK, activityResp.StatusCode);
+
+        var body = await activityResp.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.True(body.GetProperty("boostApplied").GetBoolean());
+        Assert.Equal(150, body.GetProperty("xpEarned").GetInt32()); // floor(5*20) * 1.5 = 150
+    }
+
+    [Fact]
+    public async Task PurchaseBoosterEndpoint_InsufficientCoins_ReturnsBadRequest()
+    {
+        var userIdStr = await CreateUserAsync();
+        var resp = await _client.PostAsync($"/api/users/{userIdStr}/shop/booster", null);
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, resp.StatusCode);
+    }
 }
