@@ -54,30 +54,44 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
     .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
 
     /* ── Header ── */
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
     .welcome-label { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .18em; color: #8592ad; }
     .welcome-name { font-family: 'Chakra Petch', sans-serif; font-size: 27px; font-weight: 700; color: #10203E; line-height: 1.05; }
-    .top-badges { display: flex; align-items: center; gap: 12px; }
-    .streak-badge {
-      display: flex; align-items: center; gap: 7px; background: #fff;
-      border: 1px solid #ffe0cf; padding: 8px 14px; border-radius: 999px;
-      box-shadow: 0 8px 18px -10px rgba(255,122,0,.5);
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #FF6A00; font-size: 14px;
+    /* HUD module — streak · points · vault */
+    .hud {
+      display: flex; align-items: stretch; background: #fff; border-radius: 16px;
+      padding: 6px; border: 1px solid #EAEEF6; box-shadow: 0 14px 30px -16px rgba(16,32,62,.42);
     }
-    .coins-badge {
-      display: flex; align-items: center; gap: 7px; background: #fff;
-      border: 1px solid rgba(158,207,16,.6); padding: 8px 14px; border-radius: 999px;
-      box-shadow: 0 8px 18px -10px rgba(158,207,16,.5);
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #5f7a00; font-size: 14px;
+    .hud-seg { display: flex; align-items: center; gap: 12px; padding: 9px 20px; position: relative; }
+    .hud-seg + .hud-seg::before { content: ''; position: absolute; left: 0; top: 13px; bottom: 13px; width: 1px; background: #EAEEF6; }
+    .hud-seg.clickable { cursor: pointer; border-radius: 12px; transition: background .15s, transform .1s; }
+    .hud-seg.clickable:hover { background: #F5F9FF; transform: translateY(-1px); }
+    .hud-tile {
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; color: #fff;
+      display: flex; align-items: center; justify-content: center;
     }
-    .box-badge {
-      display: flex; align-items: center; gap: 7px; background: #fff;
-      border: 1px solid rgba(46,107,230,.4); padding: 8px 14px; border-radius: 999px;
-      box-shadow: 0 8px 18px -10px rgba(46,107,230,.4); cursor: pointer;
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #2E6BE6; font-size: 14px;
-      transition: opacity .15s;
+    .hud-tile.streak { background: linear-gradient(150deg,#FF9A3D,#FF6A00); box-shadow: 0 8px 16px -8px rgba(255,106,0,.7); }
+    .hud-tile.points { background: linear-gradient(150deg,#C6E63B,#9ECF10); box-shadow: 0 8px 16px -8px rgba(158,207,16,.7); color: #26340a; }
+    .hud-tile.vault  { background: linear-gradient(150deg,#4B8DF0,#2E6BE6); box-shadow: 0 8px 16px -8px rgba(46,107,230,.7); }
+    .hud-tile.vault.empty { background: #EEF2F8; color: #9aa6bd; box-shadow: none; }
+    .hud-meta { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
+    .hud-value { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 22px; color: #10203E; }
+    .hud-label { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: .16em; color: #8592ad; margin-top: 5px; }
+    .hud-dot {
+      position: absolute; top: 9px; right: 12px; width: 8px; height: 8px; border-radius: 50%;
+      background: #FF3B57; animation: hudPulse 1.6s ease-out infinite;
     }
-    .box-badge:hover { opacity: .85; }
+    @keyframes hudPulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,59,87,.55); }
+      70% { box-shadow: 0 0 0 8px rgba(255,59,87,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,59,87,0); }
+    }
+    @media (max-width: 560px) {
+      .hud { width: 100%; }
+      .hud-seg { flex: 1; justify-content: center; padding: 9px 8px; gap: 9px; }
+      .hud-tile { width: 36px; height: 36px; }
+      .hud-value { font-size: 18px; }
+    }
 
     /* ── Grid ── */
     .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; }
@@ -171,6 +185,46 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
     .quest-bar-fill.blue { background: #2E6BE6; box-shadow: 0 0 8px rgba(46,107,230,.7); }
     .quest-pts { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: #5f7a00; }
 
+    /* ── Signal Vault (loot boxes) ── */
+    .vault-card {
+      position: relative; overflow: hidden; border-radius: 18px; padding: 18px 20px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: #fff; box-shadow: 0 12px 26px -16px rgba(16,32,62,.35);
+    }
+    .vault-card--ready {
+      background: linear-gradient(150deg,#2E6BE6,#173B92);
+      box-shadow: 0 20px 40px -20px rgba(30,79,184,.7);
+    }
+    .vault-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 88% -10%, rgba(198,230,59,.30), transparent 60%); }
+    .vault-main { position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .vault-icon {
+      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,.16); color: #fff; animation: vaultBob 3.6s ease-in-out infinite;
+    }
+    @keyframes vaultBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .vault-icon.locked { background: #EEF2F8; color: #9aa6bd; animation: none; }
+    .vault-info { min-width: 0; }
+    .vault-title { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .06em; color: #fff; }
+    .vault-title.muted { color: #10203E; }
+    .vault-sub { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 600; color: #dbe8ff; margin-top: 3px; line-height: 1.4; }
+    .vault-sub.muted { color: #8592ad; }
+    .vault-btn {
+      position: relative; flex-shrink: 0; border: none; cursor: pointer;
+      background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E;
+      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em;
+      padding: 12px 20px; border-radius: 12px;
+      box-shadow: 0 0 22px rgba(198,230,59,.55), 0 4px 0 #7c9c00;
+      transition: transform .1s, box-shadow .1s;
+    }
+    .vault-btn:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(198,230,59,.7), 0 5px 0 #7c9c00; }
+    .vault-btn:active { transform: translateY(1px); box-shadow: 0 0 16px rgba(198,230,59,.4), 0 2px 0 #7c9c00; }
+    @media (max-width: 420px) {
+      .vault-card { flex-direction: column; align-items: stretch; text-align: center; }
+      .vault-main { flex-direction: column; text-align: center; }
+      .vault-btn { width: 100%; }
+    }
+
     /* ── Recent Achievements ── */
     .achievements-card { background:#fff; border-radius:18px; padding:18px 20px; border:1px solid #E3EAF5; }
     .achievements-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; color:#10203E; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
@@ -240,12 +294,30 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
             <div class="welcome-label">WELCOME BACK</div>
             <div class="welcome-name">Hi, {{ data.user.firstName }}</div>
           </div>
-          <div class="top-badges">
-            <div class="streak-badge" *ngIf="(data?.currentStreak ?? 0) > 0"><app-icon name="flame" [size]="16" /> {{ data!.currentStreak }} day streak</div>
-            <div class="coins-badge"><app-icon name="coin" [size]="16" /> {{ data.totalPoints | number }}</div>
-            @if (pendingBoxes > 0) {
-              <div class="box-badge" (click)="openBoxModal()"><app-icon name="package" [size]="16" /> {{ pendingBoxes }}</div>
-            }
+          <div class="hud">
+            <div class="hud-seg">
+              <div class="hud-tile streak"><app-icon name="flame" [size]="20" /></div>
+              <div class="hud-meta">
+                <span class="hud-value">{{ data.currentStreak ?? 0 }}</span>
+                <span class="hud-label">STREAK</span>
+              </div>
+            </div>
+            <div class="hud-seg">
+              <div class="hud-tile points"><app-icon name="star" [size]="20" /></div>
+              <div class="hud-meta">
+                <span class="hud-value">{{ data.totalPoints | number }}</span>
+                <span class="hud-label">POINTS</span>
+              </div>
+            </div>
+            <div class="hud-seg" [class.clickable]="pendingBoxes > 0"
+                 (click)="pendingBoxes > 0 && openBoxModal()">
+              @if (pendingBoxes > 0) { <span class="hud-dot"></span> }
+              <div class="hud-tile vault" [class.empty]="pendingBoxes === 0"><app-icon name="package" [size]="20" /></div>
+              <div class="hud-meta">
+                <span class="hud-value">{{ pendingBoxes }}</span>
+                <span class="hud-label">BOXES</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -328,6 +400,34 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
                 </div>
               </div>
             </div>
+
+            <!-- Today's Steps widget -->
+            <app-today-steps-card
+              [todaySteps]="data?.todaySteps ?? 0"
+              (stepsAdded)="loadData()"></app-today-steps-card>
+
+            <!-- Signal Vault -->
+            <div class="vault-card" [class.vault-card--ready]="pendingBoxes > 0">
+              @if (pendingBoxes > 0) {
+                <div class="vault-glow"></div>
+                <div class="vault-main">
+                  <div class="vault-icon"><app-icon name="package" [size]="28" /></div>
+                  <div class="vault-info">
+                    <div class="vault-title">LOOT BOXES</div>
+                    <div class="vault-sub">{{ pendingBoxes }} {{ pendingBoxes === 1 ? 'box' : 'boxes' }} ready to open</div>
+                  </div>
+                </div>
+                <button class="vault-btn" (click)="openBoxModal()">OPEN {{ pendingBoxes === 1 ? 'BOX' : 'BOXES' }}</button>
+              } @else {
+                <div class="vault-main">
+                  <div class="vault-icon locked"><app-icon name="package" [size]="28" /></div>
+                  <div class="vault-info">
+                    <div class="vault-title muted">LOOT BOXES</div>
+                    <div class="vault-sub muted">No boxes yet — earn them by leveling up and finishing quests.</div>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
 
           <!-- RIGHT COLUMN -->
@@ -397,11 +497,6 @@ import { RivalCardComponent } from './rival-card/rival-card.component';
                 }
               }
             </div>
-
-            <!-- Today's Steps widget -->
-            <app-today-steps-card
-              [todaySteps]="data?.todaySteps ?? 0"
-              (stepsAdded)="loadData()"></app-today-steps-card>
 
             <!-- Log Activity CTA -->
             <button class="log-card" (click)="openLogActivity()">+ LOG ACTIVITY</button>
