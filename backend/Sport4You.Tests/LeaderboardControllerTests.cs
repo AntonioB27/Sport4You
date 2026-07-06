@@ -80,6 +80,41 @@ public class LeaderboardControllerTests : IClassFixture<TestFactory>
         Assert.True(beta.RankTrend < 0, $"Beta trend should be negative but was {beta.RankTrend}");
     }
 
+    // Level 10 (IMMORTAL) starts at 60,000 XP; running awards floor(km * 20) XP.
+    // 3000 km in one activity lands exactly on the threshold, enabling prestige.
+    private async Task ReachLevel10Async(string userId)
+    {
+        await _client.PostAsJsonAsync("/api/activities", new
+        { userId, sport = "running", distance = 3000, datetime = DateTime.UtcNow.ToString("o") });
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_ReportsPrestigeLevel()
+    {
+        var prestigedId = await CreateUserAsync("Prestiged", "Athlete");
+        var plainId = await CreateUserAsync("Plain", "Athlete");
+
+        // prestigedId climbs to Level 10 and prestiges once.
+        await ReachLevel10Async(prestigedId);
+        var pr = await _client.PostAsync($"/api/users/{prestigedId}/prestige", null);
+        Assert.Equal(HttpStatusCode.OK, pr.StatusCode);
+
+        // plainId logs a normal activity but never prestiges.
+        await _client.PostAsJsonAsync("/api/activities",
+            new { userId = plainId, datetime = "2026-06-30T10:00:00Z", sport = "running", distance = 5.0 });
+
+        var response = await _client.GetAsync("/api/leaderboard");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var entries = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
+        Assert.NotNull(entries);
+
+        var prestiged = entries!.First(e => e.FirstName == "Prestiged" && e.LastName == "Athlete");
+        var plain = entries!.First(e => e.FirstName == "Plain" && e.LastName == "Athlete");
+
+        Assert.Equal(1, prestiged.PrestigeLevel);
+        Assert.Equal(0, plain.PrestigeLevel);
+    }
+
     [Fact]
     public async Task GetLeaderboard_IncludesActiveAvatarImagePath()
     {

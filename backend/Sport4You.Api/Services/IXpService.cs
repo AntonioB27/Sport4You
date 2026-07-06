@@ -23,5 +23,6 @@ public interface IXpService
     Task<DailyMissionStatus[]> GetDailyMissionStatusAsync(Guid userId, DateOnly date);
     Task<int> AwardGenericXpAsync(Guid userId, int xp, string source, Guid sourceId);
     Task<int> GetPrestigeLevelAsync(Guid userId);
+    Task<Dictionary<Guid, int>> GetPrestigeLevelMapAsync();
     Task<PrestigeResult> PrestigeAsync(Guid userId);
 }

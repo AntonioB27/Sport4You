@@ -9,14 +9,16 @@ public class LeaderboardService : ILeaderboardService
     private readonly IActivityRepository _activities;
     private readonly IAvatarService _avatars;
     private readonly IBorderService _borders;
+    private readonly IXpService _xp;
 
     public LeaderboardService(IUserRepository users, IActivityRepository activities,
-        IAvatarService avatars, IBorderService borders)
+        IAvatarService avatars, IBorderService borders, IXpService xp)
     {
         _users = users;
         _activities = activities;
         _avatars = avatars;
         _borders = borders;
+        _xp = xp;
     }
 
     public async Task<List<LeaderboardEntryDto>> GetLeaderboardAsync()
@@ -25,6 +27,7 @@ public class LeaderboardService : ILeaderboardService
         var allActivities = await _activities.GetAllAsync();
         var avatarImageMap = await _avatars.GetAvatarImageMapAsync();
         var activeBorderMap = await _borders.GetActiveBorderCssMapAsync();
+        var prestigeMap = await _xp.GetPrestigeLevelMapAsync();
         var sevenDaysAgo = DateTime.UtcNow.AddDays(-7);
         var oldActivities = allActivities.Where(a => a.DateTime < sevenDaysAgo).ToList();
 
@@ -62,6 +65,7 @@ public class LeaderboardService : ILeaderboardService
                     : 0,
                 ActiveAvatarImagePath = c.User.ActiveAvatarId.HasValue ? imagePath : null,
                 ActiveBorderCss = borderCss,
+                PrestigeLevel = prestigeMap.TryGetValue(c.User.Id, out var prestige) ? prestige : 0,
             };
         }).ToList();
     }
