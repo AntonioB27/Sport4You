@@ -142,7 +142,7 @@ public class LootBoxTests : IClassFixture<TestFactory>
 
         var borders = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(JsonValueKind.Array, borders.ValueKind);
-        Assert.Equal(6, borders.GetArrayLength());
+        Assert.Equal(7, borders.GetArrayLength());
         Assert.True(borders.EnumerateArray().All(b => !b.GetProperty("unlocked").GetBoolean()));
     }
 }
