@@ -113,10 +113,21 @@ New rows in `backend/Sport4You.Api/Data/DataSeeder.cs`:
 
 ## Frontend
 
-- Achievements page (Trophy Track): add a 4th rail after gold, labeled
-  "PLATINUM", rendering the single Platinum achievement card with the same
-  component/styling already used for bronze/silver/gold cards — no new
-  visual language, just one more rail.
+- Achievements page (Trophy Track): the page's rails are progression
+  *chains* per metric (e.g. a RUNNING rail connects bronze→silver→gold
+  running-distance achievements with progress connectors) — Platinum is a
+  one-off with no tiered chain, so it does NOT get a rail. Instead, add
+  `"achievements_unlocked"` to the existing `ONE_TIME_TYPES` array in
+  `frontend/src/app/achievements/achievements.component.ts`, alongside
+  `"first_activity"`, `"first_mission"`, etc. — it then renders in the
+  existing "one-time feats" grid with zero new UI sections. The page's
+  existing "Latest Unlock" spotlight banner (shows whichever achievement
+  was earned most recently, full hero treatment) will automatically
+  feature Platinum the moment it's unlocked, since spotlight selection is
+  driven by unlock recency, not achievement type — no new code needed for
+  that payoff moment. Also add a `"platinum"` entry to the `TIER_META`
+  record so the card renders with its own frame/rarity styling instead of
+  falling back to the bronze default.
 - Achievement unlock splash and avatar unlock splash fire unchanged (both
   already generic and driven by the same `UnlockedAchievementDto`/
   `UnlockedAvatarDto` payloads the activity-log response already carries).
