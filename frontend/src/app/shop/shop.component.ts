@@ -6,102 +6,270 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../shared/services/api.service';
 import { IconComponent } from '../shared/components/icon/icon.component';
-import { ShopCatalog, ShopAvatar } from '../shared/models/shop.model';
+import { ShopItemCardComponent } from './shop-item-card.component';
+import { ShopCatalog, ShopAvatar, ShopLootBox } from '../shared/models/shop.model';
+
+interface CardMeta {
+  frame: string;
+  frameShadow: string;
+  badgeLabel: string;
+  badgeColor: string;
+  badgeBg: string;
+}
+
+const RARITY_META: Record<'common' | 'rare' | 'legendary', CardMeta> = {
+  common: {
+    frame: 'linear-gradient(160deg,#F5D3A3,#CD7F32 55%,#8A4F16)',
+    frameShadow: '0 18px 30px -20px rgba(205,127,50,.6)',
+    badgeLabel: 'COMMON', badgeColor: '#fff', badgeBg: 'rgba(138,79,22,.9)',
+  },
+  rare: {
+    frame: 'linear-gradient(160deg,#F2F5FA,#C6CFDE 55%,#93A1B7)',
+    frameShadow: '0 18px 30px -20px rgba(120,140,170,.55)',
+    badgeLabel: 'RARE', badgeColor: '#fff', badgeBg: 'rgba(90,105,130,.9)',
+  },
+  legendary: {
+    frame: 'linear-gradient(160deg,#FDE9A7,#F5B300 50%,#B57C00)',
+    frameShadow: '0 18px 30px -18px rgba(245,179,0,.5)',
+    badgeLabel: 'LEGENDARY', badgeColor: '#7a5200', badgeBg: 'rgba(255,255,255,.85)',
+  },
+};
+
+const BOOSTER_META: CardMeta = {
+  frame: 'linear-gradient(160deg,#C6E63B,#9ECF10)',
+  frameShadow: '0 18px 30px -20px rgba(158,207,16,.6)',
+  badgeLabel: 'POWER-UP', badgeColor: '#1c2a06', badgeBg: 'rgba(255,255,255,.85)',
+};
 
 @Component({
   selector: 'app-shop',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, IconComponent],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, IconComponent, ShopItemCardComponent],
   styles: [`
-    .page { max-width: 960px; margin: 0 auto; padding: 24px; }
-    .header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
-    .title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:24px; color:#10203E; }
-    .balance { display:flex; align-items:center; gap:8px; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:20px; color:#B57C00; }
-    .section-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; letter-spacing:.1em; color:#8592ad; margin: 28px 0 12px; }
-    .cards { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:16px; }
-    .card {
-      background:#fff; border-radius:16px; padding:16px; border:1px solid #eef2f8;
-      display:flex; flex-direction:column; gap:10px;
+    .page { padding:26px 30px 60px; font-family:'Nunito',system-ui,sans-serif; max-width:1240px; margin:0 auto; }
+    .spinner-wrap { display:flex; justify-content:center; padding:80px; }
+
+    .panel {
+      border-radius:26px; overflow:hidden; background:#EEF3FB;
+      border:1px solid #dbe4f2; box-shadow:0 40px 90px -46px rgba(16,30,60,.55);
     }
-    .card-art { width:100%; aspect-ratio:1; border-radius:12px; overflow:hidden; background:#f5f7fb; }
-    .card-art img { width:100%; height:100%; object-fit:cover; display:block; }
-    .card-name { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px; color:#10203E; }
-    .card-desc { font-size:12px; color:#8592ad; }
-    .card-rarity {
-      align-self:flex-start; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:10px;
-      letter-spacing:.1em; padding:3px 8px; border-radius:999px;
+
+    /* ── HUD bar ── */
+    .hud {
+      display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+      padding:22px 30px;
+      background:linear-gradient(120deg,#12245090,#0e1a34 70%),
+                 radial-gradient(120% 160% at 100% 0%, rgba(46,107,230,.55), transparent), #0f1e3b;
     }
-    .card-rarity.common { color:#5c6881; background:#eef2f8; }
-    .card-rarity.rare { color:#7E8A9C; background:#F2F5FA; }
-    .card-rarity.legendary { color:#B57C00; background:#FBF3DC; }
-    .card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:auto; }
-    .price { display:flex; align-items:center; gap:6px; font-family:'Chakra Petch',sans-serif; font-weight:700; color:#B57C00; }
-    .buy-btn {
-      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; letter-spacing:.05em;
-      background:#2E6BE6; color:#fff; border:none; border-radius:10px; padding:9px 14px; cursor:pointer;
-      transition:transform .1s, background .15s;
+    .hud-left { display:flex; align-items:center; gap:14px; }
+    .hud-star {
+      width:42px; height:42px; border-radius:12px; color:#0f1e3b;
+      background:linear-gradient(150deg,#C6E63B,#9ECF10);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 8px 18px -8px rgba(158,207,16,.9);
     }
-    .buy-btn:hover:not(:disabled) { background:#1B47AE; }
-    .buy-btn:disabled { background:#e3e9f2; color:#9aa6bd; cursor:not-allowed; }
-    .odds { font-size:11px; color:#8592ad; }
-    .spinner-wrap { display:flex; justify-content:center; padding:60px 0; }
+    .hud-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:22px; color:#fff; letter-spacing:.14em; }
+    .hud-sub { font-size:12px; color:#9db3dd; font-weight:700; }
+    .hud-right { display:flex; align-items:center; gap:12px; }
+    .hud-count {
+      display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.08);
+      border:1px solid rgba(198,230,59,.4); border-radius:999px; padding:9px 18px;
+      color:#C6E63B;
+    }
+    .hud-count-n { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:20px; color:#C6E63B; }
+
+    .content { padding:26px 30px 34px; }
+
+    /* ── Spotlight ── */
+    .spotlight {
+      display:grid; grid-template-columns:300px 1fr; border-radius:20px; overflow:hidden;
+      margin-bottom:30px; background:linear-gradient(135deg,#2E6BE6,#173B92);
+      box-shadow:0 26px 50px -24px rgba(30,79,184,.7); position:relative;
+    }
+    .spotlight-sweep {
+      position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.22) 46%, transparent 60%);
+      background-size:220% 100%; animation:holoSweepPage 4.5s linear infinite;
+    }
+    @keyframes holoSweepPage { 0% { background-position:-160% 0; } 100% { background-position:260% 0; } }
+    .spotlight-art { position:relative; padding:22px; display:flex; align-items:center; justify-content:center; }
+    .spotlight-art-circle {
+      width:140px; height:140px; border-radius:50%; background:rgba(255,255,255,.12);
+      display:flex; align-items:center; justify-content:center; color:#fff;
+    }
+    .spotlight-body { position:relative; padding:30px 34px; color:#fff; display:flex; flex-direction:column; justify-content:center; }
+    .spotlight-chip {
+      display:inline-flex; align-self:flex-start; align-items:center; gap:8px;
+      background:rgba(198,230,59,.16); border:1px solid rgba(198,230,59,.55); color:#C6E63B;
+      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:11px; letter-spacing:.2em;
+      padding:6px 12px; border-radius:999px; margin-bottom:14px;
+    }
+    .spotlight-tier { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:12px; letter-spacing:.24em; color:#f0c08a; margin-bottom:4px; }
+    .spotlight-name { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:38px; line-height:1; margin-bottom:8px; text-shadow:0 0 22px rgba(46,107,230,.6); }
+    .spotlight-desc { font-size:15px; color:#cfe0ff; margin-bottom:18px; }
+    .spotlight-meta { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .spotlight-xp {
+      display:inline-flex; align-items:center; gap:8px; background:#C6E63B; color:#1c2a06;
+      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px;
+      padding:9px 16px; border-radius:11px; box-shadow:0 10px 20px -10px rgba(198,230,59,.9);
+      border:none; cursor:pointer; transition:background .15s;
+    }
+    .spotlight-xp:hover:not(:disabled) { background:#9ECF10; }
+    .spotlight-xp:disabled { background:#c8d6f0; color:#5c6881; cursor:not-allowed; }
+    .spotlight-info { font-family:'Chakra Petch',sans-serif; font-size:13px; color:#a9c1ee; font-weight:700; }
+
+    /* ── Section header ── */
+    .section { margin-bottom:34px; }
+    .section:last-child { margin-bottom:0; }
+    .section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+    .section-title { font-family:'Chakra Petch',sans-serif; font-size:15px; font-weight:700; letter-spacing:.18em; color:#10203E; }
+    .section-count {
+      font-family:'Chakra Petch',sans-serif; font-size:12px; font-weight:700; color:#8592ad;
+      background:#fff; border:1px solid #E3EAF5; border-radius:999px; padding:3px 11px;
+    }
+
+    /* ── Item grid ── */
+    .feats-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:18px; }
+
+    @media (max-width: 900px) {
+      .spotlight { grid-template-columns:1fr; }
+    }
   `],
   template: `
     <div class="page">
-      <div class="spinner-wrap" *ngIf="loading">
-        <mat-spinner diameter="40"></mat-spinner>
-      </div>
-
-      <ng-container *ngIf="!loading && catalog">
-        <div class="header">
-          <div class="title">SHOP</div>
-          <div class="balance"><app-icon name="coin" [size]="22" /> {{ catalog.coins | number }}</div>
-        </div>
-
-        <div class="section-title">XP BOOSTER</div>
-        <div class="cards">
-          <div class="card">
-            <div class="card-name">+{{ ((catalog.booster.multiplier - 1) * 100).toFixed(0) }}% XP Booster</div>
-            <div class="card-desc">Boosts your next {{ catalog.booster.boostedActivities }} logged activities.</div>
-            <div class="odds" *ngIf="catalog.boostedActivitiesRemaining > 0">
-              Active — {{ catalog.boostedActivitiesRemaining }} boosted activities left
+      @if (loading) {
+        <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
+      } @else if (catalog) {
+        <div class="panel">
+          <!-- HUD -->
+          <div class="hud">
+            <div class="hud-left">
+              <div class="hud-star"><app-icon name="coin" [size]="22" /></div>
+              <div>
+                <div class="hud-title">SHOP</div>
+                <div class="hud-sub">Spend coins earned from every activity you log</div>
+              </div>
             </div>
-            <div class="card-footer">
-              <div class="price"><app-icon name="coin" [size]="16" /> {{ catalog.booster.price | number }}</div>
-              <button class="buy-btn" [disabled]="buying || catalog.coins < catalog.booster.price"
-                      (click)="buyBooster()">BUY</button>
+            <div class="hud-right">
+              <div class="hud-count">
+                <app-icon name="coin" [size]="18" />
+                <span class="hud-count-n">{{ catalog.coins | number }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="content">
+            <!-- Featured Special Loot Box spotlight -->
+            @if (special(catalog); as sp) {
+              <div class="spotlight">
+                <div class="spotlight-sweep"></div>
+                <div class="spotlight-art">
+                  <div class="spotlight-art-circle"><app-icon name="package" [size]="72" /></div>
+                </div>
+                <div class="spotlight-body">
+                  <div class="spotlight-chip">✦ FEATURED</div>
+                  <div class="spotlight-tier">SPECIAL LOOT BOX</div>
+                  <div class="spotlight-name">Better Odds, Guaranteed</div>
+                  <div class="spotlight-desc">
+                    {{ sp.commonPct }}% common · {{ sp.rarePct }}% rare · {{ sp.legendaryPct }}% legendary — the same reward pool, better odds.
+                  </div>
+                  <div class="spotlight-meta">
+                    <button class="spotlight-xp" [disabled]="buying || catalog.coins < sp.price" (click)="buyLootBox('special')">
+                      BUY — {{ sp.price | number }}
+                    </button>
+                    <div class="spotlight-info">Rolls from the same avatar/border pool as every other box</div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- XP Booster -->
+            <div class="section">
+              <div class="section-header">
+                <div class="section-title">XP BOOSTER</div>
+              </div>
+              <div class="feats-grid">
+                <app-shop-item-card
+                  [name]="boosterName(catalog)"
+                  description="Boosts your next {{ catalog.booster.boostedActivities }} logged activities."
+                  [imagePath]="null"
+                  iconName="lightning"
+                  [frameGradient]="boosterMeta.frame"
+                  [frameShadow]="boosterMeta.frameShadow"
+                  [badgeLabel]="boosterMeta.badgeLabel"
+                  [badgeColor]="boosterMeta.badgeColor"
+                  [badgeBg]="boosterMeta.badgeBg"
+                  [price]="catalog.booster.price"
+                  [owned]="false"
+                  [affordable]="catalog.coins >= catalog.booster.price"
+                  [buying]="buying"
+                  [shortfall]="shortfall(catalog, catalog.booster.price)"
+                  [extraLine]="boosterActiveLine(catalog)"
+                  (buy)="buyBooster()">
+                </app-shop-item-card>
+              </div>
+            </div>
+
+            <!-- Loot Boxes -->
+            <div class="section">
+              <div class="section-header">
+                <div class="section-title">LOOT BOXES</div>
+                <div class="section-count">{{ catalog.lootBoxes.length }}</div>
+              </div>
+              <div class="feats-grid">
+                @for (box of catalog.lootBoxes; track box.tier) {
+                  <app-shop-item-card
+                    [name]="box.tier === 'special' ? 'Special Loot Box' : 'Normal Loot Box'"
+                    description="{{ box.commonPct }}% common · {{ box.rarePct }}% rare · {{ box.legendaryPct }}% legendary"
+                    [imagePath]="null"
+                    iconName="package"
+                    [frameGradient]="lootBoxMeta(box).frame"
+                    [frameShadow]="lootBoxMeta(box).frameShadow"
+                    [badgeLabel]="lootBoxMeta(box).badgeLabel"
+                    [badgeColor]="lootBoxMeta(box).badgeColor"
+                    [badgeBg]="lootBoxMeta(box).badgeBg"
+                    [price]="box.price"
+                    [owned]="false"
+                    [affordable]="catalog.coins >= box.price"
+                    [buying]="buying"
+                    [shortfall]="shortfall(catalog, box.price)"
+                    (buy)="buyLootBox(box.tier)">
+                  </app-shop-item-card>
+                }
+              </div>
+            </div>
+
+            <!-- Avatars -->
+            <div class="section">
+              <div class="section-header">
+                <div class="section-title">AVATARS</div>
+                <div class="section-count">{{ catalog.avatars.length }}</div>
+              </div>
+              <div class="feats-grid">
+                @for (avatar of catalog.avatars; track avatar.id) {
+                  <app-shop-item-card
+                    [name]="avatar.name"
+                    [description]="avatar.description"
+                    [imagePath]="avatar.imagePath"
+                    [iconName]="null"
+                    [frameGradient]="RARITY_META[avatar.rarity].frame"
+                    [frameShadow]="RARITY_META[avatar.rarity].frameShadow"
+                    [badgeLabel]="RARITY_META[avatar.rarity].badgeLabel"
+                    [badgeColor]="RARITY_META[avatar.rarity].badgeColor"
+                    [badgeBg]="RARITY_META[avatar.rarity].badgeBg"
+                    [price]="avatar.price"
+                    [owned]="avatar.owned"
+                    [affordable]="catalog.coins >= avatar.price"
+                    [buying]="buying"
+                    [shortfall]="shortfall(catalog, avatar.price)"
+                    (buy)="buyAvatar(avatar)">
+                  </app-shop-item-card>
+                }
+              </div>
             </div>
           </div>
         </div>
-
-        <div class="section-title">LOOT BOXES</div>
-        <div class="cards">
-          <div class="card" *ngFor="let box of catalog.lootBoxes">
-            <div class="card-name">{{ box.tier === 'special' ? 'Special' : 'Normal' }} Loot Box</div>
-            <div class="odds">{{ box.commonPct }}% common · {{ box.rarePct }}% rare · {{ box.legendaryPct }}% legendary</div>
-            <div class="card-footer">
-              <div class="price"><app-icon name="coin" [size]="16" /> {{ box.price | number }}</div>
-              <button class="buy-btn" [disabled]="buying || catalog.coins < box.price"
-                      (click)="buyLootBox(box.tier)">BUY</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="section-title">AVATARS</div>
-        <div class="cards">
-          <div class="card" *ngFor="let avatar of catalog.avatars">
-            <div class="card-art"><img [src]="avatar.imagePath" [alt]="avatar.name" /></div>
-            <div class="card-rarity" [class]="avatar.rarity">{{ avatar.rarity.toUpperCase() }}</div>
-            <div class="card-name">{{ avatar.name }}</div>
-            <div class="card-desc">{{ avatar.description }}</div>
-            <div class="card-footer">
-              <div class="price"><app-icon name="coin" [size]="16" /> {{ avatar.price | number }}</div>
-              <button class="buy-btn" [disabled]="buying || avatar.owned || catalog.coins < avatar.price"
-                      (click)="buyAvatar(avatar)">{{ avatar.owned ? 'OWNED' : 'BUY' }}</button>
-            </div>
-          </div>
-        </div>
-      </ng-container>
+      }
     </div>
   `,
 })
@@ -110,10 +278,36 @@ export class ShopComponent implements OnInit {
   loading = true;
   buying = false;
 
+  readonly RARITY_META = RARITY_META;
+  readonly boosterMeta = BOOSTER_META;
+
   constructor(private api: ApiService, private snackBar: MatSnackBar) {}
 
   ngOnInit() {
     this.load();
+  }
+
+  special(catalog: ShopCatalog): ShopLootBox | undefined {
+    return catalog.lootBoxes.find(b => b.tier === 'special');
+  }
+
+  lootBoxMeta(box: ShopLootBox): CardMeta {
+    return RARITY_META[box.tier === 'special' ? 'legendary' : 'common'];
+  }
+
+  boosterName(catalog: ShopCatalog): string {
+    const pct = Math.round((catalog.booster.multiplier - 1) * 100);
+    return `+${pct}% XP Booster`;
+  }
+
+  boosterActiveLine(catalog: ShopCatalog): string | null {
+    return catalog.boostedActivitiesRemaining > 0
+      ? `Active — ${catalog.boostedActivitiesRemaining} boosted activities left`
+      : null;
+  }
+
+  shortfall(catalog: ShopCatalog, price: number): number {
+    return Math.max(0, price - catalog.coins);
   }
 
   private load() {
