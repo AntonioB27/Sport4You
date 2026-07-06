@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { LeaderboardEntry } from '../models/leaderboard.model';
 import {
   AddStepsResponse, AchievementsPage, AvatarStatus, DashboardData,
-  LogActivityRequest, LogActivityResponse,
+  LogActivityRequest, LogActivityResponse, PersonalRecords,
 } from '../models/dashboard.model';
 import { BorderStatus, BoxInfo, OpenBoxResult } from '../models/border.model';
 
@@ -81,5 +81,9 @@ export class ApiService {
 
   prestige(userId: string): Observable<{ prestigeLevel: number }> {
     return this.http.post<{ prestigeLevel: number }>(`${this.base}/users/${userId}/prestige`, {});
+  }
+
+  getPersonalRecords(userId: string): Observable<PersonalRecords> {
+    return this.http.get<PersonalRecords>(`${this.base}/users/${userId}/personal-records`);
   }
 }

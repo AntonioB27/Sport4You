@@ -9,11 +9,12 @@ import { BorderStatus } from '../shared/models/border.model';
 import { achievementIconPath } from '../shared/utils/achievement-icon';
 import { AvatarLockerComponent } from './avatar-locker.component';
 import { ContributionHeatmapComponent } from './contribution-heatmap/contribution-heatmap.component';
+import { PersonalRecordsComponent } from './personal-records/personal-records.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent, ContributionHeatmapComponent],
+  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, AvatarLockerComponent, ContributionHeatmapComponent, PersonalRecordsComponent],
   styles: [`
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 680px; margin: 0 auto; }
     .page.wide { max-width: 1160px; }
@@ -190,6 +191,13 @@ import { ContributionHeatmapComponent } from './contribution-heatmap/contributio
               </div>
             }
           </div>
+
+          @if (isOwnProfile) {
+            <div class="section">
+              <div class="section-title">RECORDS</div>
+              <app-personal-records [userId]="userId"></app-personal-records>
+            </div>
+          }
 
           @if (!isOwnProfile && earnedAvatars.length > 0) {
             <div class="section">

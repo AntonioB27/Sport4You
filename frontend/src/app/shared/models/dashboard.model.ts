@@ -128,3 +128,18 @@ export interface AddStepsResponse {
   achievementsUnlocked: UnlockedAchievement[];
   avatarsUnlocked: UnlockedAvatar[];
 }
+
+export interface SportRecord {
+  sport: string;
+  bestDistance: number | null;
+  bestDuration: string | null;
+  bestSteps: number | null;
+  achievedAt: string;
+}
+
+export interface PersonalRecords {
+  sportRecords: SportRecord[];
+  bestDayPoints: number;
+  bestDayDate: string | null;
+  longestStreakEver: number;
+}

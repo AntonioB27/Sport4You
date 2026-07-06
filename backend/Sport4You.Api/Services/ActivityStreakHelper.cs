@@ -25,4 +25,31 @@ internal static class ActivityStreakHelper
         }
         return streak;
     }
+
+    internal static int ComputeLongestStreakEver(IEnumerable<DateTime> activityDateTimes)
+    {
+        var dates = activityDateTimes
+            .Select(d => DateOnly.FromDateTime(d.ToUniversalTime()))
+            .Distinct()
+            .OrderBy(d => d)
+            .ToList();
+
+        if (dates.Count == 0) return 0;
+
+        var longest = 1;
+        var current = 1;
+        for (var i = 1; i < dates.Count; i++)
+        {
+            if (dates[i] == dates[i - 1].AddDays(1))
+            {
+                current++;
+                if (current > longest) longest = current;
+            }
+            else
+            {
+                current = 1;
+            }
+        }
+        return longest;
+    }
 }
