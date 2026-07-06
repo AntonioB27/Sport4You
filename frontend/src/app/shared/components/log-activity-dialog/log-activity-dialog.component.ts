@@ -188,6 +188,7 @@ const SPORTS: Sport[] = [
       letter-spacing:.24em; color:#C6E63B; margin-bottom:12px;
     }
     .conf-sub-xp { color:#fff; }
+    .conf-sub-boost { color:#C6E63B; font-weight:700; }
     .conf-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.32); color:#fff; font-family:'Chakra Petch',sans-serif; font-weight:700; padding:8px 16px; border-radius:999px; font-size:13px; }
     .conf-pill-row { margin-bottom:16px; }
 
@@ -320,7 +321,7 @@ const SPORTS: Sport[] = [
           <div class="splash-item splash-tag" style="animation-delay:.15s">ACTIVITY LOGGED</div>
           <div class="splash-item conf-points" style="animation-delay:.23s">+{{ displayedPoints.toLocaleString('en-US') }}</div>
           <div class="splash-item conf-sub" style="animation-delay:.31s">
-            POINTS EARNED@if (earnedXp > 0) {<span class="conf-sub-xp"> · +{{ earnedXp }} XP</span>}
+            POINTS EARNED@if (earnedXp > 0) {<span class="conf-sub-xp"> · +{{ earnedXp }} XP</span>}@if (boostApplied) {<span class="conf-sub-boost"> · +50% XP BOOST APPLIED</span>}
           </div>
           <div class="splash-item conf-pill-row" style="animation-delay:.39s">
             <div class="conf-pill">{{ sport.name.toUpperCase() }} · {{ displayValue }} {{ sport.unit }}</div>
@@ -356,6 +357,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
   errorMsg = '';
   earnedPoints = 0;
   earnedXp = 0;
+  boostApplied = false;
   displayedPoints = 0;
   unlockedAchievements: UnlockedAchievement[] = [];
   unlockedAvatars: UnlockedAvatar[] = [];
@@ -524,6 +526,7 @@ export class LogActivityDialogComponent implements AfterViewInit {
         this.loading = false;
         this.earnedPoints = res.points;
         this.earnedXp = res.xpEarned ?? 0;
+        this.boostApplied = res.boostApplied ?? false;
         this.activityLogged.notify();
         this.logged = true;
         this.startCountUp(res.points);
