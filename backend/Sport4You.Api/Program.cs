@@ -14,6 +14,19 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IActivityRepository, ActivityRepository>();
 builder.Services.AddScoped<IScoringService, ScoringService>();
 builder.Services.AddScoped<IActivityService, ActivityService>();
+
+builder.Services.AddScoped<RegexActivityParser>();
+
+var anthropicKey = builder.Configuration["Anthropic:ApiKey"];
+if (string.IsNullOrWhiteSpace(anthropicKey))
+{
+    builder.Services.AddScoped<IActivityParser>(sp => sp.GetRequiredService<RegexActivityParser>());
+}
+else
+{
+    builder.Services.AddHttpClient<ClaudeActivityParser>();
+    builder.Services.AddScoped<IActivityParser>(sp => sp.GetRequiredService<ClaudeActivityParser>());
+}
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IXpService, XpService>();

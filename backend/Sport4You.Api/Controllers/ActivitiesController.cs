@@ -9,7 +9,15 @@ namespace Sport4You.Api.Controllers;
 public class ActivitiesController : ControllerBase
 {
     private readonly IActivityService _activities;
-    public ActivitiesController(IActivityService activities) => _activities = activities;
+    private readonly IActivityParser _parser;
+    private readonly IScoringService _scoring;
+
+    public ActivitiesController(IActivityService activities, IActivityParser parser, IScoringService scoring)
+    {
+        _activities = activities;
+        _parser = parser;
+        _scoring = scoring;
+    }
 
     [HttpPost]
     public async Task<IActionResult> LogActivity([FromBody] LogActivityRequest request)
@@ -29,5 +37,15 @@ public class ActivitiesController : ControllerBase
             achievementsUnlocked = result.AchievementsUnlocked,
             avatarsUnlocked = result.AvatarsUnlocked,
         });
+    }
+
+    /// <summary>Interprets free text into a draft activity. Does NOT log anything.</summary>
+    [HttpPost("parse")]
+    public async Task<IActionResult> Parse([FromBody] ParseActivityRequest request)
+    {
+        // Cap input length to guard against abuse / runaway tokens.
+        var text = request.Text.Length > 300 ? request.Text[..300] : request.Text;
+        var parsed = await _parser.ParseAsync(text);
+        return Ok(ParseResultMapper.ToDto(parsed, _scoring));
     }
 }

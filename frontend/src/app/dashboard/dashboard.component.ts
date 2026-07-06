@@ -14,6 +14,7 @@ import { IconComponent } from '../shared/components/icon/icon.component';
 import { LogActivityDialogComponent } from '../shared/components/log-activity-dialog/log-activity-dialog.component';
 import { RegisterDialogComponent } from '../shared/components/register-dialog/register-dialog.component';
 import { LootBoxModalComponent } from '../loot-box/loot-box-modal.component';
+import { AiCoachDialogComponent } from './ai-coach/ai-coach-dialog.component';
 import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.component';
 import { RivalCardComponent } from './rival-card/rival-card.component';
 import { WeightCardComponent } from './weight-card/weight-card.component';
@@ -23,273 +24,261 @@ import { WeightCardComponent } from './weight-card/weight-card.component';
   standalone: true,
   imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent, RivalCardComponent, WeightCardComponent],
   styles: [`
+    /* ═══════════ Animations ═══════════ */
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
-    @keyframes glowpulse { 0%,100% { opacity:.55; } 50% { opacity:1; } }
-
-    @keyframes heroGlow {
-      0%, 100% { box-shadow: 0 20px 40px -18px rgba(30,79,184,.7); }
-      50%       { box-shadow: 0 20px 40px -18px rgba(30,79,184,.7), 0 0 60px rgba(198,230,59,.55); }
-    }
-    .hero-card--glow { animation: heroGlow 1s ease-in-out 2; }
-
-    @keyframes levelBadgePop {
-      0%   { transform: scale(1);   background: rgba(255,255,255,.14); color: #C6E63B; }
-      25%  { transform: scale(1.5); background: rgba(198,230,59,.9);   color: #0f1e3b; }
-      65%  { transform: scale(1.1); }
-      100% { transform: scale(1);   background: rgba(255,255,255,.14); color: #C6E63B; }
-    }
-    .level-badge--pop { animation: levelBadgePop 600ms ease-out forwards; }
-
-    .level-ring {
-      position: absolute; top: 10px; left: 18px;
-      width: 36px; height: 36px; border-radius: 50%;
-      border: 3px solid #C6E63B; opacity: 0; pointer-events: none;
-    }
-    @keyframes ringExpand {
-      0%   { transform: scale(0.5); opacity: 1; }
-      100% { transform: scale(3);   opacity: 0; }
-    }
-    .level-ring--active { animation: ringExpand 700ms ease-out forwards; }
-
-    .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 1100px; }
-    .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
-
-    /* ── Header ── */
-    .top-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
-    .welcome-label { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .18em; color: #8592ad; }
-    .welcome-name { font-family: 'Chakra Petch', sans-serif; font-size: 27px; font-weight: 700; color: #10203E; line-height: 1.05; }
-    /* HUD module — streak · points · vault */
-    .hud {
-      display: flex; align-items: stretch; background: #fff; border-radius: 16px;
-      padding: 6px; border: 1px solid #EAEEF6; box-shadow: 0 14px 30px -16px rgba(16,32,62,.42);
-    }
-    .hud-seg { display: flex; align-items: center; gap: 12px; padding: 9px 20px; position: relative; }
-    .hud-seg + .hud-seg::before { content: ''; position: absolute; left: 0; top: 13px; bottom: 13px; width: 1px; background: #EAEEF6; }
-    .hud-seg.clickable { cursor: pointer; border-radius: 12px; transition: background .15s, transform .1s; }
-    .hud-seg.clickable:hover { background: #F5F9FF; transform: translateY(-1px); }
-    .hud-tile {
-      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; color: #fff;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .hud-tile.streak { background: linear-gradient(150deg,#FF9A3D,#FF6A00); box-shadow: 0 8px 16px -8px rgba(255,106,0,.7); }
-    .hud-tile.points { background: linear-gradient(150deg,#C6E63B,#9ECF10); box-shadow: 0 8px 16px -8px rgba(158,207,16,.7); color: #26340a; }
-    .hud-tile.vault  { background: linear-gradient(150deg,#4B8DF0,#2E6BE6); box-shadow: 0 8px 16px -8px rgba(46,107,230,.7); }
-    .hud-tile.vault.empty { background: #EEF2F8; color: #9aa6bd; box-shadow: none; }
-    .hud-tile.coins { background: linear-gradient(150deg,#FFD54A,#F5B300); box-shadow: 0 8px 16px -8px rgba(245,179,0,.7); color: #4a3400; }
-    .boost-chip {
-      position: absolute; top: -6px; right: 2px;
-      background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif;
-      font-weight: 700; font-size: 10px; padding: 2px 6px; border-radius: 999px;
-      box-shadow: 0 4px 8px -3px rgba(46,107,230,.6);
-    }
-    .hud-meta { display: flex; flex-direction: column; line-height: 1; min-width: 0; }
-    .hud-value { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 22px; color: #10203E; }
-    .hud-label { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: .16em; color: #8592ad; margin-top: 5px; }
-    .hud-dot {
-      position: absolute; top: 9px; right: 12px; width: 8px; height: 8px; border-radius: 50%;
-      background: #FF3B57; animation: hudPulse 1.6s ease-out infinite;
-    }
+    @keyframes holoSweep { 0% { background-position: -160% 0; } 100% { background-position: 260% 0; } }
+    @keyframes vaultBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
     @keyframes hudPulse {
       0% { box-shadow: 0 0 0 0 rgba(255,59,87,.55); }
       70% { box-shadow: 0 0 0 8px rgba(255,59,87,0); }
       100% { box-shadow: 0 0 0 0 rgba(255,59,87,0); }
     }
-    @media (max-width: 680px) {
-      /* 4 segments won't fit one row on a phone — lay them out 2×2 */
-      .hud { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-      .hud-seg { padding: 10px 12px; gap: 10px; justify-content: flex-start; }
-      .hud-seg + .hud-seg::before { display: none; }
-      .hud-tile { width: 36px; height: 36px; }
-      .hud-value { font-size: 18px; }
-    }
 
-    /* ── Grid ── */
-    .grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; }
-    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    /* level-up celebration: pulse the outer drop-shadow (box-shadow is clipped away by clip-path) */
+    @keyframes heroGlowFx {
+      0%, 100% { filter: drop-shadow(0 22px 34px rgba(30,79,184,.4)); }
+      50%      { filter: drop-shadow(0 22px 34px rgba(30,79,184,.4)) drop-shadow(0 0 30px rgba(198,230,59,.8)); }
+    }
+    .hero-fx--glow { animation: heroGlowFx 1s ease-in-out 2; }
 
-    .col { display: flex; flex-direction: column; gap: 18px; }
+    @keyframes lvPop {
+      0%   { transform: translateX(-50%) scale(1); }
+      30%  { transform: translateX(-50%) scale(1.45); }
+      65%  { transform: translateX(-50%) scale(1.08); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+    .hero-lv--pop { animation: lvPop 600ms ease-out forwards; }
 
-    /* ── Hero card ── */
-    .hero-card {
-      position: relative; border-radius: 22px; padding: 22px 24px;
-      background: linear-gradient(150deg, #2E6BE6, #173B92);
-      box-shadow: 0 20px 40px -18px rgba(30,79,184,.7); min-height: 200px;
+    .level-ring {
+      position: absolute; inset: -6px; border-radius: 50%;
+      border: 3px solid #C6E63B; opacity: 0; pointer-events: none;
     }
-    .hero-mascot {
-      position: absolute; right: 24px; bottom: 24px; width: 150px; height: 150px;
+    @keyframes ringExpand {
+      0%   { transform: scale(0.6); opacity: 1; }
+      100% { transform: scale(1.9);  opacity: 0; }
     }
-    .hero-mascot-shadow {
-      position: absolute; left: 50%; bottom: -12px; transform: translateX(-50%);
-      width: 100px; height: 20px; border-radius: 50%;
-      background: radial-gradient(closest-side, rgba(198,230,59,.5), transparent);
-      filter: blur(5px);
-    }
-    .hero-mascot img {
-      position: relative; width: 100%; height: 100%; border-radius: 50%;
-      object-fit: cover; object-position: 50% 22%;
-      border: 4px solid #C6E63B;
-      box-shadow: 0 0 0 4px rgba(255,255,255,.18), 0 14px 26px -10px rgba(0,0,0,.45);
-      animation: floaty 4s ease-in-out infinite;
-    }
-    .level-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(255,255,255,.14); border: 1px solid rgba(198,230,59,.5);
-      color: #C6E63B; font-family: 'Chakra Petch', sans-serif; font-weight: 700;
-      font-size: 12px; letter-spacing: .14em; padding: 5px 12px; border-radius: 999px;
-    }
-    .prestige-chip {
-      font-weight: 800; color: #C6E63B; margin-right: 4px; text-shadow: 0 0 8px rgba(198,230,59,.7);
-    }
-    .prestige-btn {
-      display: block; margin: 8px auto 0; border: 1px solid rgba(198,230,59,.5); cursor: pointer;
-      background: rgba(198,230,59,.14); color: #C6E63B; font-family: 'Chakra Petch', sans-serif;
-      font-weight: 700; font-size: 11px; letter-spacing: .08em; padding: 6px 16px; border-radius: 999px;
-    }
-    .prestige-btn:hover { background: rgba(198,230,59,.24); }
-    .hero-points {
-      font-family: 'Chakra Petch', sans-serif; font-size: 46px; font-weight: 700;
-      color: #fff; line-height: 1; margin: 14px 0 2px; text-shadow: 0 0 20px rgba(46,107,230,.5);
-    }
-    .hero-pts-label {
-      font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700;
-      letter-spacing: .18em; color: #bcd2ff; margin-bottom: 16px;
-    }
-    .xp-meta { display: flex; justify-content: space-between; max-width: 62%; font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #dbe8ff; margin-bottom: 6px; }
-    .xp-meta span:last-child { color: #8fb0ee; }
-    .xp-bar { height: 12px; border-radius: 999px; background: rgba(0,0,0,.24); max-width: 62%; overflow: hidden; position: relative; }
-    .xp-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 16px rgba(198,230,59,.95); }
-    .xp-fill--boot { transition: width 1.3s cubic-bezier(0.15, 0.9, 0.3, 1); }
-    .xp-fill--gain { transition: width 0.7s ease-in-out; }
-    .xp-flash {
-      position: absolute; inset: 0; border-radius: 999px;
-      background: rgba(255,255,255,0.7); opacity: 0; pointer-events: none;
-    }
-    @keyframes xpFlash { 0% { opacity: 0; } 30% { opacity: 0.6; } 100% { opacity: 0; } }
+    .level-ring--active { animation: ringExpand 700ms ease-out forwards; }
+
+    @keyframes xpFlash { 0% { opacity: 0; } 30% { opacity: .6; } 100% { opacity: 0; } }
     .xp-flash--active { animation: xpFlash 400ms ease-out forwards; }
 
-    /* ── Stat tiles ── */
-    .stat-tiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
-    .stat-tile { background: #fff; border-radius: 16px; padding: 15px 16px; box-shadow: 0 10px 22px -14px rgba(16,32,62,.35); }
-    .stat-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: #8592ad; }
-    .stat-value { font-family: 'Chakra Petch', sans-serif; font-size: 26px; font-weight: 700; color: #10203E; }
-    .stat-value.blue { color: #2E6BE6; }
+    /* ═══════════ Shell ═══════════ */
+    .page { padding: 24px 30px 60px; font-family: 'Nunito', system-ui, sans-serif; max-width: 1200px; margin: 0 auto; }
+    .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
+    .not-found { padding: 40px; font-family: 'Chakra Petch', sans-serif; color: #8592ad; }
 
-    /* ── Cards ── */
-    .card { background: #fff; border-radius: 18px; padding: 18px 20px; box-shadow: 0 12px 26px -16px rgba(16,32,62,.35); }
-    .card-title { font-family: 'Chakra Petch', sans-serif; font-size: 16px; font-weight: 700; color: #10203E; letter-spacing: .04em; margin-bottom: 14px; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .card-sub { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #8592ad; }
+    /* Beveled card primitives — clip-path arcade corners.
+       Outer .fx wrapper carries the drop-shadow (clip-path eats box-shadow),
+       inner uses an inset shadow for the hairline border. */
+    .fx  { filter: drop-shadow(0 14px 26px rgba(16,32,62,.16)); }
+    .bevel {
+      position: relative; background: #fff; box-shadow: inset 0 0 0 1px #E6ECF6;
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
+      padding: 20px 22px;
+    }
+    .bevel--sm {
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+      padding: 16px 18px;
+    }
 
-    /* ── Quests ── */
-    .quest-list { display: flex; flex-direction: column; gap: 11px; }
-    .quest-item { display: flex; align-items: center; gap: 13px; }
-    .quest-icon { width: 40px; height: 40px; border-radius: 12px; background: #EAF7C9; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .quest-icon.done { background: linear-gradient(150deg,#C6E63B,#9ECF10); }
-    .quest-body { flex: 1; }
-    .quest-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; color: #10203E; }
-    .quest-name.done-text { color: #4a6100; }
-    .quest-done-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; letter-spacing: .12em; font-weight: 700; color: #7c9c00; margin-top: 2px; }
-    .quest-bar { height: 7px; border-radius: 999px; background: #EAEEF6; margin-top: 6px; overflow: hidden; }
-    .quest-bar-fill { height: 100%; border-radius: 999px; }
-    .quest-bar-fill.green { background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 8px rgba(198,230,59,.8); }
-    .quest-bar-fill.blue { background: #2E6BE6; box-shadow: 0 0 8px rgba(46,107,230,.7); }
-    .quest-pts { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: #5f7a00; }
+    /* ═══════════ Command bar (dark HUD) ═══════════ */
+    .cbar-fx { filter: drop-shadow(0 16px 26px rgba(15,30,59,.28)); margin-bottom: 20px; }
+    .cbar {
+      position: relative; display: flex; align-items: center; justify-content: space-between;
+      gap: 18px; flex-wrap: wrap; padding: 16px 24px;
+      background: radial-gradient(120% 160% at 100% 0%, rgba(46,107,230,.5), transparent), #0f1e3b;
+      clip-path: polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+    }
+    .cbar-id { display: flex; align-items: center; gap: 14px; }
+    .cbar-av { position: relative; width: 48px; height: 48px; flex-shrink: 0; }
+    .cbar-ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(#C6E63B calc(var(--p,0) * 1%), rgba(255,255,255,.12) 0); }
+    .cbar-av-in { position: absolute; inset: 3px; border-radius: 50%; overflow: hidden; background: #0c1a34; display: flex; align-items: center; justify-content: center; }
+    .cbar-av-in img { width: 150%; height: 150%; object-fit: cover; object-position: 50% 18%; }
+    .cbar-av-in .initial { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 18px; color: #C6E63B; }
+    .cbar-status { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2em; color: #7fa8ff; }
+    .cbar-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 20px; color: #fff; letter-spacing: .04em; line-height: 1.1; }
+    .cbar-name .lv { color: #C6E63B; }
+    .cbar-name .prestige { color: #C6E63B; text-shadow: 0 0 8px rgba(198,230,59,.7); }
 
-    /* ── Signal Vault (loot boxes) ── */
-    .vault-card {
-      position: relative; overflow: hidden; border-radius: 18px; padding: 18px 20px;
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      background: #fff; box-shadow: 0 12px 26px -16px rgba(16,32,62,.35);
+    .chips { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+    .chip {
+      position: relative; display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,.06); border: 1px solid rgba(122,150,210,.22); padding: 8px 14px;
+      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
     }
-    .vault-card--ready {
-      background: linear-gradient(150deg,#2E6BE6,#173B92);
-      box-shadow: 0 20px 40px -20px rgba(30,79,184,.7);
+    .chip--boxes { background: rgba(198,230,59,.1); border-color: rgba(198,230,59,.4); }
+    .chip--boxes.clickable { cursor: pointer; transition: transform .1s; }
+    .chip--boxes.clickable:hover { transform: translateY(-1px); }
+    .chip-ic { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+    .chip-ic.streak { background: linear-gradient(150deg,#FF9A3D,#FF6A00); }
+    .chip-ic.points { background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #26340a; }
+    .chip-ic.coins  { background: linear-gradient(150deg,#FFD54A,#F5B300); color: #4a3400; }
+    .chip-ic.boxes  { background: linear-gradient(150deg,#4B8DF0,#2E6BE6); }
+    .chip-ic.boxes.empty { background: rgba(255,255,255,.1); color: #7fa8ff; }
+    .chip-meta { display: flex; flex-direction: column; line-height: 1; }
+    .chip-val { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 18px; color: #fff; }
+    .chip-lab { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 9px; letter-spacing: .14em; color: #9db3dd; margin-top: 4px; }
+    .chip--boxes .chip-lab { color: #C6E63B; }
+    .chip-dot { position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%; background: #FF3B57; animation: hudPulse 1.6s ease-out infinite; }
+    .chip-boost { position: absolute; top: -7px; right: -5px; background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 9px; padding: 1px 6px; border-radius: 999px; }
+
+    /* ═══════════ Grid ═══════════ */
+    .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
+    .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+    /* ═══════════ Hero — Pilot Deck ═══════════ */
+    .hero-fx { filter: drop-shadow(0 22px 34px rgba(30,79,184,.4)); }
+    .hero {
+      position: relative; overflow: hidden; padding: 26px 28px;
+      background: linear-gradient(135deg,#2E6BE6,#173B92);
+      clip-path: polygon(22px 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%, 0 22px);
     }
-    .vault-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 88% -10%, rgba(198,230,59,.30), transparent 60%); }
-    .vault-main { position: relative; display: flex; align-items: center; gap: 14px; min-width: 0; }
-    .vault-icon {
-      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(255,255,255,.16); color: #fff; animation: vaultBob 3.6s ease-in-out infinite;
-    }
-    @keyframes vaultBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-    .vault-icon.locked { background: #EEF2F8; color: #9aa6bd; animation: none; }
-    .vault-info { min-width: 0; }
-    .vault-title { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .06em; color: #fff; }
-    .vault-title.muted { color: #10203E; }
-    .vault-sub { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 600; color: #dbe8ff; margin-top: 3px; line-height: 1.4; }
-    .vault-sub.muted { color: #8592ad; }
-    .vault-btn {
-      position: relative; flex-shrink: 0; border: none; cursor: pointer;
-      background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E;
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em;
-      padding: 12px 20px; border-radius: 12px;
-      box-shadow: 0 0 22px rgba(198,230,59,.55), 0 4px 0 #7c9c00;
+    .hero-sweep { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 32%, rgba(255,255,255,.2) 46%, transparent 60%); background-size: 220% 100%; animation: holoSweep 5s linear infinite; }
+    .hero-row { position: relative; display: flex; align-items: center; gap: 26px; }
+    .hero-av { position: relative; width: 148px; height: 148px; flex-shrink: 0; }
+    .hero-av-ring { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from -90deg, #8CE00E 0%, #C6E63B calc(var(--p,0) * 1%), rgba(255,255,255,.14) 0); box-shadow: 0 0 26px rgba(198,230,59,.5); }
+    .hero-av-in { position: absolute; inset: 9px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 40%, rgba(198,230,59,.28), transparent 65%), #14337a; display: flex; align-items: flex-end; justify-content: center; }
+    .hero-av-in img { width: 118%; height: 118%; object-fit: contain; animation: floaty 4.5s ease-in-out infinite; }
+    .hero-lv { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em; padding: 3px 12px; border-radius: 999px; box-shadow: 0 0 16px rgba(198,230,59,.7); white-space: nowrap; }
+    .hero-body { flex: 1; min-width: 0; }
+    .hero-class { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,.14); border: 1px solid rgba(198,230,59,.5); color: #C6E63B; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: .18em; padding: 4px 12px; border-radius: 999px; margin-bottom: 12px; }
+    .hero-points { font-family: 'Chakra Petch', sans-serif; font-size: 52px; font-weight: 700; color: #fff; line-height: 1; text-shadow: 0 0 22px rgba(46,107,230,.5); }
+    .hero-pts-lab { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: .2em; color: #bcd2ff; margin: 6px 0 18px; }
+    .hero-xp-meta { display: flex; justify-content: space-between; font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #dbe8ff; margin-bottom: 6px; }
+    .hero-xp-meta .cur { color: #C6E63B; } .hero-xp-meta .nxt { color: #8fb0ee; }
+    .hero-xp-bar { position: relative; height: 16px; background: rgba(0,0,0,.28); border: 1px solid rgba(255,255,255,.18); overflow: hidden; }
+    .hero-xp-fill { height: 100%; background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 16px rgba(198,230,59,.9); }
+    .hero-xp-fill--boot { transition: width 1.3s cubic-bezier(0.15, 0.9, 0.3, 1); }
+    .hero-xp-fill--gain { transition: width 0.7s ease-in-out; }
+    .hero-xp-ticks { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 24px, rgba(23,59,146,.9) 24px 28px); }
+    .hero-xp-flash { position: absolute; inset: 0; background: rgba(255,255,255,.7); opacity: 0; pointer-events: none; }
+    .prestige-btn { display: inline-block; margin-top: 12px; border: 1px solid rgba(198,230,59,.5); cursor: pointer; background: rgba(198,230,59,.14); color: #C6E63B; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: .08em; padding: 6px 16px; border-radius: 999px; }
+    .prestige-btn:hover { background: rgba(198,230,59,.24); }
+
+    /* ═══════════ Section header accent ═══════════ */
+    .sec-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .sec-title { display: flex; align-items: center; gap: 10px; }
+    .sec-bar { width: 3px; height: 16px; flex-shrink: 0; }
+    .sec-bar.lime   { background: #9ECF10; box-shadow: 0 0 8px rgba(158,207,16,.7); }
+    .sec-bar.gold   { background: #F5B300; box-shadow: 0 0 8px rgba(245,179,0,.6); }
+    .sec-bar.orange { background: #FF6A00; box-shadow: 0 0 8px rgba(255,106,0,.6); }
+    .sec-bar.blue   { background: #2E6BE6; box-shadow: 0 0 8px rgba(46,107,230,.6); }
+    .sec-name { font-family: 'Chakra Petch', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: .16em; color: #10203E; }
+    .sec-sub { font-family: 'Chakra Petch', sans-serif; font-size: 12px; font-weight: 700; color: #8592ad; }
+    .sec-link { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #2E6BE6; letter-spacing: .05em; text-decoration: none; cursor: pointer; }
+
+    /* ═══════════ AI Coach entry ═══════════ */
+    .ai-coach-card {
+      position: relative; display: flex; align-items: center; gap: 14px; width: 100%; cursor: pointer; text-align: left;
+      border: none; padding: 16px 20px; background: radial-gradient(120% 90% at 90% 0%, rgba(46,107,230,.14), transparent), #fff;
+      box-shadow: inset 0 0 0 1px rgba(46,107,230,.28);
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
       transition: transform .1s, box-shadow .1s;
     }
-    .vault-btn:hover { transform: translateY(-1px); box-shadow: 0 0 28px rgba(198,230,59,.7), 0 5px 0 #7c9c00; }
-    .vault-btn:active { transform: translateY(1px); box-shadow: 0 0 16px rgba(198,230,59,.4), 0 2px 0 #7c9c00; }
-    @media (max-width: 420px) {
-      .vault-card { flex-direction: column; align-items: stretch; text-align: center; }
-      .vault-main { flex-direction: column; text-align: center; }
-      .vault-btn { width: 100%; }
+    .ai-coach-card:hover { transform: translateY(-1px); }
+    .ai-coach-icon { font-size: 26px; }
+    .ai-coach-text { display: flex; flex-direction: column; }
+    .ai-coach-title { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .06em; color: #10203E; }
+    .ai-coach-sub { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 600; color: #5c6881; }
+    .ai-coach-mode { margin-left: auto; font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .06em; color: #B78A00; }
+
+    /* ═══════════ Core stats ═══════════ */
+    .stats3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .stat-lab { font-family: 'Chakra Petch', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: .16em; color: #8592ad; }
+    .stat-val { font-family: 'Chakra Petch', sans-serif; font-size: 28px; font-weight: 700; color: #10203E; margin-top: 4px; }
+    .stat-val.blue { color: #2E6BE6; }
+
+    /* ═══════════ Missions ═══════════ */
+    .missions { display: flex; flex-direction: column; gap: 11px; }
+    .mission { display: flex; align-items: center; gap: 13px; padding: 11px 13px; background: #F7FAFF; border: 1px solid #E6ECF6; border-radius: 4px; }
+    .mission.easy   { border-left: 3px solid #9ECF10; }
+    .mission.medium { border-left: 3px solid #2E6BE6; }
+    .mission.hard   { border-left: 3px solid #FF6A00; }
+    .mission.done   { background: #F4FBE3; border: 1px solid rgba(158,207,16,.5); border-left: 3px solid #C6E63B; }
+    .mission-check { width: 24px; height: 24px; border-radius: 6px; background: linear-gradient(150deg,#C6E63B,#9ECF10); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #1c2a06; font-weight: 800; }
+    .mission-body { flex: 1; min-width: 0; }
+    .mission-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 14px; color: #10203E; }
+    .mission-name.done { color: #4a6100; }
+    .mission-cleared { font-family: 'Chakra Petch', sans-serif; font-size: 10px; letter-spacing: .14em; font-weight: 700; color: #7c9c00; margin-top: 2px; }
+    .mission-bar { height: 6px; border-radius: 999px; background: #EAEEF6; margin-top: 7px; overflow: hidden; }
+    .mission-fill { height: 100%; }
+    .mission-fill.easy   { background: linear-gradient(90deg,#8CE00E,#C6E63B); box-shadow: 0 0 8px rgba(198,230,59,.8); }
+    .mission-fill.medium { background: linear-gradient(90deg,#4B8DF0,#2E6BE6); box-shadow: 0 0 8px rgba(46,107,230,.6); }
+    .mission-fill.hard   { background: linear-gradient(90deg,#FF9A3D,#FF6A00); box-shadow: 0 0 8px rgba(255,106,0,.6); }
+    .mission-xp { font-family: 'Chakra Petch', sans-serif; font-size: 13px; font-weight: 700; color: #5f7a00; flex-shrink: 0; }
+
+    /* ═══════════ Step core + Signal vault row ═══════════ */
+    .sv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    .vault-fx { filter: drop-shadow(0 16px 28px rgba(30,79,184,.32)); }
+    .vault {
+      position: relative; overflow: hidden; padding: 20px 22px; height: 100%;
+      background: linear-gradient(160deg,#2E6BE6,#173B92);
+      clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px);
     }
+    .vault-glow { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 82% -10%, rgba(198,230,59,.32), transparent 60%); }
+    .vault-in { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; }
+    .vault-ic { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.16); color: #fff; animation: vaultBob 3.6s ease-in-out infinite; }
+    .vault-txt { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 700; color: #dbe8ff; line-height: 1.4; }
+    .vault-btn { width: 100%; background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E; border: none; padding: 11px; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .06em; cursor: pointer; box-shadow: 0 4px 0 #7c9c00; clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px); transition: transform .1s, box-shadow .1s; }
+    .vault-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #7c9c00; }
+    .vault-btn:active { transform: translateY(1px); box-shadow: 0 2px 0 #7c9c00; }
+    /* empty state — muted white bevel */
+    .vault-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; }
+    .vault-empty-ic { width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: #EEF2F8; color: #9aa6bd; }
+    .vault-empty-txt { font-family: 'Nunito', sans-serif; font-size: 12.5px; font-weight: 700; color: #8592ad; line-height: 1.4; }
 
-    /* ── Recent Achievements ── */
-    .achievements-card { background:#fff; border-radius:18px; padding:18px 20px; border:1px solid #E3EAF5; }
-    .achievements-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:14px; color:#10203E; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
-    .achievements-see-all { font-size:11px; font-weight:700; color:#2E6BE6; letter-spacing:.05em; text-decoration:none; cursor:pointer; }
-    .ach-row { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #F0F4FB; }
-    .ach-row:last-child { border-bottom:none; }
-    .ach-tier-strip { width:4px; height:36px; border-radius:2px; flex-shrink:0; }
-    .ach-row-info { flex:1; min-width:0; }
-    .ach-row-name { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; color:#10203E; }
-    .ach-row-desc { font-size:11px; color:#8592ad; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .ach-row-date { font-size:11px; color:#b0bcd4; flex-shrink:0; }
-    .ach-empty { font-size:13px; color:#b0bcd4; text-align:center; padding:12px 0; font-style:italic; }
+    /* ═══════════ Rankings ═══════════ */
+    .rank-list { display: flex; flex-direction: column; gap: 8px; }
+    .rank-row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; }
+    .rank-row.me { padding: 8px 10px; background: #F4FBE3; border: 1px solid rgba(158,207,16,.6); border-radius: 6px; }
+    .rank-num { font-family: 'Chakra Petch', sans-serif; font-weight: 700; width: 18px; color: #8592ad; }
+    .rank-num.gold { color: #c9a13a; } .rank-num.me { color: #5f7a00; }
+    .rank-av, .rank-initial { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; object-fit: cover; object-position: 50% 22%; }
+    .rank-initial { background: #2E6BE6; color: #fff; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; }
+    .rank-name { flex: 1; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rank-pts { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #8592ad; flex-shrink: 0; }
+    .rank-pts.me { color: #5f7a00; }
 
-    /* ── Leaderboard snippet ── */
-    .lb-list { display: flex; flex-direction: column; gap: 9px; }
-    .lb-row { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
-    .lb-row.me { background: #F4FBE3; border: 1px solid rgba(158,207,16,.6); border-radius: 12px; padding: 8px 10px; margin: 0 -6px; }
-    .lb-rank { font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: #c9a13a; width: 16px; }
-    .lb-av, .lb-av-initial {
-      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-      object-fit: cover; object-position: 50% 22%; border: 2px solid #E3EAF5;
+    /* ═══════════ Combat log (recent activity) ═══════════ */
+    .clog-list { display: flex; flex-direction: column; gap: 11px; max-height: 240px; overflow-y: auto; }
+    .clog-item { display: flex; align-items: center; gap: 11px; }
+    .clog-ic { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .clog-body { flex: 1; min-width: 0; }
+    .clog-sport { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
+    .clog-meta { font-family: 'Chakra Petch', sans-serif; font-size: 11px; color: #8592ad; font-weight: 700; margin-top: 2px; }
+    .clog-pts { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #2E6BE6; flex-shrink: 0; }
+
+    /* ═══════════ Trophies (achievements) ═══════════ */
+    .tro-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #F0F4FB; }
+    .tro-row:last-child { border-bottom: none; }
+    .tro-strip { width: 4px; height: 34px; border-radius: 2px; flex-shrink: 0; }
+    .tro-info { flex: 1; min-width: 0; }
+    .tro-name { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
+    .tro-name .rarity { font-size: 9px; letter-spacing: .1em; }
+    .tro-desc { font-size: 11px; color: #8592ad; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tro-date { font-size: 11px; color: #b0bcd4; flex-shrink: 0; }
+
+    .empty { color: #b0bcd4; padding: 12px 0; font-family: 'Chakra Petch', sans-serif; font-size: 13px; text-align: center; font-style: italic; }
+
+    /* ═══════════ Log activity CTA ═══════════ */
+    .log-cta { background: linear-gradient(150deg,#C6E63B,#9ECF10); color: #10203E; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .06em; padding: 16px; box-shadow: 0 5px 0 #7c9c00; cursor: pointer; border: none; width: 100%; clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); transition: transform .1s, box-shadow .1s; }
+    .log-cta:hover { transform: translateY(-1px); box-shadow: 0 6px 0 #7c9c00; }
+    .log-cta:active { transform: translateY(1px); box-shadow: 0 3px 0 #7c9c00; }
+
+    /* ═══════════ Responsive ═══════════ */
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { .sv-row { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) {
+      .page { padding: 18px 16px 60px; }
+      .cbar { padding: 14px 16px; }
+      .chips { width: 100%; }
+      .chip { flex: 1 1 calc(50% - 5px); }
+      .hero-row { flex-direction: column; text-align: center; }
+      .hero-av { width: 120px; height: 120px; }
+      .hero-points { font-size: 42px; }
+      .hero-class { margin-top: 6px; }
     }
-    .lb-av-initial {
-      background: #2E6BE6; color: #fff;
-      font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 11px;
-      display: inline-flex; align-items: center; justify-content: center;
-    }
-    .lb-rank.me { color: #5f7a00; }
-    .lb-rank.grey { color: #8592ad; }
-    .lb-name { flex: 1; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
-    .lb-pts { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #8592ad; }
-    .lb-pts.me { color: #5f7a00; }
-    .lb-link { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #2E6BE6; }
-
-    /* ── Activity feed ── */
-    .activity-list { display: flex; flex-direction: column; gap: 12px; max-height: 240px; overflow-y: auto; }
-    .activity-item { display: flex; align-items: center; gap: 11px; }
-    .activity-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .activity-body { flex: 1; }
-    .activity-sport { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #10203E; }
-    .activity-meta { font-family: 'Chakra Petch', sans-serif; font-size: 11px; color: #8592ad; font-weight: 700; margin-top: 2px; }
-    .activity-pts { font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 13px; color: #2E6BE6; }
-
-    /* ── Log button (desktop bottom of right col) ── */
-    .log-card {
-      text-align: center; background: linear-gradient(150deg,#C6E63B,#9ECF10);
-      color: #10203E; font-family: 'Chakra Petch', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: .05em;
-      padding: 15px; border-radius: 16px; box-shadow: 0 0 26px rgba(198,230,59,.6), 0 5px 0 #7c9c00;
-      cursor: pointer; border: none; width: 100%;
-      transition: transform .1s, box-shadow .1s;
-    }
-    .log-card:hover { transform: translateY(-1px); box-shadow: 0 0 32px rgba(198,230,59,.7), 0 6px 0 #7c9c00; }
-    .log-card:active { transform: translateY(1px); box-shadow: 0 0 18px rgba(198,230,59,.4), 0 3px 0 #7c9c00; }
-
-    .empty { color: #999; padding: 16px 0; font-family: 'Chakra Petch', sans-serif; font-size: 13px; }
   `],
   template: `
     <div class="page">
@@ -298,237 +287,271 @@ import { WeightCardComponent } from './weight-card/weight-card.component';
       </div>
 
       <ng-container *ngIf="data">
-        <!-- Top bar -->
-        <div class="top-bar">
-          <div>
-            <div class="welcome-label">WELCOME BACK</div>
-            <div class="welcome-name">Hi, {{ data.user.firstName }}</div>
-          </div>
-          <div class="hud">
-            <div class="hud-seg">
-              <div class="hud-tile streak"><app-icon name="flame" [size]="20" /></div>
-              <div class="hud-meta">
-                <span class="hud-value">{{ data.currentStreak ?? 0 }}</span>
-                <span class="hud-label">STREAK</span>
+        <!-- ══ Command bar ══ -->
+        <div class="cbar-fx">
+          <div class="cbar">
+            <div class="cbar-id">
+              <div class="cbar-av">
+                <div class="cbar-ring" [style.--p]="xpPercent"></div>
+                <div class="cbar-av-in">
+                  @if (data.activeAvatar?.imagePath) {
+                    <img [src]="data.activeAvatar!.imagePath" [alt]="data.activeAvatar?.name ?? ''">
+                  } @else {
+                    <span class="initial">{{ data.user.firstName[0] }}</span>
+                  }
+                </div>
+              </div>
+              <div>
+                <div class="cbar-status">PLAYER ONLINE</div>
+                <div class="cbar-name">
+                  @if (prestigeLevel > 0) { <span class="prestige">★{{ prestigeLevel }}</span> }
+                  {{ data.user.firstName }} <span class="lv">// LVL {{ level }} {{ levelTitle }}</span>
+                </div>
               </div>
             </div>
-            <div class="hud-seg">
-              <div class="hud-tile points"><app-icon name="star" [size]="20" /></div>
-              <div class="hud-meta">
-                <span class="hud-value">{{ data.totalPoints | number }}</span>
-                <span class="hud-label">POINTS</span>
+            <div class="chips">
+              <div class="chip">
+                <div class="chip-ic streak"><app-icon name="flame" [size]="16" /></div>
+                <div class="chip-meta"><span class="chip-val">{{ data.currentStreak ?? 0 }}</span><span class="chip-lab">STREAK</span></div>
               </div>
-            </div>
-            <div class="hud-seg">
-              <div class="hud-tile coins"><app-icon name="coin" [size]="20" /></div>
-              <div class="hud-meta">
-                <span class="hud-value">{{ data.coins | number }}</span>
-                <span class="hud-label">COINS</span>
+              <div class="chip">
+                <div class="chip-ic points"><app-icon name="star" [size]="16" /></div>
+                <div class="chip-meta"><span class="chip-val">{{ data.totalPoints | number }}</span><span class="chip-lab">POINTS</span></div>
               </div>
-              @if (data.boostedActivitiesRemaining > 0) {
-                <span class="boost-chip">⚡{{ data.boostedActivitiesRemaining }}</span>
-              }
-            </div>
-            <div class="hud-seg" [class.clickable]="pendingBoxes > 0"
-                 (click)="pendingBoxes > 0 && openBoxModal()">
-              @if (pendingBoxes > 0) { <span class="hud-dot"></span> }
-              <div class="hud-tile vault" [class.empty]="pendingBoxes === 0"><app-icon name="package" [size]="20" /></div>
-              <div class="hud-meta">
-                <span class="hud-value">{{ pendingBoxes }}</span>
-                <span class="hud-label">BOXES</span>
+              <div class="chip">
+                <div class="chip-ic coins"><app-icon name="coin" [size]="16" /></div>
+                <div class="chip-meta"><span class="chip-val">{{ data.coins | number }}</span><span class="chip-lab">COINS</span></div>
+                @if (data.boostedActivitiesRemaining > 0) {
+                  <span class="chip-boost">⚡{{ data.boostedActivitiesRemaining }}</span>
+                }
+              </div>
+              <div class="chip chip--boxes" [class.clickable]="pendingBoxes > 0"
+                   (click)="pendingBoxes > 0 && openBoxModal()">
+                @if (pendingBoxes > 0) { <span class="chip-dot"></span> }
+                <div class="chip-ic boxes" [class.empty]="pendingBoxes === 0"><app-icon name="package" [size]="16" /></div>
+                <div class="chip-meta"><span class="chip-val">{{ pendingBoxes }}</span><span class="chip-lab">BOXES</span></div>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- ══ Main grid ══ -->
         <div class="grid">
-          <!-- LEFT COLUMN -->
+          <!-- ═══ LEFT ═══ -->
           <div class="col">
-            <!-- Hero card -->
-            <div class="hero-card" [class.hero-card--glow]="levelUpActive">
-              <div class="level-ring" [class.level-ring--active]="levelUpActive"></div>
-              <div class="hero-mascot">
-                <div class="hero-mascot-shadow"></div>
-                <img [style.border]="data.activeBorderCss ?? '4px solid #C6E63B'"
-                     [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
-                     [alt]="data.activeAvatar?.name ?? 'Sporty'" />
-              </div>
-              <div class="level-badge" [class.level-badge--pop]="levelUpActive">
-                @if (prestigeLevel > 0) {
-                  <span class="prestige-chip">★{{ prestigeLevel }}</span>
-                }
-                <app-icon name="lightning" [size]="14" /> LEVEL {{ displayedLevel }} · {{ levelTitle }}
-              </div>
-              @if (isMaxLevel) {
-                <button class="prestige-btn" (click)="promptPrestige()">PRESTIGE</button>
-              }
-              <div class="hero-points">{{ data.totalPoints | number }}</div>
-              <div class="hero-pts-label">TOTAL POINTS</div>
-              <div class="xp-meta">
-                <span>{{ xpInLevel }} XP</span>
-                <span>{{ xpForNextLevel }} → LV {{ level + 1 }}</span>
-              </div>
-              <div class="xp-bar">
-                <div class="xp-fill"
-                     [class.xp-fill--boot]="isBootUp"
-                     [class.xp-fill--gain]="!isBootUp"
-                     [style.width.%]="displayedXpPercent"></div>
-                <div class="xp-flash"
-                     [class.xp-flash--active]="xpFlashActive"
-                     (animationend)="xpFlashActive = false"></div>
-              </div>
-            </div>
 
-            <!-- Stat tiles -->
-            <div class="stat-tiles">
-              <div class="stat-tile">
-                <div class="stat-label">GLOBAL RANK</div>
-                <div class="stat-value blue">{{ (data?.rank ?? 0) > 0 ? '#' + data!.rank : '—' }}</div>
-              </div>
-              <div class="stat-tile">
-                <div class="stat-label">THIS WEEK</div>
-                <div class="stat-value">{{ weeklyPoints | number }}</div>
-              </div>
-              <div class="stat-tile">
-                <div class="stat-label">ACTIVITIES</div>
-                <div class="stat-value">{{ data.activities.length }} <app-icon name="medal" [size]="22" /></div>
-              </div>
-            </div>
-
-            <!-- Quests -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title">TODAY'S QUESTS</span>
-                <span class="card-sub">{{ missionsDone }} / {{ data?.dailyMissions?.length ?? 0 }} done</span>
-              </div>
-              <div class="quest-list">
-                <div class="quest-item" *ngFor="let m of data?.dailyMissions">
-                  <div class="quest-icon" [class.done]="m.completed">
-                    @if (m.completed) { ✓ } @else { <app-icon [name]="tierIcon(m.tier)" [size]="20" /> }
-                  </div>
-                  <div class="quest-body">
-                    <div class="quest-name" [class.done-text]="m.completed">{{ m.description }}</div>
-                    <div class="quest-done-label" *ngIf="m.completed">COMPLETE</div>
-                    <div class="quest-bar" *ngIf="!m.completed">
-                      <div class="quest-bar-fill"
-                           [class.green]="m.tier === 'easy'"
-                           [class.blue]="m.tier === 'medium'"
-                           [style.width.%]="progressPercent(m)"></div>
+            <!-- Hero — Pilot Deck -->
+            <div class="hero-fx" [class.hero-fx--glow]="levelUpActive">
+              <div class="hero">
+                <div class="hero-sweep"></div>
+                <div class="hero-row">
+                  <div class="hero-av">
+                    <div class="level-ring" [class.level-ring--active]="levelUpActive"></div>
+                    <div class="hero-av-ring" [style.--p]="xpPercent"></div>
+                    <div class="hero-av-in">
+                      <img [src]="data.activeAvatar?.imagePath ?? 'assets/sporty_wave.png'"
+                           [alt]="data.activeAvatar?.name ?? 'Sporty'" />
                     </div>
+                    <div class="hero-lv" [class.hero-lv--pop]="levelUpActive">LV {{ displayedLevel }}</div>
                   </div>
-                  <div class="quest-pts">+{{ m.xpReward }} XP</div>
+                  <div class="hero-body">
+                    <div class="hero-class">
+                      @if (prestigeLevel > 0) { <span>★{{ prestigeLevel }}</span> }
+                      <app-icon name="star" [size]="12" /> {{ levelTitle }} CLASS
+                    </div>
+                    <div class="hero-points">{{ data.totalPoints | number }}</div>
+                    <div class="hero-pts-lab">TOTAL POINTS</div>
+                    <div class="hero-xp-meta">
+                      <span class="cur">{{ xpInLevel }} XP</span>
+                      <span class="nxt">{{ xpForNextLevel }} → LV {{ level + 1 }}</span>
+                    </div>
+                    <div class="hero-xp-bar">
+                      <div class="hero-xp-fill"
+                           [class.hero-xp-fill--boot]="isBootUp"
+                           [class.hero-xp-fill--gain]="!isBootUp"
+                           [style.width.%]="displayedXpPercent"></div>
+                      <div class="hero-xp-ticks"></div>
+                      <div class="hero-xp-flash"
+                           [class.xp-flash--active]="xpFlashActive"
+                           (animationend)="xpFlashActive = false"></div>
+                    </div>
+                    @if (isMaxLevel) {
+                      <button class="prestige-btn" (click)="promptPrestige()">PRESTIGE</button>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Today's Steps widget -->
-            <app-today-steps-card
-              [todaySteps]="data?.todaySteps ?? 0"
-              (stepsAdded)="loadData()"></app-today-steps-card>
+            <!-- AI Coach -->
+            <div class="fx">
+              <button class="ai-coach-card" (click)="openAiCoach()">
+                <span class="ai-coach-icon">✨</span>
+                <span class="ai-coach-text">
+                  <span class="ai-coach-title">AI COACH</span>
+                  <span class="ai-coach-sub">Log an activity in plain English</span>
+                </span>
+                <span class="ai-coach-mode" *ngIf="aiMode === 'basic'">⚡ BASIC</span>
+              </button>
+            </div>
 
-            <!-- Signal Vault -->
-            <div class="vault-card" [class.vault-card--ready]="pendingBoxes > 0">
+            <!-- Core stats -->
+            <div class="stats3">
+              <div class="fx"><div class="bevel bevel--sm">
+                <div class="stat-lab">GLOBAL RANK</div>
+                <div class="stat-val blue">{{ (data?.rank ?? 0) > 0 ? '#' + data!.rank : '—' }}</div>
+              </div></div>
+              <div class="fx"><div class="bevel bevel--sm">
+                <div class="stat-lab">THIS WEEK</div>
+                <div class="stat-val">{{ weeklyPoints | number }}</div>
+              </div></div>
+              <div class="fx"><div class="bevel bevel--sm">
+                <div class="stat-lab">ACTIVITIES</div>
+                <div class="stat-val">{{ data.activities.length }}</div>
+              </div></div>
+            </div>
+
+            <!-- Daily missions -->
+            <div class="fx"><div class="bevel">
+              <div class="sec-head">
+                <div class="sec-title"><span class="sec-bar lime"></span><span class="sec-name">DAILY MISSIONS</span></div>
+                <span class="sec-sub">{{ missionsDone }} / {{ data?.dailyMissions?.length ?? 0 }} CLEARED</span>
+              </div>
+              <div class="missions">
+                <div class="mission" *ngFor="let m of data?.dailyMissions"
+                     [class.easy]="m.tier === 'easy'" [class.medium]="m.tier === 'medium'"
+                     [class.hard]="m.tier === 'hard'" [class.done]="m.completed">
+                  @if (m.completed) {
+                    <div class="mission-check">
+                      <svg width="14" height="14" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#1c2a06" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                  }
+                  <div class="mission-body">
+                    <div class="mission-name" [class.done]="m.completed">{{ m.description }}</div>
+                    @if (m.completed) {
+                      <div class="mission-cleared">MISSION CLEARED</div>
+                    } @else {
+                      <div class="mission-bar">
+                        <div class="mission-fill"
+                             [class.easy]="m.tier === 'easy'" [class.medium]="m.tier === 'medium'" [class.hard]="m.tier === 'hard'"
+                             [style.width.%]="progressPercent(m)"></div>
+                      </div>
+                    }
+                  </div>
+                  <div class="mission-xp">+{{ m.xpReward }} XP</div>
+                </div>
+              </div>
+            </div></div>
+
+            <!-- Step core + Signal vault -->
+            <div class="sv-row">
+              <app-today-steps-card
+                [todaySteps]="data?.todaySteps ?? 0"
+                (stepsAdded)="loadData()"></app-today-steps-card>
+
               @if (pendingBoxes > 0) {
-                <div class="vault-glow"></div>
-                <div class="vault-main">
-                  <div class="vault-icon"><app-icon name="package" [size]="28" /></div>
-                  <div class="vault-info">
-                    <div class="vault-title">LOOT BOXES</div>
-                    <div class="vault-sub">{{ pendingBoxes }} {{ pendingBoxes === 1 ? 'box' : 'boxes' }} ready to open</div>
+                <div class="vault-fx"><div class="vault">
+                  <div class="vault-glow"></div>
+                  <div class="vault-in">
+                    <div class="sec-title" style="align-self:flex-start;"><span class="sec-bar lime"></span><span class="sec-name" style="color:#fff;">SIGNAL VAULT</span></div>
+                    <div class="vault-ic"><app-icon name="package" [size]="30" /></div>
+                    <div class="vault-txt">{{ pendingBoxes }} {{ pendingBoxes === 1 ? 'loot box' : 'loot boxes' }} ready</div>
+                    <button class="vault-btn" (click)="openBoxModal()">OPEN VAULT</button>
                   </div>
-                </div>
-                <button class="vault-btn" (click)="openBoxModal()">OPEN {{ pendingBoxes === 1 ? 'BOX' : 'BOXES' }}</button>
+                </div></div>
               } @else {
-                <div class="vault-main">
-                  <div class="vault-icon locked"><app-icon name="package" [size]="28" /></div>
-                  <div class="vault-info">
-                    <div class="vault-title muted">LOOT BOXES</div>
-                    <div class="vault-sub muted">No boxes yet — earn them by leveling up and finishing quests.</div>
+                <div class="fx"><div class="bevel" style="height:100%;">
+                  <div class="vault-empty">
+                    <div class="sec-title" style="align-self:flex-start;"><span class="sec-bar blue"></span><span class="sec-name">SIGNAL VAULT</span></div>
+                    <div class="vault-empty-ic"><app-icon name="package" [size]="30" /></div>
+                    <div class="vault-empty-txt">No boxes yet — earn them by leveling up and clearing missions.</div>
                   </div>
-                </div>
+                </div></div>
               }
             </div>
           </div>
 
-          <!-- RIGHT COLUMN -->
+          <!-- ═══ RIGHT ═══ -->
           <div class="col">
-            <!-- Leaderboard snippet -->
-            <div class="card">
-              <div class="card-header">
-                <span class="card-title"><app-icon name="trophy" [size]="18" /> LEADERBOARD</span>
-                <span class="lb-link">All time</span>
+
+            <!-- Rankings -->
+            <div class="fx"><div class="bevel">
+              <div class="sec-head">
+                <div class="sec-title"><span class="sec-bar gold"></span><span class="sec-name">RANKINGS</span></div>
+                <span class="sec-sub" style="color:#2E6BE6;">ALL TIME</span>
               </div>
-              <div class="lb-list">
-                <div *ngFor="let e of topEntries; let i = index"
-                     class="lb-row" [class.me]="e.isMe">
-                  <span class="lb-rank" [class.me]="e.isMe" [class.grey]="i > 0 && !e.isMe">{{ e.rank }}</span>
+              <div class="rank-list">
+                <div *ngFor="let e of topEntries; let i = index" class="rank-row" [class.me]="e.isMe">
+                  <span class="rank-num" [class.gold]="i === 0 && !e.isMe" [class.me]="e.isMe">{{ e.rank }}</span>
                   @if (e.activeAvatarImagePath) {
-                    <img class="lb-av" [style.border]="e.activeBorderCss ?? '2px solid #E3EAF5'" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
+                    <img class="rank-av" [style.border]="e.activeBorderCss ?? '2px solid #E3EAF5'" [src]="e.activeAvatarImagePath" [alt]="e.firstName">
                   } @else {
-                    <span class="lb-av-initial" [style.border]="e.activeBorderCss ?? '2px solid #E3EAF5'">{{ e.firstName[0] }}</span>
+                    <span class="rank-initial" [style.border]="e.activeBorderCss ?? '2px solid #E3EAF5'">{{ e.firstName[0] }}</span>
                   }
-                  <span class="lb-name">{{ e.firstName }} {{ e.lastName }}{{ e.isMe ? ' (You)' : '' }}</span>
-                  <span class="lb-pts" [class.me]="e.isMe">{{ e.totalPoints | number }}</span>
+                  <span class="rank-name">{{ e.firstName }} {{ e.lastName }}{{ e.isMe ? ' (You)' : '' }}</span>
+                  <span class="rank-pts" [class.me]="e.isMe">{{ e.totalPoints | number }}</span>
                 </div>
               </div>
-            </div>
+            </div></div>
 
-            <!-- Rival -->
+            <!-- Duel (rival) -->
             <app-rival-card
               [rivalStatus]="data.rivalStatus"
               [myFirstName]="data.user.firstName"
               [myAvatarImagePath]="data.activeAvatar?.imagePath ?? null"
               [myBorderCss]="data.activeBorderCss"></app-rival-card>
 
-            <!-- Weight tracking -->
+            <!-- Vitals (weight) -->
             <app-weight-card [userId]="currentUserId"></app-weight-card>
 
-            <!-- Recent activity -->
-            <div class="card">
-              <div class="card-title">RECENT ACTIVITY</div>
-              <div class="activity-list">
-                <div class="activity-item" *ngFor="let a of data.activities.slice(0, 6)">
-                  <div class="activity-icon" [style.background]="sportBg(a.sport)"><app-icon [name]="sportIconName(a.sport)" [size]="20" /></div>
-                  <div class="activity-body">
-                    <div class="activity-sport">{{ formatSport(a.sport) }} · {{ formatMetric(a) }}</div>
-                    <div class="activity-meta">{{ formatDate(a.dateTime) }}</div>
+            <!-- Combat log (recent activity) -->
+            <div class="fx"><div class="bevel">
+              <div class="sec-head">
+                <div class="sec-title"><span class="sec-bar lime"></span><span class="sec-name">COMBAT LOG</span></div>
+              </div>
+              <div class="clog-list">
+                <div class="clog-item" *ngFor="let a of data.activities.slice(0, 6)">
+                  <div class="clog-ic" [style.background]="sportBg(a.sport)"><app-icon [name]="sportIconName(a.sport)" [size]="18" /></div>
+                  <div class="clog-body">
+                    <div class="clog-sport">{{ formatSport(a.sport) }} · {{ formatMetric(a) }}</div>
+                    <div class="clog-meta">{{ formatDate(a.dateTime) }}</div>
                   </div>
-                  <div class="activity-pts">+{{ a.points }}</div>
+                  <div class="clog-pts">+{{ a.points }}</div>
                 </div>
                 <div class="empty" *ngIf="data.activities.length === 0">No activities yet — start logging!</div>
               </div>
-            </div>
+            </div></div>
 
-            <!-- Recent Achievements -->
-            <div class="achievements-card">
-              <div class="achievements-title">
-                <span><app-icon name="medal" [size]="18" /> RECENT ACHIEVEMENTS</span>
-                <a class="achievements-see-all" routerLink="/achievements">SEE ALL →</a>
+            <!-- Trophies (achievements) -->
+            <div class="fx"><div class="bevel">
+              <div class="sec-head">
+                <div class="sec-title"><span class="sec-bar gold"></span><span class="sec-name">TROPHIES</span></div>
+                <a class="sec-link" routerLink="/achievements">SEE ALL →</a>
               </div>
               @if ((data?.recentAchievements?.length ?? 0) === 0) {
-                <div class="ach-empty">No achievements yet — keep going!</div>
+                <div class="empty">No achievements yet — keep going!</div>
               } @else {
                 @for (a of data!.recentAchievements; track a.id) {
-                  <div class="ach-row">
-                    <div class="ach-tier-strip" [style.background]="tierColor(a.tier)"></div>
-                    <div class="ach-row-info">
-                      <div class="ach-row-name">{{ a.name }}</div>
-                      <div class="ach-row-desc">{{ a.description }}</div>
+                  <div class="tro-row">
+                    <div class="tro-strip" [style.background]="tierStrip(a.tier)"></div>
+                    <div class="tro-info">
+                      <div class="tro-name">{{ a.name }} <span class="rarity" [style.color]="tierLabelColor(a.tier)">· {{ a.tier | uppercase }}</span></div>
+                      <div class="tro-desc">{{ a.description }}</div>
                     </div>
-                    <div class="ach-row-date">{{ a.unlockedAt | date:'MMM d' }}</div>
+                    <div class="tro-date">{{ a.unlockedAt | date:'MMM d' }}</div>
                   </div>
                 }
               }
-            </div>
+            </div></div>
 
-            <!-- Log Activity CTA -->
-            <button class="log-card" (click)="openLogActivity()">+ LOG ACTIVITY</button>
+            <!-- Log activity CTA -->
+            <button class="log-cta" (click)="openLogActivity()">+ LOG ACTIVITY</button>
           </div>
         </div>
       </ng-container>
 
       <ng-container *ngIf="!loading && !data">
-        <div style="padding: 40px; font-family: 'Chakra Petch', sans-serif; color: #8592ad;">User not found.</div>
+        <div class="not-found">User not found.</div>
       </ng-container>
     </div>
   `,
@@ -545,6 +568,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   prevLevel = 0;
   levelUpActive = false;
   displayedLevel = 1;
+  aiMode: 'ai' | 'basic' = 'basic';
   private sub?: Subscription;
   private _levelTicker?: ReturnType<typeof setInterval>;
   private _levelReset?: ReturnType<typeof setTimeout>;
@@ -576,6 +600,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!userId) { this.loading = false; return; }
     this.loadData(userId);
     this.sub = this.activityLogged.activityLogged$.subscribe(() => this.loadData());
+    this.api.getAiStatus().subscribe({ next: s => this.aiMode = s.mode, error: () => {} });
   }
 
   ngOnDestroy() {
@@ -683,6 +708,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  openAiCoach(): void {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    const ref = this.dialog.open(AiCoachDialogComponent, {
+      data: { userId, mode: this.aiMode },
+      width: '400px',
+    });
+    ref.afterClosed().subscribe(logged => { if (logged) this.loadData(); });
+  }
+
   promptPrestige(): void {
     const userId = localStorage.getItem('userId');
     if (!userId) return;
@@ -716,8 +751,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return tier === 'easy' ? 'star' : tier === 'medium' ? 'trophy' : 'flame';
   }
 
-  tierColor(tier: string): string {
-    return { bronze: '#CD7F32', silver: '#C0C0C0', gold: '#FFD700' }[tier] ?? '#9fb2d6';
+  tierStrip(tier: string): string {
+    const map: Record<string, string> = {
+      gold: 'linear-gradient(180deg,#FDE9A7,#F5B300)',
+      silver: 'linear-gradient(180deg,#F2F5FA,#93A1B7)',
+      bronze: 'linear-gradient(180deg,#F5D3A3,#8A4F16)',
+    };
+    return map[tier] ?? 'linear-gradient(180deg,#F2F5FA,#93A1B7)';
+  }
+
+  tierLabelColor(tier: string): string {
+    return { gold: '#C58A00', silver: '#7E8A9C', bronze: '#B5701E' }[tier] ?? '#7E8A9C';
   }
 
   progressPercent(m: DailyMissionItem): number {

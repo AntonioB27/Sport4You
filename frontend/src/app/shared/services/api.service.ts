@@ -10,6 +10,7 @@ import {
 import { BorderStatus, BoxInfo, OpenBoxResult } from '../models/border.model';
 import { ShopCatalog, BoosterPurchaseResult, LootBoxPurchaseResult, AvatarPurchaseResult } from '../models/shop.model';
 import { WeightHistory } from '../models/weight.model';
+import { ParseResult, AiStatus } from '../models/ai-coach.model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -39,6 +40,14 @@ export class ApiService {
 
   addSteps(userId: string, steps: number): Observable<AddStepsResponse> {
     return this.http.post<AddStepsResponse>(`${this.base}/users/${userId}/steps`, { steps });
+  }
+
+  getAiStatus(): Observable<AiStatus> {
+    return this.http.get<AiStatus>(`${this.base}/ai/status`);
+  }
+
+  parseActivity(userId: string, text: string): Observable<ParseResult> {
+    return this.http.post<ParseResult>(`${this.base}/activities/parse`, { userId, text });
   }
 
   getAchievements(userId: string): Observable<AchievementsPage> {
