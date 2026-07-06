@@ -17,4 +17,11 @@ public class ShopController : ControllerBase
         var result = await _shop.PurchaseBoosterAsync(userId);
         return result.Success ? Ok(result) : BadRequest(new { error = result.Error });
     }
+
+    [HttpPost("shop/lootbox")]
+    public async Task<IActionResult> PurchaseLootBox(Guid userId, [FromBody] PurchaseLootBoxRequest request)
+    {
+        var result = await _shop.PurchaseLootBoxAsync(userId, request.Tier);
+        return result.Success ? Ok(result) : BadRequest(new { error = result.Error });
+    }
 }

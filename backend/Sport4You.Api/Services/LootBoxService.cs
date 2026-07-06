@@ -43,7 +43,9 @@ public class LootBoxService : ILootBoxService
         var type = random.Next(2) == 0 ? "avatar" : "border";
 
         var rarityRoll = random.NextDouble();
-        var rarity = rarityRoll < 0.6 ? "common" : rarityRoll < 0.9 ? "rare" : "legendary";
+        var rarity = box.EarnReason == "shop_special"
+            ? (rarityRoll < 0.3 ? "common" : rarityRoll < 0.75 ? "rare" : "legendary")
+            : (rarityRoll < 0.6 ? "common" : rarityRoll < 0.9 ? "rare" : "legendary");
 
         var candidates = await _db.LootBoxRewards
             .Where(r => r.Type == type && r.Rarity == rarity)

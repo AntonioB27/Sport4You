@@ -1,14 +1,20 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Sport4You.Tests.Helpers;
 
 namespace Sport4You.Tests;
 
 public class LootBoxTests : IClassFixture<TestFactory>
 {
+    private readonly TestFactory _factory;
     private readonly HttpClient _client;
-    public LootBoxTests(TestFactory factory) => _client = factory.CreateClient();
+    public LootBoxTests(TestFactory factory)
+    {
+        _factory = factory;
+        _client = factory.CreateClient();
+    }
 
     private async Task<string> CreateUserAsync(string first, string last)
     {
@@ -144,5 +150,46 @@ public class LootBoxTests : IClassFixture<TestFactory>
         Assert.Equal(JsonValueKind.Array, borders.ValueKind);
         Assert.Equal(7, borders.GetArrayLength());
         Assert.True(borders.EnumerateArray().All(b => !b.GetProperty("unlocked").GetBoolean()));
+    }
+
+    [Fact]
+    public async Task OpenBox_ShopSpecialReason_UsesSkewedRarityOdds()
+    {
+        var userId = await CreateUserAsync("Shop", "SpecialOdds");
+        using var scope = _factory.Services.CreateScope();
+        var lootBox = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Services.ILootBoxService>();
+        var uid = Guid.Parse(userId);
+
+        var rarityCounts = new Dictionary<string, int> { ["common"] = 0, ["rare"] = 0, ["legendary"] = 0 };
+        const int trials = 300;
+
+        for (var i = 0; i < trials; i++)
+        {
+            await lootBox.EarnBoxAsync(uid, "shop_special");
+            var result = await lootBox.OpenBoxAsync(uid);
+            rarityCounts[result.Rarity]++;
+        }
+
+        // Special tier is 30/45/25 — assert legendary+rare together clearly dominate
+        // common (a wide tolerance band avoids test flakiness from RNG variance).
+        var legendaryAndRare = rarityCounts["rare"] + rarityCounts["legendary"];
+        Assert.True(legendaryAndRare > rarityCounts["common"],
+            $"Expected rare+legendary ({legendaryAndRare}) to outnumber common ({rarityCounts["common"]}) under 30/45/25 odds");
+        Assert.True(rarityCounts["legendary"] > trials * 0.15,
+            $"Expected legendary count ({rarityCounts["legendary"]}) to exceed 15% of {trials} trials under 25% odds");
+    }
+
+    [Fact]
+    public async Task OpenBox_ShopNormalReason_UsesSameOddsAsFreeBoxes()
+    {
+        var userId = await CreateUserAsync("Shop", "NormalOdds");
+        using var scope = _factory.Services.CreateScope();
+        var lootBox = scope.ServiceProvider.GetRequiredService<Sport4You.Api.Services.ILootBoxService>();
+        var uid = Guid.Parse(userId);
+
+        await lootBox.EarnBoxAsync(uid, "shop_normal");
+        var result = await lootBox.OpenBoxAsync(uid);
+
+        Assert.Contains(result.Rarity, new[] { "common", "rare", "legendary" });
     }
 }

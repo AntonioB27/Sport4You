@@ -9,9 +9,10 @@ public class ShopService : IShopService
 {
     private const int BoosterPrice = 400;
     private const int BoosterActivities = 3;
+    private const int NormalBoxPrice = 500;
+    private const int SpecialBoxPrice = 1000;
 
     private readonly AppDbContext _db;
-    // Used by PurchaseLootBoxAsync, implemented in a later task.
     private readonly ILootBoxService _lootBox;
 
     public ShopService(AppDbContext db, ILootBoxService lootBox)
@@ -50,7 +51,28 @@ public class ShopService : IShopService
     }
 
     public Task<ShopCatalogDto> GetCatalogAsync(Guid userId) => throw new NotImplementedException();
-    public Task<LootBoxPurchaseResult> PurchaseLootBoxAsync(Guid userId, string tier) => throw new NotImplementedException();
+
+    public async Task<LootBoxPurchaseResult> PurchaseLootBoxAsync(Guid userId, string tier)
+    {
+        if (tier != "normal" && tier != "special")
+            return new LootBoxPurchaseResult(false, "Invalid loot box tier", 0, 0);
+
+        var price = tier == "normal" ? NormalBoxPrice : SpecialBoxPrice;
+        var row = await GetOrCreateUserXpAsync(userId);
+
+        if (row.Coins < price)
+            return new LootBoxPurchaseResult(false, "Insufficient coins", row.Coins, await _lootBox.GetPendingCountAsync(userId));
+
+        row.Coins -= price;
+        row.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        await _lootBox.EarnBoxAsync(userId, tier == "normal" ? "shop_normal" : "shop_special");
+
+        var pendingCount = await _lootBox.GetPendingCountAsync(userId);
+        return new LootBoxPurchaseResult(true, null, row.Coins, pendingCount);
+    }
+
     public Task<AvatarPurchaseResult> PurchaseAvatarAsync(Guid userId, Guid avatarId) => throw new NotImplementedException();
 
     private async Task<UserXp> GetOrCreateUserXpAsync(Guid userId)

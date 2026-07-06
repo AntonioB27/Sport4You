@@ -158,4 +158,76 @@ public class ShopServiceTests : IClassFixture<TestFactory>
         var resp = await _client.PostAsync($"/api/users/{userIdStr}/shop/booster", null);
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, resp.StatusCode);
     }
+
+    [Fact]
+    public async Task PurchaseLootBox_InvalidTier_ReturnsError()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var result = await shop.PurchaseLootBoxAsync(userId, "ultra");
+
+        Assert.False(result.Success);
+        Assert.Equal("Invalid loot box tier", result.Error);
+    }
+
+    [Fact]
+    public async Task PurchaseLootBox_Normal_InsufficientCoins_ReturnsError()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var result = await shop.PurchaseLootBoxAsync(userId, "normal");
+
+        Assert.False(result.Success);
+        Assert.Equal("Insufficient coins", result.Error);
+    }
+
+    [Fact]
+    public async Task PurchaseLootBox_Normal_SufficientCoins_DeductsAndGrantsPendingBox()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+        var lootBox = scope.ServiceProvider.GetRequiredService<ILootBoxService>();
+
+        await shop.AddCoinsAsync(userId, 500);
+        var result = await shop.PurchaseLootBoxAsync(userId, "normal");
+
+        Assert.True(result.Success);
+        Assert.Equal(0, result.Coins);
+        Assert.Equal(1, result.PendingBoxes);
+        Assert.Equal(1, await lootBox.GetPendingCountAsync(userId));
+    }
+
+    [Fact]
+    public async Task PurchaseLootBox_Special_SufficientCoins_DeductsCorrectPrice()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        await shop.AddCoinsAsync(userId, 1000);
+        var result = await shop.PurchaseLootBoxAsync(userId, "special");
+
+        Assert.True(result.Success);
+        Assert.Equal(0, result.Coins);
+        Assert.Equal(1, result.PendingBoxes);
+    }
+
+    [Fact]
+    public async Task PurchaseLootBoxEndpoint_ReturnsOkOnSuccess()
+    {
+        var userIdStr = await CreateUserAsync();
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+            await shop.AddCoinsAsync(Guid.Parse(userIdStr), 500);
+        }
+
+        var resp = await _client.PostAsJsonAsync($"/api/users/{userIdStr}/shop/lootbox", new { tier = "normal" });
+        Assert.Equal(System.Net.HttpStatusCode.OK, resp.StatusCode);
+    }
 }
