@@ -50,7 +50,34 @@ public class ShopService : IShopService
         return new BoosterPurchaseResult(true, null, row.Coins, row.BoostedActivitiesRemaining);
     }
 
-    public Task<ShopCatalogDto> GetCatalogAsync(Guid userId) => throw new NotImplementedException();
+    public async Task<ShopCatalogDto> GetCatalogAsync(Guid userId)
+    {
+        var (coins, boostedActivitiesRemaining) = await GetBalanceAsync(userId);
+
+        var shopAvatars = await _db.Avatars.Where(a => a.UnlockType == "shop").ToListAsync();
+        var ownedIds = await _db.UserAvatars
+            .Where(ua => ua.UserId == userId)
+            .Select(ua => ua.AvatarId)
+            .ToListAsync();
+        var ownedSet = ownedIds.ToHashSet();
+
+        var avatarDtos = shopAvatars
+            .Select(a => new ShopAvatarDto(
+                a.Id, a.Name, a.Description, a.ImagePath,
+                a.ShopRarity ?? "common", a.ShopPrice ?? 0,
+                ownedSet.Contains(a.Id)))
+            .ToList();
+
+        return new ShopCatalogDto(
+            coins,
+            boostedActivitiesRemaining,
+            new ShopBoosterDto(BoosterPrice, BoosterActivities, 1.5),
+            [
+                new ShopLootBoxDto("normal", NormalBoxPrice, 60, 30, 10),
+                new ShopLootBoxDto("special", SpecialBoxPrice, 30, 45, 25),
+            ],
+            avatarDtos);
+    }
 
     public async Task<LootBoxPurchaseResult> PurchaseLootBoxAsync(Guid userId, string tier)
     {

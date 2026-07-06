@@ -11,6 +11,10 @@ public class ShopController : ControllerBase
     private readonly IShopService _shop;
     public ShopController(IShopService shop) => _shop = shop;
 
+    [HttpGet("shop")]
+    public async Task<IActionResult> GetShop(Guid userId)
+        => Ok(await _shop.GetCatalogAsync(userId));
+
     [HttpPost("shop/booster")]
     public async Task<IActionResult> PurchaseBooster(Guid userId)
     {

@@ -333,4 +333,51 @@ public class ShopServiceTests : IClassFixture<TestFactory>
         var resp = await _client.PostAsJsonAsync($"/api/users/{userIdStr}/shop/avatar", new { avatarId });
         Assert.Equal(System.Net.HttpStatusCode.Conflict, resp.StatusCode);
     }
+
+    [Fact]
+    public async Task GetCatalog_ReturnsBoosterLootBoxesAndSixAvatars()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var catalog = await shop.GetCatalogAsync(userId);
+
+        Assert.Equal(0, catalog.Coins);
+        Assert.Equal(0, catalog.BoostedActivitiesRemaining);
+        Assert.Equal(400, catalog.Booster.Price);
+        Assert.Equal(3, catalog.Booster.BoostedActivities);
+        Assert.Equal(2, catalog.LootBoxes.Count);
+        Assert.Contains(catalog.LootBoxes, b => b.Tier == "normal" && b.Price == 500);
+        Assert.Contains(catalog.LootBoxes, b => b.Tier == "special" && b.Price == 1000);
+        Assert.Equal(6, catalog.Avatars.Count);
+        Assert.All(catalog.Avatars, a => Assert.False(a.Owned));
+    }
+
+    [Fact]
+    public async Task GetCatalog_AfterPurchasingAnAvatar_MarksItOwned()
+    {
+        var userId = Guid.Parse(await CreateUserAsync());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+
+        var shopAvatar = await db.Avatars.FirstAsync(a => a.Name == "Sleuth Sporty");
+        await shop.AddCoinsAsync(userId, 300);
+        await shop.PurchaseAvatarAsync(userId, shopAvatar.Id);
+
+        var catalog = await shop.GetCatalogAsync(userId);
+        Assert.True(catalog.Avatars.Single(a => a.Id == shopAvatar.Id).Owned);
+    }
+
+    [Fact]
+    public async Task GetShopEndpoint_ReturnsOk()
+    {
+        var userIdStr = await CreateUserAsync();
+        var resp = await _client.GetAsync($"/api/users/{userIdStr}/shop");
+        Assert.Equal(System.Net.HttpStatusCode.OK, resp.StatusCode);
+
+        var body = await resp.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        Assert.Equal(6, body.GetProperty("avatars").GetArrayLength());
+    }
 }
