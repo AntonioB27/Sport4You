@@ -106,4 +106,22 @@ public class ShopServiceTests : IClassFixture<TestFactory>
         Assert.True(second.Success);
         Assert.Equal(6, second.BoostedActivitiesRemaining);
     }
+
+    [Fact]
+    public async Task LogActivity_PointsUnderTen_EarnsZeroCoinsAndDoesNotCreateUserXpRow()
+    {
+        var userIdStr = await CreateUserAsync();
+        var userId = Guid.Parse(userIdStr);
+
+        // A very short walk: floor(0.05 * 50) = 2 points -> floor(2/10) = 0 coins
+        await _client.PostAsJsonAsync("/api/activities", new
+        {
+            userId = userIdStr, datetime = "2026-07-01T10:00:00Z", sport = "walking", distance = 0.05,
+        });
+
+        using var scope = _factory.Services.CreateScope();
+        var shop = scope.ServiceProvider.GetRequiredService<IShopService>();
+        var (coins, _) = await shop.GetBalanceAsync(userId);
+        Assert.Equal(0, coins);
+    }
 }

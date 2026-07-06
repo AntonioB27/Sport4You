@@ -11,6 +11,7 @@ public class ShopService : IShopService
     private const int BoosterActivities = 3;
 
     private readonly AppDbContext _db;
+    // Used by PurchaseLootBoxAsync, implemented in a later task.
     private readonly ILootBoxService _lootBox;
 
     public ShopService(AppDbContext db, ILootBoxService lootBox)
