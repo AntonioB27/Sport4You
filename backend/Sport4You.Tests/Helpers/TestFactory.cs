@@ -15,6 +15,11 @@ public class TestFactory : WebApplicationFactory<Program>
     {
         _connection.Open();
 
+        builder.UseSetting("Seeding:UserCount", "5");
+        builder.UseSetting("Seeding:ActivitiesPerUserMin", "6");
+        builder.UseSetting("Seeding:ActivitiesPerUserMax", "12");
+        builder.UseSetting("Seeding:HistoryDays", "14");
+
         builder.ConfigureServices(services =>
         {
             var descriptor = services.SingleOrDefault(d =>

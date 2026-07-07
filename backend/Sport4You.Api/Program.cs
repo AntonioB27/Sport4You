@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 using Sport4You.Api.Data;
@@ -81,8 +82,16 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var scoring = scope.ServiceProvider.GetRequiredService<IScoringService>();
+    var xp = scope.ServiceProvider.GetRequiredService<IXpService>();
+    var achievements = scope.ServiceProvider.GetRequiredService<IAchievementService>();
+    var avatars = scope.ServiceProvider.GetRequiredService<IAvatarService>();
+    var seedOptions = new SeedOptions(
+        app.Configuration.GetValue("Seeding:UserCount", 30),
+        app.Configuration.GetValue("Seeding:ActivitiesPerUserMin", 55),
+        app.Configuration.GetValue("Seeding:ActivitiesPerUserMax", 90),
+        app.Configuration.GetValue("Seeding:HistoryDays", 90));
     db.Database.EnsureCreated();
-    DataSeeder.Seed(db, scoring);
+    await DataSeeder.SeedAsync(db, scoring, xp, achievements, avatars, seedOptions);
 }
 
 app.Run();

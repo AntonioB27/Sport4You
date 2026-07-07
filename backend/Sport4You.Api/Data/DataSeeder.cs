@@ -5,9 +5,11 @@ namespace Sport4You.Api.Data;
 
 public static class DataSeeder
 {
-    public static void Seed(AppDbContext db, IScoringService scoring)
+    public static async Task SeedAsync(
+        AppDbContext db, IScoringService scoring, IXpService xp,
+        IAchievementService achievements, IAvatarService avatars, SeedOptions options)
     {
-        SeedUsers(db, scoring);
+        // Definition tables first — user reward evaluation reads them.
         SeedMissions(db);
         SeedBorders(db);
         SeedAchievements(db);
@@ -15,88 +17,144 @@ public static class DataSeeder
         SeedLootBoxAvatars(db);
         SeedShopAvatars(db);
         SeedLootBoxRewards(db);
+
+        await SeedUsersAndActivitiesAsync(db, scoring, xp, achievements, avatars, options);
     }
 
-    private static void SeedUsers(AppDbContext db, IScoringService scoring)
+    // 30 unique first+last names (assignment requires uniqueness). UserCount from
+    // options selects the first N; the light test seed uses 5.
+    private static readonly string[] SeedFullNames =
     {
-        var seedNames = new[] { "Maria Gonzalez", "James Chen", "Sophie Müller", "Luca Rossi", "Amara Osei" };
-        if (db.Users.Any(u => seedNames.Contains(u.FirstName + " " + u.LastName))) return;
+        "Elena Petrov", "Marcus Bennett", "Yuki Tanaka", "Aisha Khan", "Diego Morales",
+        "Freya Andersen", "Omar Haddad", "Priya Nair", "Lucas Silva", "Nina Kowalski",
+        "Kwame Mensah", "Sofia Ricci", "Liam Murphy", "Mei Lin", "Tariq Rahman",
+        "Clara Fischer", "Andre Dubois", "Ingrid Larsen", "Rajesh Gupta", "Bianca Costa",
+        "Sean OBrien", "Hana Kim", "Mateo Fernandez", "Zara Ahmed", "Viktor Novak",
+        "Amelie Laurent", "Noah Weber", "Leila Hassan", "Carlos Vega", "Emma Thompson",
+    };
 
+    private static async Task SeedUsersAndActivitiesAsync(
+        AppDbContext db, IScoringService scoring, IXpService xp,
+        IAchievementService achievements, IAvatarService avatars, SeedOptions options)
+    {
+        // Guard: only seed on an empty user set (first seed name absent).
+        var firstParts = SeedFullNames[0].Split(' ', 2);
+        if (db.Users.Any(u => u.FirstName == firstParts[0] && u.LastName == firstParts[1])) return;
+
+        var rng = new Random();
         var now = DateTime.UtcNow;
+        var count = Math.Min(options.UserCount, SeedFullNames.Length);
 
-        var users = new[]
+        var users = new List<User>();
+        var activities = new List<Activity>();
+        var xpTransactions = new List<XpTransaction>();
+        var userXpRows = new List<UserXp>();
+
+        for (var i = 0; i < count; i++)
         {
-            new User { Id = Guid.NewGuid(), FirstName = "Maria",   LastName = "Gonzalez" },
-            new User { Id = Guid.NewGuid(), FirstName = "James",   LastName = "Chen"     },
-            new User { Id = Guid.NewGuid(), FirstName = "Sophie",  LastName = "Müller"   },
-            new User { Id = Guid.NewGuid(), FirstName = "Luca",    LastName = "Rossi"    },
-            new User { Id = Guid.NewGuid(), FirstName = "Amara",   LastName = "Osei"     },
-        };
+            var parts = SeedFullNames[i].Split(' ', 2);
+            var user = new User { Id = Guid.NewGuid(), FirstName = parts[0], LastName = parts[1] };
+            users.Add(user);
 
-        db.Users.AddRange(users);
+            var n = rng.Next(options.ActivitiesPerUserMin, options.ActivitiesPerUserMax + 1);
+            var totalXp = 0;
 
-        var activities = new List<(Guid UserId, int DaysAgo, string Sport, decimal? Distance, string? Duration, int? Steps)>
-        {
-            (users[0].Id,  0, "running",     10.5m,  null,    null),
-            (users[0].Id,  1, "running",      8.0m,  null,    null),
-            (users[0].Id,  2, "daily_steps",  null,   null,  12000),
-            (users[0].Id,  3, "cycling",     25.0m,  null,    null),
-            (users[0].Id,  4, "running",      5.0m,  null,    null),
-            (users[0].Id,  5, "running",      6.5m,  null,    null),
-            (users[0].Id,  8, "cycling",     30.0m,  null,    null),
-            (users[0].Id, 10, "running",     12.0m,  null,    null),
-            (users[0].Id, 12, "daily_steps",  null,   null,  15000),
-            (users[0].Id, 14, "running",      9.0m,  null,    null),
-            (users[1].Id,  0, "gym",         null,  "60:00",  null),
-            (users[1].Id,  1, "swimming",    null,  "45:00",  null),
-            (users[1].Id,  2, "gym",         null,  "75:00",  null),
-            (users[1].Id,  3, "gym",         null,  "60:00",  null),
-            (users[1].Id,  5, "swimming",    null,  "30:00",  null),
-            (users[1].Id,  6, "gym",         null,  "90:00",  null),
-            (users[1].Id,  9, "gym",         null,  "60:00",  null),
-            (users[1].Id, 11, "swimming",    null,  "45:00",  null),
-            (users[1].Id, 13, "gym",         null,  "75:00",  null),
-            (users[2].Id,  0, "walking",      5.0m,  null,    null),
-            (users[2].Id,  1, "gym",          null, "45:00",  null),
-            (users[2].Id,  2, "running",      4.0m,  null,    null),
-            (users[2].Id,  3, "daily_steps",  null,   null,  10000),
-            (users[2].Id,  5, "cycling",     15.0m,  null,    null),
-            (users[2].Id,  7, "swimming",     null, "30:00",  null),
-            (users[2].Id,  9, "walking",      6.0m,  null,    null),
-            (users[2].Id, 11, "running",      5.0m,  null,    null),
-            (users[3].Id,  0, "cycling",     40.0m,  null,    null),
-            (users[3].Id,  2, "walking",      8.0m,  null,    null),
-            (users[3].Id,  3, "cycling",     35.0m,  null,    null),
-            (users[3].Id,  5, "cycling",     50.0m,  null,    null),
-            (users[3].Id,  7, "walking",     10.0m,  null,    null),
-            (users[3].Id, 10, "cycling",     20.0m,  null,    null),
-            (users[3].Id, 14, "cycling",     45.0m,  null,    null),
-            (users[4].Id,  0, "daily_steps",  null,  null,   9000),
-            (users[4].Id,  1, "daily_steps",  null,  null,  11000),
-            (users[4].Id,  2, "running",      3.0m,  null,    null),
-            (users[4].Id,  3, "daily_steps",  null,  null,   8500),
-            (users[4].Id,  4, "walking",      4.0m,  null,    null),
-            (users[4].Id,  6, "daily_steps",  null,  null,  13000),
-            (users[4].Id,  8, "running",      4.0m,  null,    null),
-        };
-
-        foreach (var (userId, daysAgo, sport, distance, duration, steps) in activities)
-        {
-            var points = scoring.CalculatePoints(sport, distance, duration, steps);
-            db.Activities.Add(new Activity
+            for (var j = 0; j < n; j++)
             {
-                Id       = Guid.NewGuid(),
-                UserId   = userId,
-                DateTime = now.AddDays(-daysAgo).AddHours(-Random.Shared.Next(0, 8)),
-                Sport    = sport,
-                Distance = distance,
-                Duration = duration,
-                Steps    = steps,
-                Points   = points,
-            });
+                var g = SeedActivityGenerator.Next(rng, options.HistoryDays);
+                var points = scoring.CalculatePoints(g.Sport, g.Distance, g.Duration, g.Steps);
+                var activity = new Activity
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    DateTime = now.AddDays(-g.DaysAgo).AddHours(-g.HourOffset),
+                    Sport = g.Sport,
+                    Distance = g.Distance,
+                    Duration = g.Duration,
+                    Steps = g.Steps,
+                    Points = points,
+                };
+                activities.Add(activity);
+
+                var activityXp = xp.CalculateActivityXp(g.Sport, g.Distance, g.Duration, g.Steps);
+                totalXp += activityXp;
+                xpTransactions.Add(new XpTransaction
+                {
+                    Id = Guid.NewGuid(), UserId = user.Id, Source = "activity",
+                    SourceId = activity.Id, XpEarned = activityXp, CreatedAt = activity.DateTime,
+                });
+            }
+
+            userXpRows.Add(new UserXp { UserId = user.Id, TotalXp = totalXp, UpdatedAt = now });
         }
 
-        db.SaveChanges();
+        db.Users.AddRange(users);
+        db.Activities.AddRange(activities);
+        db.XpTransactions.AddRange(xpTransactions);
+        db.UserXp.AddRange(userXpRows);
+        await db.SaveChangesAsync();
+
+        // Mirror registration: give every user the default avatar (unlocked + equipped).
+        foreach (var user in users)
+            await avatars.UnlockAndEquipDefaultAsync(user.Id);
+
+        // Phase 2: converge achievements + avatars across ALL users. Rank-based
+        // achievements need every user present, and unlocking an achievement can
+        // grant XP that lifts a user's level, which unlocks further level-based
+        // achievements/avatars on the next pass — loop until a full pass is quiet.
+        bool anyNew;
+        do
+        {
+            anyNew = false;
+            foreach (var user in users)
+            {
+                var newAch = await achievements.EvaluateAchievementsAsync(user.Id);
+                var newAv = await avatars.EvaluateAvatarsAsync(user.Id);
+                if (newAch.Count > 0 || newAv.Count > 0) anyNew = true;
+            }
+        } while (anyNew);
+
+        // Phase 3: equip each user's best unlocked level avatar + grant/activate borders.
+        await EquipCosmeticsAsync(db, users, rng);
+    }
+
+    private static async Task EquipCosmeticsAsync(AppDbContext db, List<User> users, Random rng)
+    {
+        // Level-path avatars, best-first by the level they require (Legend 10 > Elite 7 > ...).
+        var levelAvatars = db.Avatars
+            .Where(a => a.UnlockType == "level_reached")
+            .OrderByDescending(a => a.UnlockValue)
+            .ToList();
+        // Cosmetic borders (exclude the platinum meta-border).
+        var borders = db.Borders.Where(b => b.Rarity != "platinum").ToList();
+
+        foreach (var user in users)
+        {
+            var unlockedAvatarIds = db.UserAvatars
+                .Where(ua => ua.UserId == user.Id)
+                .Select(ua => ua.AvatarId)
+                .ToHashSet();
+
+            var bestAvatar = levelAvatars.FirstOrDefault(a => unlockedAvatarIds.Contains(a.Id));
+            if (bestAvatar != null)
+                user.ActiveAvatarId = bestAvatar.Id; // `user` is the tracked entity from Phase 1
+
+            // Grant 1–3 random borders; activate the first.
+            var chosen = borders.OrderBy(_ => rng.Next()).Take(rng.Next(1, 4)).ToList();
+            for (var k = 0; k < chosen.Count; k++)
+            {
+                db.UserBorders.Add(new UserBorder
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    BorderId = chosen[k].Id,
+                    UnlockedAt = DateTime.UtcNow,
+                    IsActive = k == 0,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static void SeedMissions(AppDbContext db)
