@@ -1,9 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
+using Serilog.Events;
 using Sport4You.Api.Data;
 using Sport4You.Api.Repositories;
 using Sport4You.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) => configuration
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .WriteTo.Console());
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -59,6 +68,7 @@ app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sport4You API v1"));
 app.UseCors();
 app.UseMiddleware<Sport4You.Api.Middleware.ExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 app.MapControllers();
 
 // Lightweight liveness/readiness probe (also handy for container orchestration).

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { CommonModule, AsyncPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatDialog } from '@angular/material/dialog';
 import { RegisterDialogComponent } from './shared/components/register-dialog/register-dialog.component';
 import { WelcomeDialogComponent } from './shared/components/welcome-dialog/welcome-dialog.component';
@@ -13,7 +13,7 @@ import { TourService } from './shared/tour/tour.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, AsyncPipe, IconComponent, TourOverlayComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, IconComponent, TourOverlayComponent],
   // Frost + freeze the whole shell while logged out. The registration modal
   // lives in Material's CDK overlay (outside app-root), so it stays sharp.
   host: { '[class.app-locked]': '!isLoggedIn || welcomeOpen' },
@@ -149,7 +149,7 @@ import { TourService } from './shared/tour/tour.service';
           <app-icon name="user" [size]="18" /> PROFILE
         </a>
       </nav>
-      @if (userState.xp$ | async; as xp) {
+      @if (userState.xp(); as xp) {
         <div class="xp-widget">
           <div class="xp-label">NEXT LEVEL IN</div>
           <div class="xp-value">{{ xp.xpForNextLevel - xp.xpInLevel }} XP</div>

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, DestroyRef, computed, effect, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -45,70 +45,64 @@ const STEP_GOAL = 10000;
     <div class="fx"><div class="card">
       <div class="sec-title"><span class="sec-bar"></span><span class="title">STEP CORE</span></div>
       <div class="ring-wrap">
-        <div class="ring" [style.--p]="progressPercent">
+        <div class="ring" [style.--p]="progressPercent()">
           <div class="ring-inner">
-            <div class="ring-val">{{ displaySteps.toLocaleString('en-US') }}</div>
+            <div class="ring-val">{{ displaySteps().toLocaleString('en-US') }}</div>
             <div class="ring-goal">/ {{ goal.toLocaleString('en-US') }}</div>
           </div>
         </div>
       </div>
       <div class="foot">
-        <span class="pts">+{{ pointsFromSteps }} PTS TODAY</span>
+        <span class="pts">+{{ pointsFromSteps() }} PTS TODAY</span>
       </div>
       <div class="add-row">
         <input class="add-input" type="number" inputmode="numeric" min="1" max="100000"
-               placeholder="Add steps…" [(ngModel)]="entry" [disabled]="loading"
+               placeholder="Add steps…" [(ngModel)]="entry" [disabled]="loading()"
                (keyup.enter)="add()">
-        <button class="add-btn" [disabled]="loading" (click)="add()">+ ADD</button>
+        <button class="add-btn" [disabled]="loading()" (click)="add()">+ ADD</button>
       </div>
-      <div class="err" *ngIf="errorMsg">{{ errorMsg }}</div>
+      <div class="err" *ngIf="errorMsg()">{{ errorMsg() }}</div>
     </div></div>
   `,
 })
-export class TodayStepsCardComponent implements OnChanges {
-  @Input() todaySteps = 0;
-  @Output() stepsAdded = new EventEmitter<void>();
+export class TodayStepsCardComponent {
+  readonly todaySteps = input(0);
+  readonly stepsAdded = output<void>();
 
   readonly goal = STEP_GOAL;
-  displaySteps = 0;
+  readonly displaySteps = signal(0);
   entry: number | null = null;
-  loading = false;
-  errorMsg = '';
+  readonly loading = signal(false);
+  readonly errorMsg = signal('');
+
+  readonly progressPercent = computed(() =>
+    Math.min(100, Math.round((this.displaySteps() / this.goal) * 100)));
+  readonly pointsFromSteps = computed(() => Math.floor(this.displaySteps() / 100));
 
   constructor(
     private api: ApiService,
     private snackBar: MatSnackBar,
     private dialog: MatDialog,
     private destroyRef: DestroyRef,
-  ) {}
-
-  ngOnChanges(): void {
-    this.displaySteps = this.todaySteps;
-  }
-
-  get progressPercent(): number {
-    return Math.min(100, Math.round((this.displaySteps / this.goal) * 100));
-  }
-
-  get pointsFromSteps(): number {
-    return Math.floor(this.displaySteps / 100);
+  ) {
+    effect(() => this.displaySteps.set(this.todaySteps()), { allowSignalWrites: true });
   }
 
   add(): void {
     const userId = localStorage.getItem('userId');
     const steps = Math.floor(Number(this.entry));
     if (!userId) return;
-    if (!steps || steps <= 0) { this.errorMsg = 'Enter a step count above zero.'; return; }
-    if (steps > 100000) { this.errorMsg = 'Max 100,000 steps per entry.'; return; }
+    if (!steps || steps <= 0) { this.errorMsg.set('Enter a step count above zero.'); return; }
+    if (steps > 100000) { this.errorMsg.set('Max 100,000 steps per entry.'); return; }
 
-    this.loading = true; this.errorMsg = '';
+    this.loading.set(true); this.errorMsg.set('');
     this.api.addSteps(userId, steps)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
       next: res => {
-        this.loading = false;
+        this.loading.set(false);
         this.entry = null;
-        this.displaySteps = res.todayTotalSteps;
+        this.displaySteps.set(res.todayTotalSteps);
 
         res.missionsCompleted.forEach((m, i) => {
           setTimeout(() => {
@@ -129,8 +123,8 @@ export class TodayStepsCardComponent implements OnChanges {
         this.stepsAdded.emit();
       },
       error: () => {
-        this.loading = false;
-        this.errorMsg = 'Failed to add steps. Please try again.';
+        this.loading.set(false);
+        this.errorMsg.set('Failed to add steps. Please try again.');
       },
     });
   }

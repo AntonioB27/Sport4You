@@ -1,13 +1,12 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
 import { XpInfo } from '../models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserStateService {
-  private xpSubject = new BehaviorSubject<XpInfo | null>(null);
-  readonly xp$ = this.xpSubject.asObservable();
+  private readonly xpSignal = signal<XpInfo | null>(null);
+  readonly xp = this.xpSignal.asReadonly();
 
   setXp(xp: XpInfo): void {
-    this.xpSubject.next(xp);
+    this.xpSignal.set(xp);
   }
 }
