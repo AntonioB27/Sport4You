@@ -12,15 +12,33 @@ are kept exact and unauthenticated on `main` by design — see
 [Design Decisions](#design-decisions) for why, and
 [Bonus: Full Auth Variant](#bonus-full-auth-variant) for a branch that changes them.
 
+## Table of Contents
+
+- [Screenshots](#screenshots)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Run with Docker](#run-with-docker)
+- [Running Locally](#running-locally)
+- [Project Structure](#project-structure)
+- [Design Decisions](#design-decisions)
+- [Features](#features)
+- [API Reference](#api-reference)
+- [Scoring System](#scoring-system)
+- [Bonus: Full Auth Variant](#bonus-full-auth-variant)
+
 ## Screenshots
 
-| Dashboard | Leaderboard | Log an activity |
-|---|---|---|
-| ![Dashboard](docs/screenshots/dashboard.png) | ![Leaderboard, filterable by time period and sport](docs/screenshots/leaderboard.png) | ![Log Activity dialog](docs/screenshots/log-activity.png) |
+| Dashboard | Leaderboard |
+|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Leaderboard, filterable by time period and sport](docs/screenshots/leaderboard.png) |
 
-| Achievements | Avatars & Borders | Loot Box |
-|---|---|---|
-| ![Achievements / Trophy Track](docs/screenshots/achievements.png) | ![Avatars & Borders locker](docs/screenshots/avatars.png) | ![Loot Box reveal](docs/screenshots/loot-box.png) |
+| Log an activity | Achievements |
+|---|---|
+| ![Log Activity dialog](docs/screenshots/log-activity.png) | ![Achievements / Trophy Track](docs/screenshots/achievements.png) |
+
+| Avatars & Borders | Loot Box |
+|---|---|
+| ![Avatars & Borders locker](docs/screenshots/avatars.png) | ![Loot Box reveal](docs/screenshots/loot-box.png) |
 
 | Public Profile | Welcome / Onboarding |
 |---|---|
