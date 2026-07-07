@@ -12,12 +12,27 @@ are kept exact and unauthenticated on `main` by design — see
 [Design Decisions](#design-decisions) for why, and
 [Bonus: Full Auth Variant](#bonus-full-auth-variant) for a branch that changes them.
 
+## Screenshots
+
+| Dashboard | Leaderboard | Log an activity |
+|---|---|---|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Leaderboard, filterable by time period and sport](docs/screenshots/leaderboard.png) | ![Log Activity dialog](docs/screenshots/log-activity.png) |
+
+| Achievements | Avatars & Borders | Loot Box |
+|---|---|---|
+| ![Achievements / Trophy Track](docs/screenshots/achievements.png) | ![Avatars & Borders locker](docs/screenshots/avatars.png) | ![Loot Box reveal](docs/screenshots/loot-box.png) |
+
+| Public Profile | Welcome / Onboarding |
+|---|---|
+| ![Public profile with activity heatmap](docs/screenshots/profile.png) | ![First-run welcome splash](docs/screenshots/welcome.png) |
+
 ## Tech Stack
 
-- **Backend:** C# / ASP.NET Core 8 Web API · Entity Framework Core · SQLite
-- **Frontend:** Angular 17 (standalone components) · Angular Material · Chart.js (ng2-charts)
-- **Tests:** xUnit, 201 tests — `dotnet test` (real SQLite-backed integration tests via
-  `WebApplicationFactory`, not mocks)
+- **Backend:** C# / ASP.NET Core 8 Web API · Entity Framework Core · SQLite · Serilog
+- **Frontend:** Angular 17 (standalone components, Signals) · Angular Material · Chart.js (ng2-charts)
+- **Tests:** xUnit, 206 tests — `dotnet test` (mostly real SQLite-backed integration tests
+  via `WebApplicationFactory`, plus a handful of Moq-based isolated unit tests); Karma/Jasmine
+  on the frontend, both run in CI
 - **API docs:** OpenAPI / Swagger UI at `/swagger`
 
 ## Prerequisites
@@ -97,11 +112,18 @@ cd backend
 dotnet test
 ```
 
-201 tests, all passing. Coverage spans the assignment-required logic
+206 tests, all passing. Coverage spans the assignment-required logic
 (`ScoringServiceTests.cs` — pure unit tests of every sport's points formula,
-including floor/edge-case behavior) and every game-layer subsystem, all as
+including floor/edge-case behavior) and every game-layer subsystem, mostly as
 real integration tests against an in-memory SQLite database through the
-actual HTTP pipeline (`WebApplicationFactory`) rather than mocked layers.
+actual HTTP pipeline (`WebApplicationFactory`) rather than mocked layers —
+plus a small set of Moq-based isolated unit tests
+(`ActivityServiceMockedTests.cs`) that mock every collaborator to verify
+orchestration logic in isolation, complementing the integration-test style
+used everywhere else.
+
+Frontend tests (`cd frontend && npx ng test --no-watch --browsers=ChromeHeadless`) run via
+Karma/Jasmine and are part of CI alongside the backend suite.
 
 > **Note:** the SQLite schema is created via EF Core's `EnsureCreated()`
 > (no migrations). If you pull an update that changes a model and the app
@@ -162,13 +184,25 @@ leave implicit:
   It never touches XP, achievements, or the leaderboard — a private health
   metric shouldn't be gamified or visible to other users, so it's modeled as
   two fully separate tables with their own service, not bolted onto `User`.
+- **Backend tests mix two styles on purpose.** Most tests are real-DB
+  integration tests through the actual HTTP pipeline, which is the right
+  default for a small app where most bugs live at the seams between layers.
+  `ActivityService` also has a set of Moq-based unit tests that mock every
+  collaborator — a deliberate example of isolating a unit under test, kept
+  additive rather than replacing any integration coverage.
+- **AI Coach never writes on parse.** `POST /api/activities/parse` only
+  drafts a suggestion (sport, metric, points preview); confirming it calls
+  the same `POST /api/activities` / steps endpoints as manual logging, so the
+  assignment's write contracts have exactly one path into the database
+  regardless of how an activity was described.
 
 ## Features
 
 **Core (per the assignment)**
 - Register with first + last name (unique), log activities across 6 sports
   with sport-specific normalized scoring
-- Global leaderboard, ranked by total points, with 7-day rank trend
+- Global leaderboard, ranked by total points, with rank trends, filterable by
+  time period (this week / this month / all-time) and by sport
 - Personal dashboard: activity history, points-over-time and sport-breakdown
   charts
 
@@ -209,6 +243,11 @@ leave implicit:
   (points gap, who's ahead), independent of your overall leaderboard rank
 
 **Tracking**
+- **AI Coach** — log an activity by typing it in plain English (e.g. "ran 5k
+  in 25 min"); a Claude-backed parser (with an offline regex fallback when no
+  API key is configured) extracts the sport and metric, previews the points,
+  and asks for clarification if something's ambiguous, before confirming
+  through the same endpoints as manual logging
 - **Daily steps** — dedicated accumulating endpoint (checking in multiple
   times a day adds up) with a dashboard widget
 - **Weight tracking** — private, non-competitive daily weigh-ins with a
@@ -221,6 +260,10 @@ leave implicit:
 - **Account recovery** — since names are unique, re-entering your name via
   `POST /api/users/login` restores your account after clearing browser
   storage
+- **Guided onboarding** — every page is gated behind a blurred login/register
+  wall until an identity exists; first-time registration follows with a
+  full-bleed welcome splash and a guided spotlight tour of the app (replayable
+  any time from the sidebar's "Tutorial" button)
 - **Public profiles** — view any user's level, stats, badges, avatars, and
   personal records from the leaderboard
 
@@ -232,12 +275,14 @@ leave implicit:
 | POST | `/api/users` | Register a new user *(assignment contract)* |
 | POST | `/api/users/login` | Recover an account by name |
 | POST | `/api/activities` | Log a fitness activity *(assignment contract)* |
+| POST | `/api/activities/parse` | AI Coach — parse free-text into a draft activity (never writes) |
+| GET | `/api/ai/status` | `"ai"` if a Claude API key is configured, else `"basic"` (regex fallback) |
 | POST | `/api/users/{id}/steps` | Add to today's accumulating step total |
 | POST | `/api/users/{id}/prestige` | Prestige at max level |
 | GET | `/api/users/{id}/weight` | Weight history + goal |
 | POST | `/api/users/{id}/weight` | Log today's weight (upserts) |
 | PUT | `/api/users/{id}/weight/goal` | Set/update goal weight |
-| GET | `/api/leaderboard` | Ranked leaderboard (avatars, borders, trends) |
+| GET | `/api/leaderboard?period=&sport=` | Ranked leaderboard (avatars, borders, trends); `period` is `7d`\|`30d`\|`all`, `sport` is `all` or one of the six sports |
 | GET | `/api/users/{id}/dashboard` | Everything the dashboard needs, in one call |
 | GET | `/api/users/{id}/achievements` | Achievement statuses, progress, XP summary |
 | GET | `/api/users/{id}/personal-records` | Per-sport bests, biggest day, longest streak |
