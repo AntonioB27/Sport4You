@@ -48,6 +48,18 @@ import { AvatarLockerComponent } from '../profile/avatar-locker.component';
     }
     .equip-btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: none; }
     .active-label { font-family: 'Chakra Petch', sans-serif; font-size: 11px; font-weight: 700; color: #2E6BE6; }
+
+    .mobile-toggle-header { display:none; }
+    @media (max-width: 767px) {
+      .mobile-toggle-header { display:flex; }
+      .mobile-hidden { display:none; }
+    }
+    .segmented { display:flex; background:#e2e9f4; border-radius:12px; padding:4px; gap:3px; flex:1; }
+    .segment {
+      flex:1; text-align:center; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:11px;
+      letter-spacing:.04em; color:#8592ad; padding:9px 0; border-radius:9px; cursor:pointer;
+    }
+    .segment.active { color:#fff; background:#2E6BE6; }
   `],
   template: `
     <div class="page">
@@ -66,14 +78,23 @@ import { AvatarLockerComponent } from '../profile/avatar-locker.component';
       } @else if (avatarsLoading) {
         <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
       } @else {
-        <app-avatar-locker
-          [avatars]="avatars"
-          [equipping]="equipping"
-          [activeBorderCss]="activeBorderCss"
-          (equip)="equip($event)"></app-avatar-locker>
+        <div class="mobile-toggle-header">
+          <div class="segmented">
+            <div class="segment" [class.active]="activeView === 'avatars'" (click)="setView('avatars')">AVATARS</div>
+            <div class="segment" [class.active]="activeView === 'borders'" (click)="setView('borders')">BORDERS</div>
+          </div>
+        </div>
+
+        <div [class.mobile-hidden]="activeView !== 'avatars'">
+          <app-avatar-locker
+            [avatars]="avatars"
+            [equipping]="equipping"
+            [activeBorderCss]="activeBorderCss"
+            (equip)="equip($event)"></app-avatar-locker>
+        </div>
 
         @if (!bordersLoading && borders.length > 0) {
-          <div class="borders-section">
+          <div class="borders-section" [class.mobile-hidden]="activeView !== 'borders'">
             <div class="s4y-sec-head"><div class="s4y-sec-title"><span class="s4y-sec-bar s4y-sec-bar--blue"></span><span class="s4y-sec-name">BORDERS</span></div></div>
             <div class="border-grid">
               @for (b of sortedBorders; track b.id) {
@@ -106,6 +127,16 @@ export class AvatarsPageComponent implements OnInit {
   borders: BorderStatus[] = [];
   bordersLoading = false;
   equippingBorder = false;
+
+  activeView: 'avatars' | 'borders' = 'avatars';
+
+  get equippedAvatar(): AvatarStatus | null {
+    return this.avatars.find(a => a.isActive) ?? null;
+  }
+
+  setView(view: 'avatars' | 'borders'): void {
+    this.activeView = view;
+  }
 
   constructor(private api: ApiService, private snackBar: MatSnackBar) {}
 

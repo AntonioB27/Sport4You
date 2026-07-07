@@ -143,12 +143,75 @@ const BOOSTER_META: CardMeta = {
     @media (max-width: 900px) {
       .spotlight { grid-template-columns:1fr; }
     }
+
+    /* ── Mobile layout (1c) ── */
+    .mobile-view { display:none; }
+    @media (max-width: 767px) {
+      .desktop-view { display:none; }
+      .mobile-view { display:block; }
+    }
+    .mobile-hud {
+      position:sticky; top:0; z-index:10; padding:14px 18px 12px;
+      background:linear-gradient(120deg,#12245090,#0e1a34 70%),
+                 radial-gradient(120% 160% at 100% 0%, rgba(46,107,230,.55), transparent), #0f1e3b;
+    }
+    .mobile-hud-row { display:flex; align-items:center; justify-content:space-between; }
+    .mobile-hud-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:16px; color:#fff; letter-spacing:.08em; }
+    .mobile-hud-count { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; color:#C6E63B; }
+    .mobile-spotlight {
+      margin:14px; padding:14px 16px; border-radius:14px;
+      background:linear-gradient(135deg,#F5B300,#B57C00); color:#3a2800;
+    }
+    .mobile-spotlight-name { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:15px; }
+    .mobile-spotlight-desc { font-size:11px; margin:4px 0 9px; font-weight:600; }
+    .mobile-spotlight-buy {
+      background:#0f1e3b; color:#C6E63B; border:none; font-family:'Chakra Petch',sans-serif;
+      font-weight:700; font-size:12px; padding:7px 13px; border-radius:9px; cursor:pointer;
+    }
+    .mobile-spotlight-buy:disabled { opacity:.5; cursor:not-allowed; }
+    .segmented { display:flex; background:#e2e9f4; border-radius:12px; padding:4px; gap:3px; margin:0 14px 14px; }
+    .segment {
+      flex:1; text-align:center; font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:11px;
+      letter-spacing:.04em; color:#8592ad; padding:9px 0; border-radius:9px; cursor:pointer;
+    }
+    .segment.active { color:#fff; background:#2E6BE6; }
+    .mobile-section-body { padding:0 14px 20px; }
+    .mobile-section-body .feats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   `],
   template: `
     <div class="page">
       @if (loading) {
         <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
       } @else if (catalog) {
+        <div class="mobile-view">
+          <div class="mobile-hud">
+            <div class="mobile-hud-row">
+              <div class="mobile-hud-title">SHOP</div>
+              <div class="mobile-hud-count">{{ catalog.coins | number }} coins</div>
+            </div>
+          </div>
+          @if (special(catalog); as sp) {
+            <div class="mobile-spotlight">
+              <div class="mobile-spotlight-name">Better Odds, Guaranteed</div>
+              <div class="mobile-spotlight-desc">{{ sp.commonPct }}% common · {{ sp.rarePct }}% rare · {{ sp.legendaryPct }}% legendary</div>
+              <button class="mobile-spotlight-buy" [disabled]="buying || catalog.coins < sp.price" (click)="buyLootBox('special')">BUY — {{ sp.price | number }}</button>
+            </div>
+          }
+          <div class="segmented">
+            <div class="segment" [class.active]="activeSegment === 'boosters'" (click)="setSegment('boosters')">BOOSTERS</div>
+            <div class="segment" [class.active]="activeSegment === 'boxes'" (click)="setSegment('boxes')">BOXES</div>
+            <div class="segment" [class.active]="activeSegment === 'avatars'" (click)="setSegment('avatars')">AVATARS</div>
+          </div>
+          <div class="mobile-section-body">
+            @switch (activeSegment) {
+              @case ('boosters') { <ng-container *ngTemplateOutlet="boosterGrid"></ng-container> }
+              @case ('boxes') { <ng-container *ngTemplateOutlet="boxesGrid"></ng-container> }
+              @case ('avatars') { <ng-container *ngTemplateOutlet="avatarsGrid"></ng-container> }
+            }
+          </div>
+        </div>
+
+        <div class="desktop-view">
         <div class="panel-fx">
         <div class="panel">
           <!-- HUD -->
@@ -195,11 +258,7 @@ const BOOSTER_META: CardMeta = {
               </div>
             }
 
-            <!-- XP Booster -->
-            <div class="section">
-              <div class="section-header">
-                <div class="section-title">XP BOOSTER</div>
-              </div>
+            <ng-template #boosterGrid>
               <div class="feats-grid">
                 <app-shop-item-card
                   [name]="boosterName(catalog)"
@@ -220,14 +279,8 @@ const BOOSTER_META: CardMeta = {
                   (buy)="buyBooster()">
                 </app-shop-item-card>
               </div>
-            </div>
-
-            <!-- Loot Boxes -->
-            <div class="section">
-              <div class="section-header">
-                <div class="section-title">LOOT BOXES</div>
-                <div class="section-count">{{ catalog.lootBoxes.length }}</div>
-              </div>
+            </ng-template>
+            <ng-template #boxesGrid>
               <div class="feats-grid">
                 @for (box of catalog.lootBoxes; track box.tier) {
                   <app-shop-item-card
@@ -249,14 +302,8 @@ const BOOSTER_META: CardMeta = {
                   </app-shop-item-card>
                 }
               </div>
-            </div>
-
-            <!-- Avatars -->
-            <div class="section">
-              <div class="section-header">
-                <div class="section-title">AVATARS</div>
-                <div class="section-count">{{ catalog.avatars.length }}</div>
-              </div>
+            </ng-template>
+            <ng-template #avatarsGrid>
               <div class="feats-grid">
                 @for (avatar of catalog.avatars; track avatar.id) {
                   <app-shop-item-card
@@ -278,8 +325,35 @@ const BOOSTER_META: CardMeta = {
                   </app-shop-item-card>
                 }
               </div>
+            </ng-template>
+
+            <!-- XP Booster -->
+            <div class="section">
+              <div class="section-header">
+                <div class="section-title">XP BOOSTER</div>
+              </div>
+              <ng-container *ngTemplateOutlet="boosterGrid"></ng-container>
+            </div>
+
+            <!-- Loot Boxes -->
+            <div class="section">
+              <div class="section-header">
+                <div class="section-title">LOOT BOXES</div>
+                <div class="section-count">{{ catalog.lootBoxes.length }}</div>
+              </div>
+              <ng-container *ngTemplateOutlet="boxesGrid"></ng-container>
+            </div>
+
+            <!-- Avatars -->
+            <div class="section">
+              <div class="section-header">
+                <div class="section-title">AVATARS</div>
+                <div class="section-count">{{ catalog.avatars.length }}</div>
+              </div>
+              <ng-container *ngTemplateOutlet="avatarsGrid"></ng-container>
             </div>
           </div>
+        </div>
         </div>
         </div>
       }
@@ -290,6 +364,12 @@ export class ShopComponent implements OnInit {
   catalog: ShopCatalog | null = null;
   loading = true;
   buying = false;
+
+  activeSegment: 'boosters' | 'boxes' | 'avatars' = 'boosters';
+
+  setSegment(segment: 'boosters' | 'boxes' | 'avatars'): void {
+    this.activeSegment = segment;
+  }
 
   readonly RARITY_META = RARITY_META;
   readonly boosterMeta = BOOSTER_META;

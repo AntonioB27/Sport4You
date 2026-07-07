@@ -57,6 +57,33 @@ const GROUPS: LockerGroup[] = [
     .body { padding: 28px 30px 32px; display: grid; grid-template-columns: 300px 1fr; gap: 26px; }
     @media (max-width: 900px) { .body { grid-template-columns: 1fr; } }
 
+    /* ── Mobile layout (1e) ── */
+    .mobile-view { display:none; }
+    @media (max-width: 767px) {
+      .desktop-view { display:none; }
+      .mobile-view { display:block; }
+    }
+    .mobile-mini-hud {
+      display:flex; align-items:center; gap:13px; padding:14px 18px 16px;
+      background:linear-gradient(120deg,#12245090,#0e1a34 70%),
+                 radial-gradient(120% 160% at 100% 0%, rgba(46,107,230,.55), transparent), #0f1e3b;
+    }
+    .mobile-mini-avatar {
+      width:52px; height:52px; flex:0 0 auto; border-radius:50%; overflow:hidden;
+      background:linear-gradient(165deg,#F1F6FF,#D6E4FB); box-shadow:0 0 0 3px rgba(198,230,59,.6);
+    }
+    .mobile-mini-avatar img { width:100%; height:100%; object-fit:cover; object-position:50% 22%; }
+    .mobile-mini-name { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:16px; color:#fff; }
+    .mobile-mini-sub { font-size:11px; color:#9db3dd; font-weight:700; margin-top:2px; }
+    .mobile-chip-row { display:flex; gap:7px; overflow-x:auto; padding:12px 18px 4px; }
+    .mobile-chip {
+      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:11px; letter-spacing:.04em;
+      border-radius:999px; padding:6px 12px; flex:0 0 auto; cursor:pointer; white-space:nowrap;
+      background:#fff; border:1px solid #e3eaf5; color:#5c6881;
+    }
+    .mobile-chip.active { background:#EAF1FF; border-color:transparent; color:#2E6BE6; }
+    .mobile-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px 10px; padding:14px 18px 20px; }
+
     /* ── Portrait pane ── */
     .portrait {
       position: relative; overflow: hidden; align-self: start;
@@ -147,6 +174,60 @@ const GROUPS: LockerGroup[] = [
     .locker-unlock { font-size: 9px; color: #8592ad; line-height: 1.25; }
   `],
   template: `
+    <div class="mobile-view">
+      @for (eq of equipped ? [equipped] : []; track eq.id) {
+        <div class="mobile-mini-hud">
+          <div class="mobile-mini-avatar"><img [src]="eq.imagePath" [alt]="eq.name"></div>
+          <div>
+            <div class="mobile-mini-name">{{ eq.name }}</div>
+            <div class="mobile-mini-sub">{{ unlockedCount }} / {{ avatars.length }} lockers open</div>
+          </div>
+        </div>
+      } @empty {
+        <div class="mobile-mini-hud">
+          <div class="mobile-mini-avatar"></div>
+          <div>
+            <div class="mobile-mini-name">No avatar equipped</div>
+            <div class="mobile-mini-sub">{{ unlockedCount }} / {{ avatars.length }} lockers open</div>
+          </div>
+        </div>
+      }
+      <div class="mobile-chip-row">
+        @for (section of sections; track section.label) {
+          <div class="mobile-chip" [class.active]="activeGroup === section.label" (click)="setGroup(section.label)">{{ section.label }}</div>
+        }
+      </div>
+      @for (section of mobileSections; track section.label) {
+        <div class="mobile-grid">
+          @for (a of section.items; track a.id) {
+            <div class="locker">
+              @if (a.unlocked) {
+                <div class="porthole" [class.equipped-porthole]="a.isActive"
+                     (click)="onEquip(a)" [title]="a.description">
+                  <div class="porthole-img"><img [src]="a.imagePath" [alt]="a.name"></div>
+                  @if (a.isActive) { <div class="equip-ring"></div> }
+                </div>
+                @if (a.isActive) {
+                  <div class="locker-equipped-tag">✓ EQUIPPED</div>
+                } @else {
+                  <div class="locker-name">{{ a.name }}</div>
+                }
+              } @else {
+                <div class="porthole locked-porthole">
+                  <div class="locked-face"><span class="locked-q">?</span></div>
+                  <div class="lock-badge">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" fill="#8592ad"/><path d="M8 11V8a4 4 0 018 0v3" stroke="#8592ad" stroke-width="2" fill="none"/></svg>
+                  </div>
+                </div>
+                <div class="locker-name">??? Sporty</div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="desktop-view">
     <div class="panel-fx">
     <div class="panel">
       <div class="hud">
@@ -232,6 +313,7 @@ const GROUPS: LockerGroup[] = [
       </div>
     </div>
     </div>
+    </div>
   `,
 })
 export class AvatarLockerComponent {
@@ -240,6 +322,16 @@ export class AvatarLockerComponent {
   /** Equipped border CSS, shown as a ring around the preview avatar. */
   @Input() activeBorderCss: string | null = null;
   @Output() equip = new EventEmitter<AvatarStatus>();
+
+  activeGroup: string | null = null;
+
+  get mobileSections(): { label: string; items: AvatarStatus[] }[] {
+    return this.activeGroup ? this.sections.filter(s => s.label === this.activeGroup) : this.sections;
+  }
+
+  setGroup(label: string | null): void {
+    this.activeGroup = this.activeGroup === label ? null : label;
+  }
 
   get unlockedCount(): number {
     return this.avatars.filter(a => a.unlocked).length;

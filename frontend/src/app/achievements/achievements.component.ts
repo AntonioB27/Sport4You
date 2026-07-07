@@ -64,6 +64,7 @@ const SECTIONS: SectionDef[] = [
 
 const ONE_TIME_TYPES = ['first_activity', 'first_mission', 'first_sweep', 'all_sports', 'points_in_day', 'achievements_unlocked'];
 const TIER_ORDER = ['bronze', 'silver', 'gold'];
+export const ONE_TIME_LABEL = 'One-Time Feats';
 
 interface TierMeta {
   frame: string;
@@ -364,12 +365,66 @@ export class AchievementCardComponent {
       .rail { flex-wrap:wrap; }
       .connector { min-width:100%; flex-basis:100%; }
     }
+
+    /* ── Mobile layout (1a) ── */
+    .mobile-view { display:none; }
+    @media (max-width: 767px) {
+      .desktop-view { display:none; }
+      .mobile-view { display:block; }
+    }
+    .mobile-hud {
+      position:sticky; top:0; z-index:10; padding:14px 18px 12px;
+      background:linear-gradient(120deg,#12245090,#0e1a34 70%),
+                 radial-gradient(120% 160% at 100% 0%, rgba(46,107,230,.55), transparent), #0f1e3b;
+    }
+    .mobile-hud-row { display:flex; align-items:center; justify-content:space-between; }
+    .mobile-hud-title { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:16px; color:#fff; letter-spacing:.08em; }
+    .mobile-hud-count { font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:13px; color:#C6E63B; }
+    .chip-row { display:flex; gap:7px; overflow-x:auto; padding:10px 4px 2px; }
+    .chip {
+      font-family:'Chakra Petch',sans-serif; font-weight:700; font-size:11px; letter-spacing:.04em;
+      border-radius:999px; padding:7px 13px; flex:0 0 auto; cursor:pointer; border:1px solid transparent;
+      background:#fff; color:#5c6881; white-space:nowrap;
+    }
+    .chip.active { background:#2E6BE6; color:#fff; }
+    .mobile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding:14px; }
+    .mobile-empty { padding:40px 20px; text-align:center; color:#8592ad; font-size:13px; }
   `],
   template: `
     <div class="page">
       @if (loading) {
         <div class="spinner-wrap"><mat-spinner diameter="36"></mat-spinner></div>
       } @else {
+        <div class="mobile-view">
+          <div class="mobile-hud">
+            <div class="mobile-hud-row">
+              <div class="mobile-hud-title">TROPHY TRACK</div>
+              <div class="mobile-hud-count">{{ unlockedCount }} / {{ achievements.length }}</div>
+            </div>
+            <div class="chip-row">
+              <div class="chip" [class.active]="activeTier === 'all'" (click)="setTier('all')">ALL</div>
+              <div class="chip" [class.active]="activeTier === 'bronze'" (click)="setTier('bronze')">BRONZE</div>
+              <div class="chip" [class.active]="activeTier === 'silver'" (click)="setTier('silver')">SILVER</div>
+              <div class="chip" [class.active]="activeTier === 'gold'" (click)="setTier('gold')">GOLD</div>
+            </div>
+            <div class="chip-row">
+              @for (cat of mobileCategories; track cat) {
+                <div class="chip" [class.active]="activeCategory === cat" (click)="setCategory(cat)">{{ cat }}</div>
+              }
+            </div>
+          </div>
+          @if (mobileFiltered.length === 0) {
+            <div class="mobile-empty">No badges match this filter yet.</div>
+          } @else {
+            <div class="mobile-grid">
+              @for (a of mobileFiltered; track a.id) {
+                <app-achievement-card [a]="a"></app-achievement-card>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="desktop-view">
         <div class="panel-fx">
         <div class="panel">
           <!-- HUD -->
@@ -491,6 +546,7 @@ export class AchievementCardComponent {
           </div>
         </div>
         </div>
+        </div>
       }
     </div>
   `,
@@ -500,6 +556,35 @@ export class AchievementsComponent implements OnInit {
   xp: XpInfo | null = null;
   loading = true;
   sections = SECTIONS;
+
+  activeTier: 'all' | 'bronze' | 'silver' | 'gold' = 'all';
+  activeCategory: string | null = null;
+  readonly ONE_TIME_LABEL = ONE_TIME_LABEL;
+
+  get mobileCategories(): string[] {
+    return [...this.sections.map(s => s.label), ONE_TIME_LABEL];
+  }
+
+  get mobileFiltered(): AchievementStatus[] {
+    let list: AchievementStatus[];
+    if (this.activeCategory === ONE_TIME_LABEL) {
+      list = this.oneTimeFeats;
+    } else if (this.activeCategory) {
+      const section = this.sections.find(s => s.label === this.activeCategory);
+      list = section ? this.sectionAchievements(section) : this.achievements;
+    } else {
+      list = this.achievements;
+    }
+    return this.activeTier === 'all' ? list : list.filter(a => a.tier === this.activeTier);
+  }
+
+  setTier(tier: 'all' | 'bronze' | 'silver' | 'gold'): void {
+    this.activeTier = tier;
+  }
+
+  setCategory(category: string | null): void {
+    this.activeCategory = this.activeCategory === category ? null : category;
+  }
 
   constructor(private api: ApiService) {}
 
