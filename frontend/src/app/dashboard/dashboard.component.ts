@@ -18,11 +18,12 @@ import { AiCoachDialogComponent } from './ai-coach/ai-coach-dialog.component';
 import { TodayStepsCardComponent } from './today-steps-card/today-steps-card.component';
 import { RivalCardComponent } from './rival-card/rival-card.component';
 import { WeightCardComponent } from './weight-card/weight-card.component';
+import { StatsPanelComponent } from './stats-panel/stats-panel.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent, RivalCardComponent, WeightCardComponent],
+  imports: [CommonModule, MatProgressSpinnerModule, MatSnackBarModule, RouterLink, LootBoxModalComponent, IconComponent, TodayStepsCardComponent, RivalCardComponent, WeightCardComponent, StatsPanelComponent],
   styles: [`
     /* ═══════════ Animations ═══════════ */
     @keyframes floaty { 0%,100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
@@ -471,6 +472,10 @@ import { WeightCardComponent } from './weight-card/weight-card.component';
                 </div></div>
               }
             </div>
+
+            <app-stats-panel
+              [sportBreakdown]="data.sportBreakdown"
+              [pointsOverTime]="data.pointsOverTime"></app-stats-panel>
           </div>
 
           <!-- ═══ RIGHT ═══ -->

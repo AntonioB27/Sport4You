@@ -8,11 +8,12 @@ import { DashboardData, AchievementStatus, AvatarStatus } from '../shared/models
 import { achievementIconPath } from '../shared/utils/achievement-icon';
 import { ContributionHeatmapComponent } from './contribution-heatmap/contribution-heatmap.component';
 import { PersonalRecordsComponent } from './personal-records/personal-records.component';
+import { SportRadarComponent } from '../shared/components/sport-radar/sport-radar.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, ContributionHeatmapComponent, PersonalRecordsComponent],
+  imports: [CommonModule, RouterLink, MatProgressSpinnerModule, MatSnackBarModule, ContributionHeatmapComponent, PersonalRecordsComponent, SportRadarComponent],
   styles: [`
     .page { padding: 26px 30px; font-family: 'Nunito', system-ui, sans-serif; max-width: 680px; margin: 0 auto; }
     .spinner-wrap { display: flex; justify-content: center; padding: 80px; }
@@ -148,6 +149,13 @@ import { PersonalRecordsComponent } from './personal-records/personal-records.co
         <div class="section">
           <div class="section-title">ACTIVITY</div>
           <app-contribution-heatmap [pointsOverTime]="data.pointsOverTime"></app-contribution-heatmap>
+        </div>
+        </div>
+
+        <div class="card-fx">
+        <div class="section">
+          <div class="section-title">SPORT MIX</div>
+          <app-sport-radar [sportBreakdown]="data.sportBreakdown"></app-sport-radar>
         </div>
         </div>
 
